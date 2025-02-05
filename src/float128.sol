@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.24;
 
-type float128 is bytes32;
+type float128 is uint256;
 
 struct Float {
     int significand;
@@ -9,7 +9,7 @@ struct Float {
 }
 
 library FloatStructLibSol {
-    function add(
+    function addStructs(
         Float memory a,
         Float memory b
     ) internal pure returns (Float memory r) {
@@ -48,7 +48,13 @@ library FloatStructLibYul {
                         mload(a),
                         div(
                             mload(b),
-                            exp(10, add(mload(a), add(not(mload(b)), 1)))
+                            exp(
+                                10,
+                                add(
+                                    mload(add(a, 0x20)),
+                                    add(not(mload(add(b, 0x20))), 1)
+                                )
+                            )
                         )
                     )
                 )
@@ -61,7 +67,13 @@ library FloatStructLibYul {
                         mload(b),
                         div(
                             mload(a),
-                            exp(10, add(mload(b), add(not(mload(a)), 1)))
+                            exp(
+                                10,
+                                add(
+                                    mload(add(b, 0x20)),
+                                    add(not(mload(add(a, 0x20))), 1)
+                                )
+                            )
                         )
                     )
                 )
@@ -70,47 +82,35 @@ library FloatStructLibYul {
     }
 }
 
-/*library Float2Ints {
-    function add(
+library Float2Ints {
+    function addInts(
         int aMan,
         int aExp,
         int bMan,
         int bExp
-    ) internal pure returns (int rMan, uint rExp) {
+    ) internal pure returns (int rMan, int rExp) {
         assembly {
             if eq(aExp, bExp) {
-                mstore(rExp, aExp)
-                mstore(r, aMan, bMan)
+                rExp := aExp
+                rMan := add(aMan, bMan)
             }
-            if gt(mload(add(a, 0x20)), mload(add(b, 0x20))) {
-                mstore(add(r, 0x20), mload(add(a, 0x20)))
-                mstore(
-                    r,
-                    add(
-                        mload(a),
-                        div(
-                            mload(b),
-                            exp(10, add(mload(a), add(not(mload(b)), 1)))
-                        )
-                    )
+            if gt(aExp, bExp) {
+                rExp := aExp
+                rMan := add(
+                    aMan,
+                    div(bMan, exp(10, add(aExp, add(not(bExp), 1))))
                 )
             }
-            if gt(mload(add(b, 0x20)), mload(add(a, 0x20))) {
-                mstore(add(r, 0x20), mload(add(b, 0x20)))
-                mstore(
-                    r,
-                    add(
-                        mload(b),
-                        div(
-                            mload(a),
-                            exp(10, add(mload(b), add(not(mload(a)), 1)))
-                        )
-                    )
+            if gt(bExp, aExp) {
+                rExp := bExp
+                rMan := add(
+                    bMan,
+                    div(aMan, exp(10, add(bExp, add(not(aExp), 1))))
                 )
             }
         }
     }
-}*/
+}
 
 library FloatUintLib {
     /// 256 ... EXPONENT ... 129, MANTISSA_SIGN (128), 127 .. MANTISSA ... 0
@@ -122,7 +122,7 @@ library FloatUintLib {
     uint constant TOW_COMPLEMENT_SIGN_MASK =
         0x8000000000000000000000000000000000000000000000000000000000000000;
 
-    function add(float128 a, float128 b) internal pure returns (float128 r) {
+    function addUints(uint256 a, uint256 b) internal pure returns (float128 r) {
         assembly {
             // we extract the exponent and mantissas for both
             let aExp := and(a, EXPONENT_MASK)
@@ -160,7 +160,7 @@ library FloatUintLib {
     function encode(
         int mantissa,
         int exponent
-    ) internal pure returns (float128 float) {
+    ) internal pure returns (uint256 float) {
         // bounds not enforced yet
         assembly {
             if and(mantissa, TOW_COMPLEMENT_SIGN_MASK) {
@@ -193,25 +193,56 @@ library FloatUintLib {
             }
         }
     }
+
+    function log10Ceiling(uint x) external pure returns (uint log) {
+        assembly {
+            if gt(x, 0) {
+                if gt(x, 99999999999999999999999999999999) {
+                    log := 32
+                    x := div(x, 100000000000000000000000000000000)
+                }
+                if gt(x, 9999999999999999) {
+                    log := add(log, 16)
+                    x := div(x, 10000000000000000)
+                }
+                if gt(x, 99999999) {
+                    log := add(log, 8)
+                    x := div(x, 100000000)
+                }
+                if gt(x, 9999) {
+                    log := add(log, 4)
+                    x := div(x, 10000)
+                }
+                if gt(x, 99) {
+                    log := add(log, 2)
+                    x := div(x, 100)
+                }
+                if gt(x, 9) {
+                    log := add(log, 1)
+                }
+                log := add(log, 1)
+            }
+        }
+    }
 }
 
-contract EquationWithStructs {
+/*contract EquationWithStructs {
     using FloatStructLibYul for Float;
 
     uint public a;
     uint public b;
 
-    function setA(uint _a) external {
+    function setAStructs(uint _a) internal {
         a = _a;
     }
 
-    function setB(uint _b) external {
+    function setBStructs(uint _b) internal {
         b = _b;
     }
 
     // execution cost Sol 5186
     // execution cost Yul 5098
-    function test() external view returns (uint r) {
+    function testStructs() internal view returns (uint r) {
         Float memory A = Float({exponent: -36, significand: int(a)});
         Float memory B = Float({exponent: -36, significand: int(b)});
         Float memory _r = A.add(B);
@@ -232,16 +263,16 @@ contract EquationUintFloat {
     float128 public a;
     float128 public b;
 
-    function setA(float128 _a) external {
+    function setA(float128 _a) internal {
         a = _a;
     }
 
-    function setB(float128 _b) external {
+    function setB(float128 _b) internal {
         b = _b;
     }
 
-    // execution cost 896
-    function test() external view returns (float128 r) {
+    // execution cost 4923
+    function testUints() external view returns (float128 r) {
         r = a.add(b);
     }
 }
@@ -263,3 +294,30 @@ contract FloatEncoder {
         (mantissa, exponent) = float.decode();
     }
 }
+
+contract EquationWith2Ints {
+    using Float2Ints for int;
+
+    /*int public aMan;
+    int public aExp;
+    int public bMan;
+    int public bExp;
+
+    function setAInts(int _aMan, int _aExp) internal {
+        aMan = _aMan;
+        aExp = _aExp;
+    }
+
+    function setBInts(int _bMan, int _bExp) internal {
+        bMan = _bMan;
+        bExp = _bExp;
+    }
+
+    // execution cost Yul 5023
+    function testInts(
+        int aMan,
+        int bMan
+    ) internal view returns (int rMan, int rExp) {
+        (rMan, rExp) = aMan.add(-36, bMan, -36);
+    }
+}*/
