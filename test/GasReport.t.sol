@@ -89,4 +89,20 @@ contract GasReport is Test, GasHelpers {
         gasUsed = stopMeasuringGas();
         console2.log("log10: ", gasUsed);
     }
+
+    function testGasUsedMul128() public {
+        _primer();
+        uint256 gasUsed = 0;
+
+        startMeasuringGas("Gas used - mul128");
+        Float2Ints.mul128(
+            22345000000000000000000000000000000000,
+            -36,
+            33678000000000000000000000000000000000,
+            -36
+        );
+
+        gasUsed = stopMeasuringGas();
+        console2.log("mul128: ", gasUsed);
+    }
 }

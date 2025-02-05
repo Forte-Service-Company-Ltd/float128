@@ -110,6 +110,83 @@ library Float2Ints {
             }
         }
     }
+
+    function mul128(
+        int aMan,
+        int aExp,
+        int bMan,
+        int bExp
+    ) external pure returns (int256 rMan, int256 rExp) {
+        //int c = aMan * bMan;
+        //int newExp = aExp + bExp;
+        bool isNegativeA;
+        bool isNegativeB;
+        assembly {
+            if gt(shr(255, aMan), 0) {
+                aMan := add(not(aMan), 1)
+                isNegativeA := 1
+            }
+            if gt(shr(255, bMan), 0) {
+                bMan := add(not(bMan), 1)
+                isNegativeB := 1
+            }
+            rMan := mul(aMan, bMan)
+            rExp := add(aExp, bExp)
+        }
+
+        uint256 rawResultSize = log10Ceiling(uint(rMan));
+        assembly {
+            if gt(rawResultSize, 38) {
+                let expReducer := sub(rawResultSize, 38)
+                rMan := div(rMan, exp(10, expReducer))
+                rExp := sub(rExp, expReducer)
+            }
+            if xor(isNegativeA, isNegativeB) {
+                rMan := add(not(rMan), 1)
+            }
+        }
+    }
+
+    function log10Ceiling(uint x) internal pure returns (uint log) {
+        assembly {
+            if gt(x, 0) {
+                if gt(
+                    x,
+                    9999999999999999999999999999999999999999999999999999999999999999
+                ) {
+                    log := 64
+                    x := div(
+                        x,
+                        10000000000000000000000000000000000000000000000000000000000000000
+                    )
+                }
+                if gt(x, 99999999999999999999999999999999) {
+                    log := add(log, 32)
+                    x := div(x, 100000000000000000000000000000000)
+                }
+                if gt(x, 9999999999999999) {
+                    log := add(log, 16)
+                    x := div(x, 10000000000000000)
+                }
+                if gt(x, 99999999) {
+                    log := add(log, 8)
+                    x := div(x, 100000000)
+                }
+                if gt(x, 9999) {
+                    log := add(log, 4)
+                    x := div(x, 10000)
+                }
+                if gt(x, 99) {
+                    log := add(log, 2)
+                    x := div(x, 100)
+                }
+                if gt(x, 9) {
+                    log := add(log, 1)
+                }
+                log := add(log, 1)
+            }
+        }
+    }
 }
 
 library FloatUintLib {
@@ -194,7 +271,7 @@ library FloatUintLib {
         }
     }
 
-    function log10Ceiling(uint x) external pure returns (uint log) {
+    function log10Ceiling(uint x) public pure returns (uint log) {
         assembly {
             if gt(x, 0) {
                 if gt(x, 99999999999999999999999999999999) {
