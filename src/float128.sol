@@ -147,6 +147,38 @@ library Float2Ints {
         }
     }
 
+    function div(int aMan, int aExp, int bMan, int bExp) internal pure returns(int rMan, int rExp){
+        bool negativeA;
+        bool negativeB;
+        assembly{
+            if gt(shr(255,aMan),0){
+                negativeA := 1
+                aMan := add(not(aMan), 1)
+            }
+            if gt(shr(255,bMan),0){
+                negativeB := 1
+                bMan := add(not(bMan), 1)
+            }
+        }
+        uint digitsA = log10Ceiling(uint(aMan));
+        assembly{
+            let expMultiplier := sub(76, digitsA)
+            aMan := mul(aMan, exp(10, expMultiplier))
+            let negExpMultiplier := add(not(expMultiplier), 1)
+            aExp := add(aExp,  negExpMultiplier)
+            rMan := div(aMan, bMan)
+        }
+        uint rawResultSize = log10Ceiling(uint(rMan));
+        assembly{
+            let expReducer := sub(rawResultSize, 38)
+            rExp := add(add(aExp, add(not(bExp),1)), expReducer)
+            rMan := div(rMan, exp(10, expReducer))
+            if xor(negativeA, negativeB){
+                rMan := add(not(rMan), 1)
+            }
+        }
+    }
+
     function log10Ceiling(uint x) internal pure returns (uint log) {
         assembly {
             if gt(x, 0) {
