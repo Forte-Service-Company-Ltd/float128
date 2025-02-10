@@ -4,19 +4,15 @@ pragma solidity 0.8.24;
 import {Test} from "forge-std/Test.sol";
 import {GasHelpers} from "test/GasHelpers.sol";
 import "lib/forge-std/src/console2.sol";
-import {Float2Ints, FloatStructLibSol, Float, FloatUintLib, float128} from "src/float128.sol";
+import {Float, float128, Float128} from "src/float128.sol";
 
 contract GasReport is Test, GasHelpers {
-    using Float2Ints for int256;
-    using FloatStructLibSol for Float;
-    //
+    using Float128 for Float;
 
-    function testGasUsedStructs() public {
+    function testGasUsedStructs_add() public {
         _primer();
         uint256 gasUsed = 0;
 
-        //setAStructs(22345000000000000000000000000000000000);
-        //setBStructs(33678000000000000000000000000000000000);
         Float memory A = Float({
             exponent: -36,
             significand: int(22345000000000000000000000000000000000)
@@ -25,55 +21,89 @@ contract GasReport is Test, GasHelpers {
             exponent: -36,
             significand: int(33678000000000000000000000000000000000)
         });
-
         startMeasuringGas("Gas used - structs");
-        FloatStructLibSol.addStructs(A, B);
+        Float128.add(A, B);
 
         gasUsed = stopMeasuringGas();
         console2.log("struct: ", gasUsed);
     }
 
-    function testGasUsedInts() public {
+    function testGasUsedStructs_sub() public {
         _primer();
         uint256 gasUsed = 0;
 
-        //setAInts(22345000000000000000000000000000000000, -36);
-        //setBInts(33678000000000000000000000000000000000, -36);
-        int a = 22345000000000000000000000000000000000;
-        int b = 33678000000000000000000000000000000000;
-
-        startMeasuringGas("Gas used - ints");
-
-        Float2Ints.addInts(a, -36, b, -36);
+        Float memory A = Float({
+            exponent: -36,
+            significand: int(22345000000000000000000000000000000000)
+        });
+        Float memory B = Float({
+            exponent: -36,
+            significand: int(33678000000000000000000000000000000000)
+        });
+        startMeasuringGas("Gas used - structs");
+        Float128.sub(A, B);
 
         gasUsed = stopMeasuringGas();
-        console2.log("2 ints: ", gasUsed);
+        console2.log("struct: ", gasUsed);
+    }
+
+    function testGasUsedStructs_mul() public {
+        _primer();
+        uint256 gasUsed = 0;
+
+        Float memory A = Float({
+            exponent: -36,
+            significand: int(22345000000000000000000000000000000000)
+        });
+        Float memory B = Float({
+            exponent: -36,
+            significand: int(33678000000000000000000000000000000000)
+        });
+        startMeasuringGas("Gas used - structs");
+        Float128.mul(A, B);
+
+        gasUsed = stopMeasuringGas();
+        console2.log("struct: ", gasUsed);
+    }
+
+    function testGasUsedStructs_div() public {
+        _primer();
+        uint256 gasUsed = 0;
+
+        Float memory A = Float({
+            exponent: -36,
+            significand: int(22345000000000000000000000000000000000)
+        });
+        Float memory B = Float({
+            exponent: -36,
+            significand: int(33678000000000000000000000000000000000)
+        });
+        startMeasuringGas("Gas used - structs");
+        Float128.div(A, B);
+
+        gasUsed = stopMeasuringGas();
+        console2.log("struct: ", gasUsed);
     }
 
     function testGasUsedUints() public {
         _primer();
         uint256 gasUsed = 0;
 
-        //setAInts(22345000000000000000000000000000000000, -36);
-        //setBInts(33678000000000000000000000000000000000, -36);
-        /*float128 a = float128(
-            0x000000000000000000000000000000b8195625990e78ddb46cd69d8c00000000
-        );
-        float128 b = float128(
-            0x000000000000000000000000000000b810cf7d8ed5a96744e5135bda00000000
-        );*/
-        uint256 a = FloatUintLib.encode(
+        float128 a = Float128.encode(
             22345000000000000000000000000000000000,
             -36
         );
-        uint256 b = FloatUintLib.encode(
+        float128 b = Float128.encode(
             33678000000000000000000000000000000000,
             -36
         );
 
-        startMeasuringGas("Gas used - uints");
+        
+        // float128 a = float128.wrap(_a);
+        // float128 b = float128.wrap(_b);
 
-        FloatUintLib.addUints(a, b);
+        startMeasuringGas("Gas used - uints");
+        Float128.add(a, b);
         gasUsed = stopMeasuringGas();
         console2.log("2 uints: ", gasUsed);
     }
@@ -85,24 +115,88 @@ contract GasReport is Test, GasHelpers {
         uint256 x = type(uint208).max;
         startMeasuringGas("Gas used - log10");
 
-        FloatUintLib.log10Ceiling(x);
+        Float128.findNumberOfDigits(x);
         gasUsed = stopMeasuringGas();
         console2.log("log10: ", gasUsed);
     }
 
-    function testGasUsedMul128() public {
+    function testGasUsedEncoded_mul() public {
         _primer();
         uint256 gasUsed = 0;
 
-        startMeasuringGas("Gas used - mul128");
-        Float2Ints.mul128(
+        float128 a = Float128.encode(
             22345000000000000000000000000000000000,
-            -36,
+            -36
+        );
+        float128 b = Float128.encode(
             33678000000000000000000000000000000000,
             -36
         );
 
+        startMeasuringGas("Gas used - mul128");
+        Float128.mul(a, b);
+
         gasUsed = stopMeasuringGas();
         console2.log("mul128: ", gasUsed);
+    }
+
+    function testGasUsedEncoded_div() public {
+        _primer();
+        uint256 gasUsed = 0;
+
+        float128 a = Float128.encode(
+            22345000000000000000000000000000000000,
+            -36
+        );
+        float128 b = Float128.encode(
+            33678000000000000000000000000000000000,
+            -36
+        );
+
+        startMeasuringGas("Gas used - div128");
+        Float128.div(a, b);
+
+        gasUsed = stopMeasuringGas();
+        console2.log("div128: ", gasUsed);
+    }
+
+    function testGasUsedEncoded_sub() public {
+        _primer();
+        uint256 gasUsed = 0;
+
+        float128 a = Float128.encode(
+            22345000000000000000000000000000000000,
+            -36
+        );
+        float128 b = Float128.encode(
+            33678000000000000000000000000000000000,
+            -36
+        );
+
+        startMeasuringGas("Gas used - sub128");
+        Float128.sub(a, b);
+
+        gasUsed = stopMeasuringGas();
+        console2.log("sub: ", gasUsed);
+    }
+
+    function testGasUsedEncoded_add() public {
+        _primer();
+        uint256 gasUsed = 0;
+
+        float128 a = Float128.encode(
+            22345000000000000000000000000000000000,
+            -36
+        );
+        float128 b = Float128.encode(
+            33678000000000000000000000000000000000,
+            -36
+        );
+
+        startMeasuringGas("Gas used - add128");
+        Float128.add(a, b);
+
+        gasUsed = stopMeasuringGas();
+        console2.log("add: ", gasUsed);
     }
 }

@@ -1,27 +1,58 @@
 import argparse
 from decimal import *
 from eth_abi import encode
+from math import log10
 
 
 def calculate_float_mul(args):
     getcontext().prec = 200
+    max_digits = 38
+    base = 10
     aMan = Decimal(args.aMan)
     aExp = Decimal(args.aExp)
     bMan = Decimal(args.bMan)
     bExp = Decimal(args.bExp)
+    operation = args.operation
+    result_float = 0
+    result_man = 0
+    result_exp = 0
+    result_log10 = 0
+    a_digits = int(log10(aMan)) + 1
+    b_digits = int(log10(bMan)) + 1
 
-    a = Decimal(aMan * 10**aExp)
-    b = Decimal(bMan * 10**bExp)
+    a = Decimal(aMan * base**aExp)
+    b = Decimal(bMan * base**bExp)
 
     isNegative = False
-    result = a * b
-    if result < 0:
-        isNegative = True
-        result = abs(result)
-
-    temp = str(int(result*10**(-1*(aExp+bExp))))
-    temp = temp[0:38]
-    return int(temp)
+    if(operation == "mul"): 
+        result_float = a * b
+        result_digits = int(log10(aMan * bMan)) + 1
+        result_exp = aExp + bExp
+        if (result_digits > max_digits):
+            digits_to_truncate = result_digits - max_digits
+            result_exp += digits_to_truncate
+        result_man = int(result_float*10**(-result_exp))
+    elif(operation == "div"):
+        # print("a", a)
+        # print("b", b)
+        result_float = a / b
+        # print("result_float", result_float)
+        # result_log10 = log10(result_float)
+        # result_digits = max_digits
+        # result_exp = Decimal(int(result_log10) + 1) - result_digits
+        # result_man = int(result_float*10**(result_digits -  Decimal(int(result_log10) + 1)))
+        result_digits = int(log10(result_float)) + 1
+        if (result_digits < 0): result_digits -= 1
+        # print("result_digits", result_digits)
+        result_exp = Decimal(result_digits - max_digits)
+        # print("result_exp", result_exp)
+        # if (result_digits > max_digits):
+        #     digits_to_truncate = result_digits - max_digits
+        #     result_exp += digits_to_truncate
+        result_man = int(result_float*10**(-result_exp))
+        # print("result_man", result_man)
+        
+    return result_man, int(result_exp)
 
 
 
@@ -32,13 +63,14 @@ def parse_args():
     parser.add_argument("aExp", type=int)
     parser.add_argument("bMan", type=int)
     parser.add_argument("bExp", type=int)
+    parser.add_argument("operation", type=str)
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
-    result = calculate_float_mul(args)
-    enc = encode(["int256"], [int(result)])
+    (result_man, result_exp) = calculate_float_mul(args)
+    enc = encode(["(int256,int256)"], [(result_man, result_exp)])
     print("0x" + enc.hex(), end="")
 
 
