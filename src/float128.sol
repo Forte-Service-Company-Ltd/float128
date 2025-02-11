@@ -238,75 +238,105 @@ library Float128{
         Float memory a,
         Float memory b
     ) internal pure returns (Float memory r) {
-        assembly {
-            if eq(mload(add(a, 0x20)), mload(add(b, 0x20))) {
-                mstore(add(r, 0x20), mload(add(a, 0x20)))
-                mstore(r, add(mload(a), mload(b)))
-            }
-            if gt(mload(add(a, 0x20)), mload(add(b, 0x20))) {
-                mstore(add(r, 0x20), mload(add(a, 0x20)))
-                mstore(
-                    r,
-                    add(
-                        mload(a),
-                        div(
-                            mload(b),
-                            exp(
-                                10,
-                                add(
-                                    mload(add(a, 0x20)),
-                                    add(not(mload(add(b, 0x20))), 1)
-                                )
-                            )
-                        )
-                    )
-                )
-            }
-            if gt(mload(add(b, 0x20)), mload(add(a, 0x20))) {
-                mstore(add(r, 0x20), mload(add(b, 0x20)))
-                mstore(
-                    r,
-                    add(
-                        mload(b),
-                        div(
-                            mload(a),
-                            exp(
-                                10,
-                                add(
-                                    mload(add(b, 0x20)),
-                                    add(not(mload(add(a, 0x20))), 1)
-                                )
-                            )
-                        )
-                    )
-                )
+        // assembly {
+            
+        //     if gt(mload(add(a, 0x20)), mload(add(b, 0x20))) {
+        //         mstore(add(r, 0x20), mload(add(a, 0x20)))
+        //         mstore(
+        //             b,
+                   
+        //                 div(
+        //                     mload(b),
+        //                     exp(
+        //                         BASE,
+        //                         add(
+        //                             mload(add(a, 0x20)),
+        //                             add(not(mload(add(b, 0x20))), 1)
+        //                         )
+        //                     )
+        //                 )
+                    
+        //         )
+        //     }
+        //     if gt(mload(add(b, 0x20)), mload(add(a, 0x20))) {
+        //         mstore(add(r, 0x20), mload(add(b, 0x20)))
+        //         mstore(
+        //             a,
+                    
+        //                 div(
+        //                     mload(a),
+        //                     exp(
+        //                         BASE,
+        //                         add(
+        //                             mload(add(b, 0x20)),
+        //                             add(not(mload(add(a, 0x20))), 1)
+        //                         )
+        //                     )
+        //                 )
+                    
+        //         )
+        //     }
+        //     if eq(mload(add(a, 0x20)), mload(add(b, 0x20))) {
+        //         mstore(add(r, 0x20), mload(add(a, 0x20)))
+        //     }
+
+        //     mstore(r, add(mload(a), mload(b)))
+        //     if gt(r, 99999999999999999999999999999999999999){
+        //         mstore(r, div(r, BASE))
+        //         mstore(add(r, 0x20), add(1, mload(r)))
+        //     }
+        // }
+        unchecked{
+            if(a.exponent > b.exponent){
+                b.significand /= int(BASE**(uint(a.exponent - b.exponent)));
+                r.exponent = a.exponent;
+            }else if(a.exponent < b.exponent){
+                a.significand /= int(BASE**(uint(b.exponent - a.exponent)));
+                r.exponent = b.exponent;
+            }else r.exponent = a.exponent;
+
+            r.significand = a.significand + b.significand;
+            if(r.significand > 99999999999999999999999999999999999999){
+                ++r.exponent;
+                r.significand /= int(BASE);
             }
         }
     }
 
     function sub(Float memory a, Float memory b) internal pure returns (Float memory r) {
-        assembly {
-            /// we negate the sign of b to do subtraction instead of addition
-            mstore(b, add(not(mload(add(b, 0x20))), 1))
-            /// we perform regular addition 
-            if eq(mload(add(a, 0x20)), mload(add(b, 0x20))) {
-                mstore(add(r, 0x20), mload(add(a, 0x20)))
-                mstore(r, add(mload(a), mload(b)))
-            }
-            if gt(mload(add(a, 0x20)), mload(add(b, 0x20))) {
-                mstore(add(r, 0x20), mload(add(a, 0x20)))
-                mstore(r, add(
-                    mload(a),
-                    div(mload(b), exp(10, add(mload(add(a, 0x20)), add(not(mload(add(b, 0x20))), 1)))))
-                )
-            }
-            if gt(mload(add(b, 0x20)), mload(add(a, 0x20))) {
-                mstore(add(r, 0x20), mload(add(b, 0x20)))
-                mstore(r, add(
-                    mload(b),
-                    div(mload(a), exp(10, add(mload(add(b, 0x20)), add(not(mload(add(a, 0x20))), 1)))))
-                )
-            }
+        // assembly {
+        //     /// we negate the sign of b to do subtraction instead of addition
+        //     mstore(b, add(not(mload(add(b, 0x20))), 1))
+        //     /// we perform regular addition 
+        //     if eq(mload(add(a, 0x20)), mload(add(b, 0x20))) {
+        //         mstore(add(r, 0x20), mload(add(a, 0x20)))
+        //         mstore(r, add(mload(a), mload(b)))
+        //     }
+        //     if gt(mload(add(a, 0x20)), mload(add(b, 0x20))) {
+        //         mstore(add(r, 0x20), mload(add(a, 0x20)))
+        //         mstore(r, add(
+        //             mload(a),
+        //             div(mload(b), exp(10, add(mload(add(a, 0x20)), add(not(mload(add(b, 0x20))), 1)))))
+        //         )
+        //     }
+        //     if gt(mload(add(b, 0x20)), mload(add(a, 0x20))) {
+        //         mstore(add(r, 0x20), mload(add(b, 0x20)))
+        //         mstore(r, add(
+        //             mload(b),
+        //             div(mload(a), exp(10, add(mload(add(b, 0x20)), add(not(mload(add(a, 0x20))), 1)))))
+        //         )
+        //     }
+        // }
+        unchecked{
+            if(a.exponent > b.exponent){
+                b.significand /= int(BASE**(uint(a.exponent - b.exponent)));
+                r.exponent = a.exponent;
+            }else if(a.exponent < b.exponent){
+                a.significand /= int(BASE**(uint(b.exponent - a.exponent)));
+                r.exponent = b.exponent;
+            }else r.exponent = a.exponent;
+
+            r.significand = a.significand - b.significand;
         }
     }
 
