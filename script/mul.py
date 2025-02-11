@@ -33,24 +33,19 @@ def calculate_float_mul(args):
             result_exp += digits_to_truncate
         result_man = int(result_float*10**(-result_exp))
     elif(operation == "div"):
-        # print("a", a)
-        # print("b", b)
         result_float = a / b
-        # print("result_float", result_float)
-        # result_log10 = log10(result_float)
-        # result_digits = max_digits
-        # result_exp = Decimal(int(result_log10) + 1) - result_digits
-        # result_man = int(result_float*10**(result_digits -  Decimal(int(result_log10) + 1)))
         result_digits = int(log10(result_float)) + 1
         if (result_digits < 0): result_digits -= 1
-        # print("result_digits", result_digits)
         result_exp = Decimal(result_digits - max_digits)
-        # print("result_exp", result_exp)
-        # if (result_digits > max_digits):
-        #     digits_to_truncate = result_digits - max_digits
-        #     result_exp += digits_to_truncate
         result_man = int(result_float*10**(-result_exp))
-        # print("result_man", result_man)
+    elif(operation == "add"):
+        result_float = a + b
+        result_exp = max(aExp, bExp)
+        result_digits = int(log10(result_float / 10**result_exp)) + 1
+        if (result_digits > max_digits):
+            digits_to_truncate = result_digits - max_digits
+            result_exp += digits_to_truncate
+        result_man = int(result_float*10**(-result_exp))
         
     return result_man, int(result_exp)
 

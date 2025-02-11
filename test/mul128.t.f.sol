@@ -102,4 +102,30 @@ contract Mul128FuzzTest is FloatPythonUtils {
         assertEq(pyMan, rMan);
         assertEq(pyExp, rExp);
     }
+
+    function testEncoded_add(int aMan, int aExp, int bMan, int bExp) public {
+        aMan = bound(aMan, 1, 1 << 128 - 1);
+        aExp = bound(aExp, -100, 100);
+        bMan = bound(bMan,  1, 1 << 128 - 1);
+        bExp = bound(bExp, -100, 100);
+
+        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "add");
+        bytes memory res = vm.ffi(inputs);
+        (int pyMan, int pyExp) = abi.decode((res), (int256,int256));
+
+        float128 a = Float128.encode(aMan, aExp);
+        float128 b = Float128.encode(bMan, bExp);
+
+        float128 result = Float128.add(a, b);
+        console2.log("result: ", float128.unwrap(result));
+        (int rMan, int rExp) = Float128.decode(result);
+        // we fix the python result due to the imprecision of the log10. We cut precision where needed
+        
+        console2.log("rMan: ", rMan);
+        console2.log("rExp: ", rExp);
+        console2.log("pyMan: ", pyMan);
+        console2.log("pyExp: ", pyExp);
+        assertEq(pyMan, rMan);
+        assertEq(pyExp, rExp);
+    }
 }

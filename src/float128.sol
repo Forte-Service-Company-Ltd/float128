@@ -54,9 +54,14 @@ library Float128{
                 bMan := add(not(bMan), 1)
             }
             let addition := add(aMan, bMan)
+            
             if and(TOW_COMPLEMENT_SIGN_MASK, addition) {
                 r := or(r, MANTISSA_SIGN_MASK) // assign the negative sign
                 addition := add(not(addition), 1) // convert back from 2's complement
+            }
+            if gt(addition, 99999999999999999999999999999999999999){
+                addition := div(addition, 10)
+                r := add(r, 680564733841876926926749214863536422912) // we add 1 to the exponent
             }
             r := or(r, addition)
         }
@@ -99,9 +104,6 @@ library Float128{
     }
 
     function mul(float128 a, float128 b) internal pure returns (float128 r) {
-
-        console2.log("a", float128.unwrap(a));
-        console2.log("b", float128.unwrap(b));
         uint rMan;
         uint rExp;
         assembly {
@@ -110,12 +112,11 @@ library Float128{
             let bExp := and(b, EXPONENT_MASK)
             let aMan := and(a, MANTISSA_MASK)
             let bMan := and(b, MANTISSA_MASK)
-            ///
+    
             rMan := mul(aMan, bMan)
             rExp := sub(add(shr(EXPONENT_BIT, aExp), shr(EXPONENT_BIT, bExp)), ZERO_OFFSET)
         }
         uint256 rawResultSize = findNumberOfDigits(rMan);
-        console2.log("rawResultSize", rawResultSize);
         assembly {
             if gt(rawResultSize, MAX_DIGITS) {
                 let expReducer := sub(rawResultSize, MAX_DIGITS)
@@ -310,30 +311,40 @@ library Float128{
     }
 
     function mul(Float memory a, Float memory b) internal pure returns (Float memory r) {
-        bool isNegativeA;
-        bool isNegativeB;
-        assembly {
-            if gt(shr(255, mload(a)), 0) {
-                mstore(a, add(not(mload(a)), 1))
-                isNegativeA := 1
-            }
-            if gt(shr(255, mload(b)), 0) {
-                mstore(b,  add(not(mload(b)), 1))
-                isNegativeB := 1
-            }
-            mstore(r, mul(mload(a), mload(b)))
-            mstore(add(r, 0x20), add(mload(add(a, 0x20)), mload(add(b, 0x20))))
-        }
+        // bool isNegativeA;
+        // bool isNegativeB;
+        // assembly {
+        //     if gt(shr(EXPONENT_BIT, mload(a)), 0) {
+        //         mstore(a, add(not(mload(a)), 1))
+        //         isNegativeA := 1
+        //     }
+        //     if gt(shr(EXPONENT_BIT, mload(b)), 0) {
+        //         mstore(b,  add(not(mload(b)), 1))
+        //         isNegativeB := 1
+        //     }
+        //     mstore(r, mul(mload(a), mload(b)))
+        //     mstore(add(r, 0x20), add(mload(add(a, 0x20)), mload(add(b, 0x20))))
+        // }
 
-        uint256 rawResultSize = findNumberOfDigits(uint(r.significand));
-        assembly {
-            if gt(rawResultSize, 38) {
-                let expReducer := sub(rawResultSize, 38)
-                mstore(r, div(mload(r), exp(10, expReducer)))
-                mstore(add(r, 0x20), add(mload(add(r, 0x20)), expReducer))
-            }
-            if xor(isNegativeA, isNegativeB) {
-                mstore(r, add(not(mload(r)), 1))
+        // uint256 rawResultSize = findNumberOfDigits(uint(r.significand));
+        // assembly {
+        //     if gt(rawResultSize, MAX_DIGITS) {
+        //         let expReducer := sub(rawResultSize, MAX_DIGITS)
+        //         mstore(r, div(mload(r), exp(10, expReducer)))
+        //         mstore(add(r, 0x20), add(mload(add(r, 0x20)), expReducer))
+        //     }
+        //     if xor(isNegativeA, isNegativeB) {
+        //         mstore(r, add(not(mload(r)), 1))
+        //     }
+        // }
+        unchecked{
+            r.exponent = a.exponent + b.exponent;
+            r.significand = a.significand * b.significand;
+            uint256 rawResultSize = findNumberOfDigits(uint(r.significand));
+            if(rawResultSize > MAX_DIGITS){
+                uint expReducer = rawResultSize -  MAX_DIGITS;
+                r.exponent += int(expReducer);
+                r.significand /= int(10**expReducer);
             }
         }
     }
@@ -375,6 +386,21 @@ library Float128{
                 mstore(r, add(not(mload(r)), 1))
             }
         }
+        // unchecked{
+        //     /// this method can only have 37 digits of precision
+        //     uint digitsA = findNumberOfDigits(uint(a.significand));
+        //     uint expMultiplier = MAX_DIGITS_X_2 - digitsA;
+        //     a.significand *= int(10**expMultiplier);
+        //     a.exponent -= int(expMultiplier);
+        //     r.exponent = a.exponent - b.exponent;
+        //     r.significand = a.significand / b.significand;
+        //     uint256 rawResultSize = findNumberOfDigits(uint(r.significand));
+        //     int expReducer = int(rawResultSize) -  int(MAX_DIGITS);
+        //     r.exponent += expReducer;
+        //     if (expReducer >= 0) r.significand /= int(10**uint(expReducer));
+        //     else r.significand *= int(10**uint(expReducer * -1));
+            
+        // }
     }
 
 }
