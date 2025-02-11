@@ -25,6 +25,7 @@ library Float128{
     uint constant EXPONENT_BIT = 129;
     uint constant MAX_DIGITS = 38;
     uint constant MAX_DIGITS_X_2 = 76;
+    uint constant MAX_DIGITS_X_2_PLUS_1 = 77;
 
     function add(float128 a, float128 b) internal pure returns (float128 r) {
         assembly {
@@ -352,24 +353,27 @@ library Float128{
         }
         uint digitsA = findNumberOfDigits(uint(a.significand));
         assembly{
-            let expMultiplier := sub(MAX_DIGITS_X_2, digitsA)
+            let expMultiplier := sub(MAX_DIGITS_X_2_PLUS_1, digitsA)
             mstore(a, mul(mload(a), exp(BASE, expMultiplier)))
             let negExpMultiplier := add(not(expMultiplier), 1)
             mstore(add(a, 0x20), add(mload(add(a, 0x20)),  negExpMultiplier))
             mstore(r, div(mload(a), mload(b)))
+            mstore(add(0x20, r), add(mload(add(0x20, a)), add(not(mload(add(0x20, b))), 1)))
         }
         console2.log("a.significand", a.significand);
         console2.log("a.exponent", a.exponent);
         uint rawResultSize = findNumberOfDigits(uint(r.significand));
         console2.log("r.significand", r.significand);
+        console2.log("r.exponent", r.exponent);
         console2.log("rawResultSize", rawResultSize);
+        uint expReducer;
         assembly{
-            let expReducer := add(rawResultSize, add(not(MAX_DIGITS), 1))
-            mstore(add(r, 0x20), add( add(mload(add(a, 0x20)), add(not(mload(add(b, 0x20))), 1)), expReducer))
-            if gt(shr(255,expReducer),0){
+            expReducer := add(rawResultSize, add(not(MAX_DIGITS), 1))
+            mstore(add(r, 0x20), add(mload(add(r, 0x20)), expReducer))
+            if iszero(gt(shr(255,expReducer),0)){
                 mstore(r, div(mload(r), exp(BASE, expReducer)))
             }
-            if iszero(gt(shr(255,expReducer),0)){
+            if gt(shr(255,expReducer),0){
                 expReducer := add(not(expReducer), 1)
                 mstore(r, mul(mload(r), exp(BASE, expReducer)))
             }
@@ -377,6 +381,7 @@ library Float128{
                 mstore(r, add(not(mload(r)), 1))
             }
         }
+        console2.log("expReducer", expReducer);
     }
 
 }

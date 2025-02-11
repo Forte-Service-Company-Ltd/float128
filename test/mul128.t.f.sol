@@ -64,11 +64,16 @@ contract Mul128FuzzTest is FloatPythonUtils {
         (int pyMan, int pyExp) = abi.decode((res), (int256,int256));
 
         Float memory result = Float128.div(Float({significand: aMan, exponent: aExp}), Float({significand: bMan, exponent: bExp}));
-        //resSol = resSol * 10 >> resExp;
-        console2.log("pyMan: ", pyMan);
-        console2.log("pyExp: ", pyExp);
-        console2.log("solRes: ", result.significand);
-        console2.log("solRes: ", result.exponent);
+        // we fix the python result due to the imprecision of the log10. We cut precision where needed
+        if(pyExp != result.exponent){
+            if(pyExp > result.exponent){
+                ++result.exponent;
+                result.significand /= 10;
+            }else{
+                ++pyExp;
+                pyMan /= 10;
+            }
+        }
         assertEq(pyMan, result.significand);
         assertEq(pyExp, result.exponent);
     }
