@@ -133,22 +133,22 @@ library Float128{
         uint aExp;
         assembly{
             aMan := and(a, MANTISSA_MASK)
-            aExp := and(a, EXPONENT_MASK)
+            aExp := shr(EXPONENT_BIT, and(a, EXPONENT_MASK))
         }
         uint digitsA = findNumberOfDigits(aMan);
         assembly{
             let bMan := and(b, MANTISSA_MASK)
-            let expMultiplier := sub(MAX_DIGITS_X_2, digitsA)
+            let expMultiplier := sub(MAX_DIGITS_X_2_PLUS_1, digitsA)
             aMan := mul(aMan, exp(BASE, expMultiplier))
             aExp := sub(aExp,  expMultiplier)
             rMan := div(aMan, bMan)
         }
-        console2.log("aExp", aExp);
         uint rawResultSize = findNumberOfDigits(rMan);
         assembly{
-            let bExp := and(b, EXPONENT_MASK)
+            let bExp :=  shr(EXPONENT_BIT, and(b, EXPONENT_MASK))
+            rExp := sub(add(aExp, ZERO_OFFSET), bExp)
             let expReducer := sub(rawResultSize, MAX_DIGITS)
-            rExp := sub(add(add(aExp, ZERO_OFFSET), expReducer), bExp)
+            rExp := add(rExp, expReducer)
             rMan := div(rMan, exp(BASE, expReducer))
             r :=  or(xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK)),or(rMan,shl(EXPONENT_BIT, rExp)))
         }
@@ -360,15 +360,9 @@ library Float128{
             mstore(r, div(mload(a), mload(b)))
             mstore(add(0x20, r), add(mload(add(0x20, a)), add(not(mload(add(0x20, b))), 1)))
         }
-        console2.log("a.significand", a.significand);
-        console2.log("a.exponent", a.exponent);
         uint rawResultSize = findNumberOfDigits(uint(r.significand));
-        console2.log("r.significand", r.significand);
-        console2.log("r.exponent", r.exponent);
-        console2.log("rawResultSize", rawResultSize);
-        uint expReducer;
         assembly{
-            expReducer := add(rawResultSize, add(not(MAX_DIGITS), 1))
+            let expReducer := add(rawResultSize, add(not(MAX_DIGITS), 1))
             mstore(add(r, 0x20), add(mload(add(r, 0x20)), expReducer))
             if iszero(gt(shr(255,expReducer),0)){
                 mstore(r, div(mload(r), exp(BASE, expReducer)))
@@ -381,7 +375,6 @@ library Float128{
                 mstore(r, add(not(mload(r)), 1))
             }
         }
-        console2.log("expReducer", expReducer);
     }
 
 }
