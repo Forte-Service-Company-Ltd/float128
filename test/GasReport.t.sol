@@ -4,7 +4,7 @@ pragma solidity 0.8.24;
 import {Test} from "forge-std/Test.sol";
 import {GasHelpers} from "test/GasHelpers.sol";
 import "lib/forge-std/src/console2.sol";
-import {Float, float128, Float128} from "src/float128.sol";
+import {Float, packedFloat, Float128} from "src/Float128.sol";
 
 contract GasReport is Test, GasHelpers {
     using Float128 for Float;
@@ -89,18 +89,18 @@ contract GasReport is Test, GasHelpers {
         _primer();
         uint256 gasUsed = 0;
 
-        float128 a = Float128.encode(
+        packedFloat a = Float128.encode(
             22345000000000000000000000000000000000,
             -36
         );
-        float128 b = Float128.encode(
+        packedFloat b = Float128.encode(
             33678000000000000000000000000000000000,
             -36
         );
 
         
-        // float128 a = float128.wrap(_a);
-        // float128 b = float128.wrap(_b);
+        // packedFloat a = packedFloat.wrap(_a);
+        // packedFloat b = packedFloat.wrap(_b);
 
         startMeasuringGas("Gas used - uints");
         Float128.add(a, b);
@@ -124,11 +124,11 @@ contract GasReport is Test, GasHelpers {
         _primer();
         uint256 gasUsed = 0;
 
-        float128 a = Float128.encode(
+        packedFloat a = Float128.encode(
             22345000000000000000000000000000000000,
             -36
         );
-        float128 b = Float128.encode(
+        packedFloat b = Float128.encode(
             33678000000000000000000000000000000000,
             -36
         );
@@ -144,11 +144,11 @@ contract GasReport is Test, GasHelpers {
         _primer();
         uint256 gasUsed = 0;
 
-        float128 a = Float128.encode(
+        packedFloat a = Float128.encode(
             22345000000000000000000000000000000000,
             -36
         );
-        float128 b = Float128.encode(
+        packedFloat b = Float128.encode(
             33678000000000000000000000000000000000,
             -36
         );
@@ -164,11 +164,11 @@ contract GasReport is Test, GasHelpers {
         _primer();
         uint256 gasUsed = 0;
 
-        float128 a = Float128.encode(
+        packedFloat a = Float128.encode(
             22345000000000000000000000000000000000,
             -36
         );
-        float128 b = Float128.encode(
+        packedFloat b = Float128.encode(
             33678000000000000000000000000000000000,
             -36
         );
@@ -184,11 +184,11 @@ contract GasReport is Test, GasHelpers {
         _primer();
         uint256 gasUsed = 0;
 
-        float128 a = Float128.encode(
+        packedFloat a = Float128.encode(
             22345000000000000000000000000000000000,
             -36
         );
-        float128 b = Float128.encode(
+        packedFloat b = Float128.encode(
             33678000000000000000000000000000000000,
             -36
         );

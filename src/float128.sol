@@ -2,7 +2,7 @@
 pragma solidity 0.8.24;
 import "forge-std/console2.sol";
 
-type float128 is uint256;
+type packedFloat is uint256;
 
 struct Float {
     int significand;
@@ -29,7 +29,7 @@ library Float128{
     uint constant MAX_38_DIGIT_NUMBER = 99999999999999999999999999999999999999;
     uint constant MIN_38_DIGIT_NUMBER = 10000000000000000000000000000000000000;
 
-    function add(float128 a, float128 b) internal pure returns (float128 r) {
+    function add(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
         assembly {
             // we extract the exponent and mantissas for both
             let aExp := and(a, EXPONENT_MASK)
@@ -69,7 +69,7 @@ library Float128{
         }
     }
 
-    function sub(float128 a, float128 b) internal pure returns (float128 r) {
+    function sub(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
         assembly {
             // we extract the exponent and mantissas for both
             let aExp := and(a, EXPONENT_MASK)
@@ -105,7 +105,7 @@ library Float128{
         }
     }
 
-    function mul(float128 a, float128 b) internal pure returns (float128 r) {
+    function mul(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
         uint rMan;
         uint rExp;
         assembly {
@@ -129,7 +129,7 @@ library Float128{
         }
     }
 
-    function div(float128 a, float128 b) internal pure returns(float128 r){
+    function div(packedFloat a, packedFloat b) internal pure returns(packedFloat r){
         uint rMan;
         uint rExp;
         uint aMan; 
@@ -158,7 +158,7 @@ library Float128{
     }
     
 
-    function encode(int mantissa,int exponent) internal pure returns (float128 float) {
+    function encode(int mantissa,int exponent) internal pure returns (packedFloat float) {
         uint digitsMantissa;
         uint mantissaMultiplier;
         // we start by extracting the sign of the mantissa
@@ -190,7 +190,7 @@ library Float128{
     }
 
     function decode(
-        float128 float
+        packedFloat float
     ) internal pure returns (int mantissa, int exponent) {
         assembly {
             // exponent
@@ -346,7 +346,7 @@ library Float128{
             }else r.exponent = a.exponent;
 
             r.significand = a.significand + b.significand;
-            if(r.significand > MAX_38_DIGIT_NUMBER){
+            if(uint(r.significand) > MAX_38_DIGIT_NUMBER){
                 ++r.exponent;
                 r.significand /= int(BASE);
             }

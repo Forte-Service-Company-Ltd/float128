@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "forge-std/console2.sol";
-import "src/float128.sol";
+import "src/Float128.sol";
 import "test/FloatPythonUtils.sol";
 
 contract Mul128FuzzTest is FloatPythonUtils {
@@ -34,10 +34,10 @@ contract Mul128FuzzTest is FloatPythonUtils {
         (int pyMan, int pyExp) = abi.decode((res), (int256,int256));
         console2.log("Before mul");
 
-        float128 a = Float128.encode(aMan, aExp);
-        float128 b = Float128.encode(bMan, bExp);
+        packedFloat a = Float128.encode(aMan, aExp);
+        packedFloat b = Float128.encode(bMan, bExp);
 
-        float128 result = Float128.mul(a, b);
+        packedFloat result = Float128.mul(a, b);
         (int rMan, int rExp) = Float128.decode(result);
 
         assertEq(pyMan, rMan);
@@ -79,11 +79,11 @@ contract Mul128FuzzTest is FloatPythonUtils {
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256,int256));
 
-        float128 a = Float128.encode(aMan, aExp);
-        float128 b = Float128.encode(bMan, bExp);
+        packedFloat a = Float128.encode(aMan, aExp);
+        packedFloat b = Float128.encode(bMan, bExp);
 
-        float128 result = Float128.div(a, b);
-        console2.log("result: ", float128.unwrap(result));
+        packedFloat result = Float128.div(a, b);
+        console2.log("result: ", packedFloat.unwrap(result));
         (int rMan, int rExp) = Float128.decode(result);
         // we fix the python result due to the imprecision of the log10. We cut precision where needed
         if(pyExp != rExp){
@@ -113,11 +113,11 @@ contract Mul128FuzzTest is FloatPythonUtils {
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256,int256));
 
-        float128 a = Float128.encode(aMan, aExp);
-        float128 b = Float128.encode(bMan, bExp);
+        packedFloat a = Float128.encode(aMan, aExp);
+        packedFloat b = Float128.encode(bMan, bExp);
 
-        float128 result = Float128.add(a, b);
-        console2.log("result: ", float128.unwrap(result));
+        packedFloat result = Float128.add(a, b);
+        console2.log("result: ", packedFloat.unwrap(result));
         (int rMan, int rExp) = Float128.decode(result);
         // we fix the python result due to the imprecision of the log10. We cut precision where needed
         if(pyExp != rExp){
@@ -166,11 +166,11 @@ contract Mul128FuzzTest is FloatPythonUtils {
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256,int256));
 
-        float128 a = Float128.encode(aMan, aExp);
-        float128 b = Float128.encode(bMan, bExp);
+        packedFloat a = Float128.encode(aMan, aExp);
+        packedFloat b = Float128.encode(bMan, bExp);
 
-        float128 result = Float128.sub(a, b);
-        console2.log("result: ", float128.unwrap(result));
+        packedFloat result = Float128.sub(a, b);
+        console2.log("result: ", packedFloat.unwrap(result));
         (int rMan, int rExp) = Float128.decode(result);
         // we fix the python result due to the imprecision of the log10. We cut precision where needed
         
