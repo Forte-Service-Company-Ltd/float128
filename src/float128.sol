@@ -31,6 +31,7 @@ library Float128{
     uint constant MAX_DIGITS_X_2_PLUS_1 = 77;
     uint constant MAX_38_DIGIT_NUMBER = 99999999999999999999999999999999999999;
     uint constant MIN_38_DIGIT_NUMBER = 10000000000000000000000000000000000000;
+    uint constant MAX_39_DIGIT_NUMBER = 999999999999999999999999999999999999999;
     uint constant MAX_75_DIGIT_NUMBER = 999999999999999999999999999999999999999999999999999999999999999999999999999;
 
     function add(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
@@ -199,29 +200,26 @@ library Float128{
     }
 
     function div(packedFloat a, packedFloat b) internal pure returns(packedFloat r){
-        uint rMan;
-        uint rExp;
-        uint aMan; 
-        uint aExp;
         assembly{
-            aMan := and(a, MANTISSA_MASK)
-            aExp := shr(EXPONENT_BIT, and(a, EXPONENT_MASK))
-        }
-        uint digitsA = findNumberOfDigits(aMan);
-        assembly{
+            let aMan := and(a, MANTISSA_MASK)
+            let aExp := shr(EXPONENT_BIT, and(a, EXPONENT_MASK))
             let bMan := and(b, MANTISSA_MASK)
-            let expMultiplier := sub(MAX_DIGITS_X_2_PLUS_1, digitsA)
-            aMan := mul(aMan, exp(BASE, expMultiplier))
-            aExp := sub(aExp,  expMultiplier)
-            rMan := div(aMan, bMan)
-        }
-        uint rawResultSize = findNumberOfDigits(rMan);
-        assembly{
             let bExp :=  shr(EXPONENT_BIT, and(b, EXPONENT_MASK))
-            rExp := sub(add(aExp, ZERO_OFFSET), bExp)
-            let expReducer := sub(rawResultSize, MAX_DIGITS)
-            rExp := add(rExp, expReducer)
-            rMan := div(rMan, exp(BASE, expReducer))
+            // we can add 39 digits since we have extra room in the bits for one more digit
+            aMan := mul(aMan, exp(BASE, MAX_DIGITS))
+            aExp := sub(aExp,  MAX_DIGITS)
+            let rMan := div(aMan, bMan)
+
+            let rExp := sub(add(aExp, ZERO_OFFSET), bExp)
+            // a division between a k-digit number and a j-digit number will result in a number between (k - j) 
+            // and (k - j + 1) digits. Since we are dividing a 76-digit number by a 38-digit number, we know 
+            // that the result could have either 39 or 38 digitis.
+            let is39digit := gt(rMan, MAX_38_DIGIT_NUMBER)
+            if is39digit {
+                // we need to truncate the 2 last digits
+                rExp := add(rExp, 1)
+                rMan := div(rMan, exp(BASE, 1))
+            }
             r :=  or(xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK)),or(rMan,shl(EXPONENT_BIT, rExp)))
         }
     }

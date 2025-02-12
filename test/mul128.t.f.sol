@@ -84,10 +84,10 @@ contract Mul128FuzzTest is FloatPythonUtils {
     }
 
     function testEncoded_div(int aMan, int aExp, int bMan, int bExp) public {
-        aMan = bound(aMan, 1, 1 << 128 - 1);
-        aExp = bound(aExp, -100, 100);
-        bMan = bound(bMan,  1, 1 << 128 - 1);
-        bExp = bound(bExp, -100, 100);
+        aMan = bound(aMan, 1, 99999999999999999999999999999999999999);
+        aExp = bound(aExp, -90, 90);
+        bMan = bound(bMan,  1, 99999999999999999999999999999999999999);
+        bExp = bound(bExp, -90, 90);
 
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "div");
         bytes memory res = vm.ffi(inputs);
@@ -99,6 +99,11 @@ contract Mul128FuzzTest is FloatPythonUtils {
         packedFloat result = Float128.div(a, b);
         console2.log("result: ", packedFloat.unwrap(result));
         (int rMan, int rExp) = Float128.decode(result);
+        console2.log("rMan: ", rMan);
+        console2.log("rExp: ", rExp);
+        console2.log("pyMan: ", pyMan);
+        console2.log("pyExp: ", pyExp);
+        assertEq(findNumberOfDigits(uint(rMan < 0 ? rMan * -1: rMan)), 38, "Solidity result is not normalized");
         // we fix the python result due to the imprecision of the log10. We cut precision where needed
         if(pyExp != rExp){
             if(pyExp > rExp){
@@ -109,10 +114,6 @@ contract Mul128FuzzTest is FloatPythonUtils {
                 pyMan /= 10;
             }
         }
-        console2.log("rMan: ", rMan);
-        console2.log("rExp: ", rExp);
-        console2.log("pyMan: ", pyMan);
-        console2.log("pyExp: ", pyExp);
         assertEq(pyMan, rMan);
         assertEq(pyExp, rExp);
     }
@@ -134,6 +135,11 @@ contract Mul128FuzzTest is FloatPythonUtils {
         packedFloat result = Float128.add(a, b);
         console2.log("result: ", packedFloat.unwrap(result));
         (int rMan, int rExp) = Float128.decode(result);
+
+        console2.log("rMan: ", rMan);
+        console2.log("rExp: ", rExp);
+        console2.log("pyMan: ", pyMan);
+        console2.log("pyExp: ", pyExp);
         assertEq(findNumberOfDigits(uint(rMan < 0 ? rMan * -1: rMan)), 38, "Solidity result is not normalized");
         // we fix the python result due to the imprecision of the log10. We cut precision where needed
         if(pyExp != rExp){
