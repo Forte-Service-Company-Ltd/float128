@@ -48,19 +48,19 @@ library Float128{
             }
             /// we use complements 2 for mantissa sign
             if and(a, MANTISSA_SIGN_MASK) {
-                aMan := add(not(aMan), 1)
+                aMan := sub(0,aMan)
             }
             if and(b, MANTISSA_SIGN_MASK) {
-                bMan := add(not(bMan), 1)
+                bMan := sub(0,bMan)
             }
             let addition := add(aMan, bMan)
             
             if and(TOW_COMPLEMENT_SIGN_MASK, addition) {
                 r := or(r, MANTISSA_SIGN_MASK) // assign the negative sign
-                addition := add(not(addition), 1) // convert back from 2's complement
+                addition := sub(0,addition) // convert back from 2's complement
             }
             if gt(addition, 99999999999999999999999999999999999999){
-                addition := div(addition, 10)
+                addition := div(addition, BASE)
                 r := add(r, 680564733841876926926749214863536422912) // we add 1 to the exponent
             }
             r := or(r, addition)
@@ -88,16 +88,16 @@ library Float128{
             }
             /// we use complements 2 for mantissas sign
             if and(a, MANTISSA_SIGN_MASK) {
-                aMan := add(not(aMan), 1)
+                aMan := sub(0,aMan)
             }
             /// we invert the sign for b to do a subtraction instead of an addition
             if xor(b, MANTISSA_SIGN_MASK) {
-                bMan := add(not(bMan), 1)
+                bMan := sub(0, bMan)
             }
             let addition := add(aMan, bMan)
             if and(TOW_COMPLEMENT_SIGN_MASK, addition) {
                 r := or(r, MANTISSA_SIGN_MASK) // assign the negative sign
-                addition := add(not(addition), 1) // convert back from 2's complement
+                addition := sub(0,addition) // convert back from 2's complement
             }
             r := or(r, addition)
         }
@@ -163,7 +163,7 @@ library Float128{
         // bounds not enforced yet
         assembly {
             if and(mantissa, TOW_COMPLEMENT_SIGN_MASK) {
-                float := or(MANTISSA_SIGN_MASK, add(not(mantissa), 1))
+                float := or(MANTISSA_SIGN_MASK, sub(0,mantissa))
             }
             if iszero(and(mantissa, TOW_COMPLEMENT_SIGN_MASK)) {
                 float := mantissa
@@ -179,7 +179,7 @@ library Float128{
             // exponent
             let _exp := shr(EXPONENT_BIT, float)
             if gt(ZERO_OFFSET, _exp) {
-                exponent := add(not(sub(ZERO_OFFSET, _exp)), 1)
+                exponent := sub(0,sub(ZERO_OFFSET, _exp))
             }
             if gt(_exp, ZERO_OFFSET_MINUS_1) {
                 exponent := sub(_exp, ZERO_OFFSET)
@@ -188,7 +188,7 @@ library Float128{
             mantissa := and(float, MANTISSA_MASK)
             /// we use complements 2 for mantissa sign
             if and(float, MANTISSA_SIGN_MASK) {
-                mantissa := add(not(mantissa), 1)
+                mantissa := sub(0,mantissa)
             }
         }
     }
@@ -251,7 +251,7 @@ library Float128{
         //                         BASE,
         //                         add(
         //                             mload(add(a, 0x20)),
-        //                             add(not(mload(add(b, 0x20))), 1)
+        //                             sub(0,mload(add(b, 0x20)))
         //                         )
         //                     )
         //                 )
@@ -269,7 +269,7 @@ library Float128{
         //                         BASE,
         //                         add(
         //                             mload(add(b, 0x20)),
-        //                             add(not(mload(add(a, 0x20))), 1)
+        //                             sub(0,mload(add(a, 0x20)))
         //                         )
         //                     )
         //                 )
@@ -306,7 +306,7 @@ library Float128{
     function sub(Float memory a, Float memory b) internal pure returns (Float memory r) {
         // assembly {
         //     /// we negate the sign of b to do subtraction instead of addition
-        //     mstore(b, add(not(mload(add(b, 0x20))), 1))
+        //     mstore(b, sub(0,mload(add(b, 0x20))))
         //     /// we perform regular addition 
         //     if eq(mload(add(a, 0x20)), mload(add(b, 0x20))) {
         //         mstore(add(r, 0x20), mload(add(a, 0x20)))
@@ -316,14 +316,14 @@ library Float128{
         //         mstore(add(r, 0x20), mload(add(a, 0x20)))
         //         mstore(r, add(
         //             mload(a),
-        //             div(mload(b), exp(10, add(mload(add(a, 0x20)), add(not(mload(add(b, 0x20))), 1)))))
+        //             div(mload(b), exp(10, add(mload(add(a, 0x20)), sub(0,mload(add(b, 0x20)))))))
         //         )
         //     }
         //     if gt(mload(add(b, 0x20)), mload(add(a, 0x20))) {
         //         mstore(add(r, 0x20), mload(add(b, 0x20)))
         //         mstore(r, add(
         //             mload(b),
-        //             div(mload(a), exp(10, add(mload(add(b, 0x20)), add(not(mload(add(a, 0x20))), 1)))))
+        //             div(mload(a), exp(10, add(mload(add(b, 0x20)), sub(0,mload(add(a, 0x20)))))))
         //         )
         //     }
         // }
@@ -341,42 +341,28 @@ library Float128{
     }
 
     function mul(Float memory a, Float memory b) internal pure returns (Float memory r) {
-        // bool isNegativeA;
-        // bool isNegativeB;
-        // assembly {
-        //     if gt(shr(EXPONENT_BIT, mload(a)), 0) {
-        //         mstore(a, add(not(mload(a)), 1))
-        //         isNegativeA := 1
-        //     }
-        //     if gt(shr(EXPONENT_BIT, mload(b)), 0) {
-        //         mstore(b,  add(not(mload(b)), 1))
-        //         isNegativeB := 1
-        //     }
-        //     mstore(r, mul(mload(a), mload(b)))
-        //     mstore(add(r, 0x20), add(mload(add(a, 0x20)), mload(add(b, 0x20))))
-        // }
-
-        // uint256 rawResultSize = findNumberOfDigits(uint(r.significand));
-        // assembly {
-        //     if gt(rawResultSize, MAX_DIGITS) {
-        //         let expReducer := sub(rawResultSize, MAX_DIGITS)
-        //         mstore(r, div(mload(r), exp(10, expReducer)))
-        //         mstore(add(r, 0x20), add(mload(add(r, 0x20)), expReducer))
-        //     }
-        //     if xor(isNegativeA, isNegativeB) {
-        //         mstore(r, add(not(mload(r)), 1))
-        //     }
-        // }
-        unchecked{
-            r.exponent = a.exponent + b.exponent;
-            r.significand = a.significand * b.significand;
-            uint256 rawResultSize = findNumberOfDigits(uint(r.significand));
-            if(rawResultSize > MAX_DIGITS){
-                uint expReducer = rawResultSize -  MAX_DIGITS;
-                r.exponent += int(expReducer);
-                r.significand /= int(10**expReducer);
+        assembly {
+            mstore(r, mul(mload(a), mload(b)))
+            mstore(add(r, 0x20), add(mload(add(a, 0x20)), mload(add(b, 0x20))))
+        }
+        uint256 rawResultSize = findNumberOfDigits(uint(r.significand));
+        assembly {
+            if gt(rawResultSize, MAX_DIGITS) {
+                let expReducer := sub(rawResultSize, MAX_DIGITS)
+                mstore(r, div(mload(r), exp(BASE, expReducer)))
+                mstore(add(r, 0x20), add(mload(add(r, 0x20)), expReducer))
             }
         }
+        // unchecked{
+        //     r.exponent = a.exponent + b.exponent;
+        //     r.significand = a.significand * b.significand;
+        //     uint256 rawResultSize = findNumberOfDigits(uint(r.significand));
+        //     if(rawResultSize > MAX_DIGITS){
+        //         uint expReducer = rawResultSize -  MAX_DIGITS;
+        //         r.exponent += int(expReducer);
+        //         r.significand /= int(10**expReducer);
+        //     }
+        // }
     }
 
     function div(Float memory a, Float memory b) internal pure returns (Float memory r) {
@@ -385,35 +371,35 @@ library Float128{
         assembly{
             if gt(shr(255,mload(a)),0){
                 negativeA := 1
-                mstore(a, add(not(mload(a)), 1))
+                mstore(a, sub(0,mload(a)))
             }
             if gt(shr(255,mload(b)),0){
                 negativeB := 1
-                mstore(b, add(not(mload(b)), 1))
+                mstore(b, sub(0,mload(b)))
             }
         }
         uint digitsA = findNumberOfDigits(uint(a.significand));
         assembly{
             let expMultiplier := sub(MAX_DIGITS_X_2_PLUS_1, digitsA)
             mstore(a, mul(mload(a), exp(BASE, expMultiplier)))
-            let negExpMultiplier := add(not(expMultiplier), 1)
+            let negExpMultiplier := sub(0,expMultiplier)
             mstore(add(a, 0x20), add(mload(add(a, 0x20)),  negExpMultiplier))
             mstore(r, div(mload(a), mload(b)))
-            mstore(add(0x20, r), add(mload(add(0x20, a)), add(not(mload(add(0x20, b))), 1)))
+            mstore(add(0x20, r), add(mload(add(0x20, a)), sub(0,mload(add(0x20, b)))))
         }
         uint rawResultSize = findNumberOfDigits(uint(r.significand));
         assembly{
-            let expReducer := add(rawResultSize, add(not(MAX_DIGITS), 1))
+            let expReducer := add(rawResultSize, sub(0,MAX_DIGITS))
             mstore(add(r, 0x20), add(mload(add(r, 0x20)), expReducer))
             if iszero(gt(shr(255,expReducer),0)){
                 mstore(r, div(mload(r), exp(BASE, expReducer)))
             }
             if gt(shr(255,expReducer),0){
-                expReducer := add(not(expReducer), 1)
+                expReducer := sub(0,expReducer)
                 mstore(r, mul(mload(r), exp(BASE, expReducer)))
             }
             if xor(negativeA, negativeB){
-                mstore(r, add(not(mload(r)), 1))
+                mstore(r, sub(0,mload(r)))
             }
         }
         // unchecked{

@@ -120,7 +120,15 @@ contract Mul128FuzzTest is FloatPythonUtils {
         console2.log("result: ", float128.unwrap(result));
         (int rMan, int rExp) = Float128.decode(result);
         // we fix the python result due to the imprecision of the log10. We cut precision where needed
-        
+        if(pyExp != rExp){
+            if(pyExp > rExp){
+                ++rExp;
+                rMan /= 10;
+            }else{
+                ++pyExp;
+                pyMan /= 10;
+            }
+        }
         console2.log("rMan: ", rMan);
         console2.log("rExp: ", rExp);
         console2.log("pyMan: ", pyMan);
@@ -154,7 +162,7 @@ contract Mul128FuzzTest is FloatPythonUtils {
         bMan = bound(bMan,  1, 1 << 128 - 1);
         bExp = bound(bExp, -100, 100);
 
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "add");
+        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "sub");
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256,int256));
 
@@ -180,7 +188,7 @@ contract Mul128FuzzTest is FloatPythonUtils {
         bMan = bound(bMan,  1, 1 << 128 - 1);
         bExp = bound(bExp, -100, 100);
 
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "add");
+        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "sub");
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256,int256));
 
