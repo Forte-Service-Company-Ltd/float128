@@ -104,9 +104,10 @@ contract Mul128FuzzTest is FloatPythonUtils {
     }
 
     function testEncoded_add(int aMan, int aExp, int bMan, int bExp) public {
-        aMan = bound(aMan, 1, 1 << 128 - 1);
+        // it loses precision when numbers have more than 38 digits
+        aMan = bound(aMan, 1, 99999999999999999999999999999999999999);
         aExp = bound(aExp, -100, 100);
-        bMan = bound(bMan,  1, 1 << 128 - 1);
+        bMan = bound(bMan,  1, 99999999999999999999999999999999999999);
         bExp = bound(bExp, -100, 100);
 
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "add");
