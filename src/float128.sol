@@ -189,6 +189,14 @@ library Float128{
         }
     }
 
+    function convertToPackedFloat(Float memory _float) internal pure returns(packedFloat float){
+        float = toPackedFloat(_float.significand, _float.exponent);
+    }
+
+    function convertToUnpackedFloat(packedFloat _float) internal pure returns(Float memory float){
+        (float.significand, float.exponent) = decode(_float);
+    }
+
     function decode(
         packedFloat float
     ) internal pure returns (int mantissa, int exponent) {
