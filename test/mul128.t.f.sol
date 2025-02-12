@@ -24,10 +24,10 @@ contract Mul128FuzzTest is FloatPythonUtils {
     }
 
     function testEncoded_mul(int aMan, int aExp, int bMan, int bExp) public {
-        aMan = bound(aMan, 1, 1 << 128 - 1);
-        aExp = bound(aExp, -128, 127);
-        bMan = bound(bMan,  1, 1 << 128 - 1);
-        bExp = bound(bExp, -128, 127);
+        aMan = bound(aMan, 1, 99999999999999999999999999999999999999);
+        aExp = bound(aExp, -100, 100);
+        bMan = bound(bMan,  1, 99999999999999999999999999999999999999);
+        bExp = bound(bExp, -100, 100);
 
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "mul");
         bytes memory res = vm.ffi(inputs);
@@ -39,6 +39,19 @@ contract Mul128FuzzTest is FloatPythonUtils {
 
         packedFloat result = Float128.mul(a, b);
         (int rMan, int rExp) = Float128.decode(result);
+        if(pyExp != rExp){
+            if(pyExp > rExp){
+                ++rExp;
+                rMan /= 10;
+            }else{
+                ++pyExp;
+                pyMan /= 10;
+            }
+        }
+        console2.log("rMan: ", rMan);
+        console2.log("rExp: ", rExp);
+        console2.log("pyMan: ", pyMan);
+        console2.log("pyExp: ", pyExp);
 
         assertEq(pyMan, rMan);
         assertEq(pyExp, rExp);

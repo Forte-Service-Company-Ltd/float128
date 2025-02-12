@@ -24,11 +24,14 @@ library Float128{
     uint constant ZERO_OFFSET_MINUS_1 = 255;
     uint constant EXPONENT_BIT = 129;
     uint constant MAX_DIGITS = 38;
+    uint constant MAX_DIGITS_MINUS_1 = 37;
     uint constant MAX_DIGITS_PLUS_1 = 39;
     uint constant MAX_DIGITS_X_2 = 76;
+    uint constant MAX_DIGITS_X_2_MINUS_1 = 75;
     uint constant MAX_DIGITS_X_2_PLUS_1 = 77;
     uint constant MAX_38_DIGIT_NUMBER = 99999999999999999999999999999999999999;
     uint constant MIN_38_DIGIT_NUMBER = 10000000000000000000000000000000000000;
+    uint constant MAX_75_DIGIT_NUMBER = 999999999999999999999999999999999999999999999999999999999999999999999999999;
 
     function add(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
         uint addition;
@@ -179,13 +182,17 @@ library Float128{
     
             rMan := mul(aMan, bMan)
             rExp := sub(add(shr(EXPONENT_BIT, aExp), shr(EXPONENT_BIT, bExp)), ZERO_OFFSET)
-        }
-        uint256 rawResultSize = findNumberOfDigits(rMan);
-        assembly {
-            if gt(rawResultSize, MAX_DIGITS) {
-                let expReducer := sub(rawResultSize, MAX_DIGITS)
-                rMan := div(rMan, exp(BASE, expReducer))
-                rExp := add(rExp, expReducer)
+            // multiplication between 2 numbers with k digits can result in a number between 2*k - 1 and 2*k digits
+            // we check first if rMan is a 2k-digit number
+            let is76digit := gt(rMan, MAX_75_DIGIT_NUMBER)
+            if is76digit {
+                rMan := div(rMan, exp(BASE, MAX_DIGITS))
+                rExp := add(rExp, MAX_DIGITS)
+            }
+            // if not, we then know that it is a 2k-1-digit number
+            if iszero(is76digit) {
+                rMan := div(rMan, exp(BASE, MAX_DIGITS_MINUS_1))
+                rExp := add(rExp, MAX_DIGITS_MINUS_1)
             }
             r :=  or(xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK)),or(rMan,shl(EXPONENT_BIT, rExp)))
         }
