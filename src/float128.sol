@@ -26,6 +26,8 @@ library Float128{
     uint constant MAX_DIGITS = 38;
     uint constant MAX_DIGITS_X_2 = 76;
     uint constant MAX_DIGITS_X_2_PLUS_1 = 77;
+    uint constant MAX_38_DIGIT_NUMBER = 99999999999999999999999999999999999999;
+    uint constant MIN_38_DIGIT_NUMBER = 10000000000000000000000000000000000000;
 
     function add(float128 a, float128 b) internal pure returns (float128 r) {
         assembly {
@@ -59,7 +61,7 @@ library Float128{
                 r := or(r, MANTISSA_SIGN_MASK) // assign the negative sign
                 addition := sub(0,addition) // convert back from 2's complement
             }
-            if gt(addition, 99999999999999999999999999999999999999){
+            if gt(addition, MAX_38_DIGIT_NUMBER){
                 addition := div(addition, BASE)
                 r := add(r, 680564733841876926926749214863536422912) // we add 1 to the exponent
             }
@@ -156,19 +158,34 @@ library Float128{
     }
     
 
-    function encode(
-        int mantissa,
-        int exponent
-    ) internal pure returns (float128 float) {
-        // bounds not enforced yet
+    function encode(int mantissa,int exponent) internal pure returns (float128 float) {
+        uint digitsMantissa;
+        uint mantissaMultiplier;
+        // we start by extracting the sign of the mantissa
         assembly {
             if and(mantissa, TOW_COMPLEMENT_SIGN_MASK) {
-                float := or(MANTISSA_SIGN_MASK, sub(0,mantissa))
+                float := MANTISSA_SIGN_MASK
+                mantissa := sub(0,mantissa)
             }
-            if iszero(and(mantissa, TOW_COMPLEMENT_SIGN_MASK)) {
-                float := mantissa
+        }
+        // we normalize only if necessary
+        if(uint(mantissa) > MAX_38_DIGIT_NUMBER || uint(mantissa) < MIN_38_DIGIT_NUMBER){
+            digitsMantissa = findNumberOfDigits(uint(mantissa));
+            assembly{
+                mantissaMultiplier := sub(digitsMantissa, MAX_DIGITS)
+                exponent := add(exponent, mantissaMultiplier)
+                let negativeMultiplier := and(MANTISSA_SIGN_MASK, mantissaMultiplier)
+                if negativeMultiplier{
+                    mantissa := mul(mantissa,exp(BASE, sub(0, mantissaMultiplier)))
+                }
+                if iszero(negativeMultiplier){
+                    mantissa := div(mantissa,exp(BASE, mantissaMultiplier))
+                }
             }
-            float := or(float, shl(EXPONENT_BIT, add(exponent, ZERO_OFFSET)))
+        }
+        // final encoding
+        assembly{
+            float := or(float, or(mantissa, shl(EXPONENT_BIT, add(exponent, ZERO_OFFSET))))
         }
     }
 
@@ -191,6 +208,39 @@ library Float128{
                 mantissa := sub(0,mantissa)
             }
         }
+    }
+
+    function normalize(Float memory x) internal pure returns(Float memory float){
+        uint digitsMantissa;
+        uint mantissaMultiplier;
+        bool isMantissaNegative;
+
+        assembly{
+            isMantissaNegative := and(mload(x), MANTISSA_SIGN_MASK)
+            if isMantissaNegative{
+                mstore(x, sub(0, mload(x)))
+            }
+        }
+        if(uint(x.significand) > MAX_38_DIGIT_NUMBER || uint(x.significand) < MIN_38_DIGIT_NUMBER){
+            digitsMantissa = findNumberOfDigits(uint(x.significand));
+            assembly{
+                mantissaMultiplier := sub(digitsMantissa, MAX_DIGITS)
+                mstore(add(x, 0x20), add(mload(add(x, 0x20)), mantissaMultiplier))
+                let negativeMultiplier := and(MANTISSA_SIGN_MASK, mantissaMultiplier)
+                if negativeMultiplier{
+                    mstore(x, mul(mload(x),exp(BASE, sub(0, mantissaMultiplier))))
+                }
+                if iszero(negativeMultiplier){
+                    mstore(x, div(mload(x),exp(BASE, mantissaMultiplier)))
+                }
+            }
+        }
+        assembly{
+            if isMantissaNegative{
+                mstore(x, sub(0, mload(x)))
+            }
+        }
+        float = x;
     }
 
     function findNumberOfDigits(uint x) internal pure returns (uint log) {
@@ -281,7 +331,7 @@ library Float128{
         //     }
 
         //     mstore(r, add(mload(a), mload(b)))
-        //     if gt(r, 99999999999999999999999999999999999999){
+        //     if gt(r, MAX_38_DIGIT_NUMBER){
         //         mstore(r, div(r, BASE))
         //         mstore(add(r, 0x20), add(1, mload(r)))
         //     }
@@ -296,7 +346,7 @@ library Float128{
             }else r.exponent = a.exponent;
 
             r.significand = a.significand + b.significand;
-            if(r.significand > 99999999999999999999999999999999999999){
+            if(r.significand > MAX_38_DIGIT_NUMBER){
                 ++r.exponent;
                 r.significand /= int(BASE);
             }
