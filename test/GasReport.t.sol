@@ -89,11 +89,11 @@ contract GasReport is Test, GasHelpers {
         _primer();
         uint256 gasUsed = 0;
 
-        packedFloat a = Float128.encode(
+        packedFloat a = Float128.toPackedFloat(
             22345000000000000000000000000000000000,
             -36
         );
-        packedFloat b = Float128.encode(
+        packedFloat b = Float128.toPackedFloat(
             33678000000000000000000000000000000000,
             -36
         );
@@ -124,11 +124,11 @@ contract GasReport is Test, GasHelpers {
         _primer();
         uint256 gasUsed = 0;
 
-        packedFloat a = Float128.encode(
+        packedFloat a = Float128.toPackedFloat(
             22345000000000000000000000000000000000,
             -36
         );
-        packedFloat b = Float128.encode(
+        packedFloat b = Float128.toPackedFloat(
             33678000000000000000000000000000000000,
             -36
         );
@@ -144,11 +144,11 @@ contract GasReport is Test, GasHelpers {
         _primer();
         uint256 gasUsed = 0;
 
-        packedFloat a = Float128.encode(
+        packedFloat a = Float128.toPackedFloat(
             22345000000000000000000000000000000000,
             -36
         );
-        packedFloat b = Float128.encode(
+        packedFloat b = Float128.toPackedFloat(
             33678000000000000000000000000000000000,
             -36
         );
@@ -164,11 +164,11 @@ contract GasReport is Test, GasHelpers {
         _primer();
         uint256 gasUsed = 0;
 
-        packedFloat a = Float128.encode(
+        packedFloat a = Float128.toPackedFloat(
             22345000000000000000000000000000000000,
             -36
         );
-        packedFloat b = Float128.encode(
+        packedFloat b = Float128.toPackedFloat(
             33678000000000000000000000000000000000,
             -36
         );
@@ -184,11 +184,11 @@ contract GasReport is Test, GasHelpers {
         _primer();
         uint256 gasUsed = 0;
 
-        packedFloat a = Float128.encode(
+        packedFloat a = Float128.toPackedFloat(
             22345000000000000000000000000000000000,
             -36
         );
-        packedFloat b = Float128.encode(
+        packedFloat b = Float128.toPackedFloat(
             33678000000000000000000000000000000000,
             -36
         );

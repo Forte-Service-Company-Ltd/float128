@@ -158,7 +158,7 @@ library Float128{
     }
     
 
-    function encode(int mantissa,int exponent) internal pure returns (packedFloat float) {
+    function toPackedFloat(int mantissa,int exponent) internal pure returns (packedFloat float) {
         uint digitsMantissa;
         uint mantissaMultiplier;
         // we start by extracting the sign of the mantissa
@@ -241,6 +241,10 @@ library Float128{
             }
         }
         float = x;
+    }
+
+    function toFloat(int _significand, int _exponent) internal pure returns(Float memory float){
+        float = normalize(Float({significand: _significand, exponent: _exponent}));
     }
 
     function findNumberOfDigits(uint x) internal pure returns (uint log) {

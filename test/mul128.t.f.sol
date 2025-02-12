@@ -34,8 +34,8 @@ contract Mul128FuzzTest is FloatPythonUtils {
         (int pyMan, int pyExp) = abi.decode((res), (int256,int256));
         console2.log("Before mul");
 
-        packedFloat a = Float128.encode(aMan, aExp);
-        packedFloat b = Float128.encode(bMan, bExp);
+        packedFloat a = Float128.toPackedFloat(aMan, aExp);
+        packedFloat b = Float128.toPackedFloat(bMan, bExp);
 
         packedFloat result = Float128.mul(a, b);
         (int rMan, int rExp) = Float128.decode(result);
@@ -79,8 +79,8 @@ contract Mul128FuzzTest is FloatPythonUtils {
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256,int256));
 
-        packedFloat a = Float128.encode(aMan, aExp);
-        packedFloat b = Float128.encode(bMan, bExp);
+        packedFloat a = Float128.toPackedFloat(aMan, aExp);
+        packedFloat b = Float128.toPackedFloat(bMan, bExp);
 
         packedFloat result = Float128.div(a, b);
         console2.log("result: ", packedFloat.unwrap(result));
@@ -113,8 +113,8 @@ contract Mul128FuzzTest is FloatPythonUtils {
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256,int256));
 
-        packedFloat a = Float128.encode(aMan, aExp);
-        packedFloat b = Float128.encode(bMan, bExp);
+        packedFloat a = Float128.toPackedFloat(aMan, aExp);
+        packedFloat b = Float128.toPackedFloat(bMan, bExp);
 
         packedFloat result = Float128.add(a, b);
         console2.log("result: ", packedFloat.unwrap(result));
@@ -166,8 +166,8 @@ contract Mul128FuzzTest is FloatPythonUtils {
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256,int256));
 
-        packedFloat a = Float128.encode(aMan, aExp);
-        packedFloat b = Float128.encode(bMan, bExp);
+        packedFloat a = Float128.toPackedFloat(aMan, aExp);
+        packedFloat b = Float128.toPackedFloat(bMan, bExp);
 
         packedFloat result = Float128.sub(a, b);
         console2.log("result: ", packedFloat.unwrap(result));
