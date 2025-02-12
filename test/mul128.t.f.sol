@@ -39,6 +39,7 @@ contract Mul128FuzzTest is FloatPythonUtils {
 
         packedFloat result = Float128.mul(a, b);
         (int rMan, int rExp) = Float128.decode(result);
+        assertEq(findNumberOfDigits(uint(rMan < 0 ? rMan * -1: rMan)), 38, "Solidity result is not normalized");
         if(pyExp != rExp){
             if(pyExp > rExp){
                 ++rExp;
@@ -133,6 +134,7 @@ contract Mul128FuzzTest is FloatPythonUtils {
         packedFloat result = Float128.add(a, b);
         console2.log("result: ", packedFloat.unwrap(result));
         (int rMan, int rExp) = Float128.decode(result);
+        assertEq(findNumberOfDigits(uint(rMan < 0 ? rMan * -1: rMan)), 38, "Solidity result is not normalized");
         // we fix the python result due to the imprecision of the log10. We cut precision where needed
         if(pyExp != rExp){
             if(pyExp > rExp){
@@ -214,4 +216,46 @@ contract Mul128FuzzTest is FloatPythonUtils {
         assertEq(pyMan, result.significand);
         assertEq(pyExp, result.exponent);
     }
+
+    function findNumberOfDigits(uint x) internal pure returns (uint log) {
+        assembly {
+            if gt(x, 0) {
+                if gt(
+                    x,
+                    9999999999999999999999999999999999999999999999999999999999999999
+                ) {
+                    log := 64
+                    x := div(
+                        x,
+                        10000000000000000000000000000000000000000000000000000000000000000
+                    )
+                }
+                if gt(x, 99999999999999999999999999999999) {
+                    log := add(log, 32)
+                    x := div(x, 100000000000000000000000000000000)
+                }
+                if gt(x, 9999999999999999) {
+                    log := add(log, 16)
+                    x := div(x, 10000000000000000)
+                }
+                if gt(x, 99999999) {
+                    log := add(log, 8)
+                    x := div(x, 100000000)
+                }
+                if gt(x, 9999) {
+                    log := add(log, 4)
+                    x := div(x, 10000)
+                }
+                if gt(x, 99) {
+                    log := add(log, 2)
+                    x := div(x, 100)
+                }
+                if gt(x, 9) {
+                    log := add(log, 1)
+                }
+                log := add(log, 1)
+            }
+        }
+    }
 }
+
