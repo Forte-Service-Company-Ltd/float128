@@ -194,6 +194,11 @@ contract Mul128FuzzTest is FloatPythonUtils {
         packedFloat result = Float128.sub(a, b);
         console2.log("result: ", packedFloat.unwrap(result));
         (int rMan, int rExp) = Float128.decode(result);
+
+        console2.log("rMan: ", rMan);
+        console2.log("rExp: ", rExp);
+        console2.log("pyMan: ", pyMan);
+        console2.log("pyExp: ", pyExp);
         assertEq(findNumberOfDigits(uint(rMan < 0 ? rMan * -1: rMan)), 38, "Solidity result is not normalized");
         // we fix the python result due to the imprecision of the log10. We cut precision where needed
         if(pyExp != rExp){

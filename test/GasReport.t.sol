@@ -18,7 +18,7 @@ contract GasReport is Test, GasHelpers {
             significand: int(22345000000000000000000000000000000000)
         });
         Float memory B = Float({
-            exponent: -36,
+            exponent: -26,
             significand: int(33678000000000000000000000000000000000)
         });
         startMeasuringGas("Gas used - structs");
@@ -33,7 +33,7 @@ contract GasReport is Test, GasHelpers {
         uint256 gasUsed = 0;
 
         Float memory A = Float({
-            exponent: -36,
+            exponent: -26,
             significand: int(22345000000000000000000000000000000000)
         });
         Float memory B = Float({
@@ -52,7 +52,7 @@ contract GasReport is Test, GasHelpers {
         uint256 gasUsed = 0;
 
         Float memory A = Float({
-            exponent: -36,
+            exponent: -26,
             significand: int(22345000000000000000000000000000000000)
         });
         Float memory B = Float({
@@ -91,7 +91,7 @@ contract GasReport is Test, GasHelpers {
 
         packedFloat a = Float128.toPackedFloat(
             22345000000000000000000000000000000000,
-            -36
+            -26
         );
         packedFloat b = Float128.toPackedFloat(
             33678000000000000000000000000000000000,
@@ -126,7 +126,7 @@ contract GasReport is Test, GasHelpers {
 
         packedFloat a = Float128.toPackedFloat(
             22345000000000000000000000000000000000,
-            -36
+            -26
         );
         packedFloat b = Float128.toPackedFloat(
             33678000000000000000000000000000000000,
@@ -146,7 +146,7 @@ contract GasReport is Test, GasHelpers {
 
         packedFloat a = Float128.toPackedFloat(
             22345000000000000000000000000000000000,
-            -36
+            -26
         );
         packedFloat b = Float128.toPackedFloat(
             33678000000000000000000000000000000000,
@@ -166,7 +166,7 @@ contract GasReport is Test, GasHelpers {
 
         packedFloat a = Float128.toPackedFloat(
             22345000000000000000000000000000000000,
-            -36
+            -26
         );
         packedFloat b = Float128.toPackedFloat(
             33678000000000000000000000000000000000,
@@ -186,7 +186,7 @@ contract GasReport is Test, GasHelpers {
 
         packedFloat a = Float128.toPackedFloat(
             22345000000000000000000000000000000000,
-            -36
+            -26
         );
         packedFloat b = Float128.toPackedFloat(
             33678000000000000000000000000000000000,

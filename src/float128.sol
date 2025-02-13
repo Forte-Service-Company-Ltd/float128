@@ -33,9 +33,12 @@ library Float128{
     uint constant MIN_38_DIGIT_NUMBER = 10000000000000000000000000000000000000;
     uint constant MAX_39_DIGIT_NUMBER = 999999999999999999999999999999999999999;
     uint constant MAX_75_DIGIT_NUMBER = 999999999999999999999999999999999999999999999999999999999999999999999999999;
+    uint constant MAX_76_DIGIT_NUMBER = 9999999999999999999999999999999999999999999999999999999999999999999999999999;
 
     function add(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
         uint addition;
+        bool isSubtraction;
+        bool sameExponent;
         assembly {
             // we extract the exponent and mantissas for both
             let aExp := and(a, EXPONENT_MASK)
@@ -69,6 +72,7 @@ library Float128{
             }
             if eq(aExp, bExp) {
                 r := aExp
+                sameExponent := 1
             }
             // we use complements 2 for mantissa sign
             if and(a, MANTISSA_SIGN_MASK) {
@@ -78,29 +82,53 @@ library Float128{
                 bMan := sub(0,bMan)
             }
             addition := add(aMan, bMan)
+            isSubtraction := xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK))
 
             if and(TOW_COMPLEMENT_SIGN_MASK, addition) {
                 r := or(r, MANTISSA_SIGN_MASK) // assign the negative sign
                 addition := sub(0,addition) // convert back from 2's complement
             }
         }
-        if(addition > MAX_38_DIGIT_NUMBER || addition < MIN_38_DIGIT_NUMBER){
-            uint digitsMantissa = findNumberOfDigits(addition);
-            assembly{
-                let mantissaReducer := sub(digitsMantissa, MAX_DIGITS)
-                let negativeReducer := and(TOW_COMPLEMENT_SIGN_MASK, mantissaReducer)
-                if negativeReducer{
-                    addition := mul(addition,exp(BASE, sub(0, mantissaReducer))) 
-                    r := sub(r, shl(EXPONENT_BIT, mantissaReducer))
+        if(isSubtraction){
+            if(addition > MAX_38_DIGIT_NUMBER || addition < MIN_38_DIGIT_NUMBER){
+                uint digitsMantissa = findNumberOfDigits(addition);
+                assembly{
+                    let mantissaReducer := sub(digitsMantissa, MAX_DIGITS)
+                    let negativeReducer := and(TOW_COMPLEMENT_SIGN_MASK, mantissaReducer)
+                    if negativeReducer{
+                        addition := mul(addition,exp(BASE, sub(0, mantissaReducer))) 
+                        r := sub(r, shl(EXPONENT_BIT, mantissaReducer))
+                    }
+                    if iszero(negativeReducer){
+                        addition := div(addition,exp(BASE, mantissaReducer))
+                        r := add(r, shl(EXPONENT_BIT, mantissaReducer))
+                    }
+                    r := or(r, addition)
                 }
-                if iszero(negativeReducer){
-                    addition := div(addition,exp(BASE, mantissaReducer))
-                    r := add(r, shl(EXPONENT_BIT, mantissaReducer))
+            }else{
+                assembly{
+                    r := or(r, addition)
                 }
-                r := or(r, addition)
             }
         }else{
             assembly{
+                if iszero(sameExponent){
+                    let is77digit := gt(addition, MAX_76_DIGIT_NUMBER)
+                    if is77digit{
+                        addition := div(addition,exp(BASE, MAX_DIGITS_PLUS_1))
+                        r := add(r, shl(EXPONENT_BIT, MAX_DIGITS_PLUS_1))
+                    }
+                    if iszero(is77digit){
+                        addition := div(addition,exp(BASE, MAX_DIGITS))
+                        r := add(r, shl(EXPONENT_BIT, MAX_DIGITS))
+                    }
+                }
+                if sameExponent{
+                    if gt(addition, MAX_38_DIGIT_NUMBER){
+                        addition := div(addition,BASE)
+                        r := add(r, shl(EXPONENT_BIT, 1))
+                    }
+                }
                 r := or(r, addition)
             }
         }
@@ -108,6 +136,8 @@ library Float128{
 
     function sub(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
         uint addition;
+        bool isSubtraction;
+        bool sameExponent;
         assembly {
             // we extract the exponent and mantissas for both
             let aExp := and(a, EXPONENT_MASK)
@@ -141,16 +171,17 @@ library Float128{
             }
             if eq(aExp, bExp) {
                 r := aExp
+                sameExponent := 1
             }
             // we use complements 2 for mantissa sign
             if and(a, MANTISSA_SIGN_MASK) {
                 aMan := sub(0,aMan)
             }
-            // we invert the sign of b
             if xor(b, MANTISSA_SIGN_MASK) {
                 bMan := sub(0,bMan)
             }
             addition := add(aMan, bMan)
+            isSubtraction := eq(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK))
 
             if and(TOW_COMPLEMENT_SIGN_MASK, addition) {
                 r := or(r, MANTISSA_SIGN_MASK) // assign the negative sign
@@ -158,23 +189,48 @@ library Float128{
             }
         }
         console2.log("addition", addition);
-        if(addition > MAX_38_DIGIT_NUMBER || addition < MIN_38_DIGIT_NUMBER){
-            uint digitsMantissa = findNumberOfDigits(addition);
-            assembly{
-                let mantissaReducer := sub(digitsMantissa, MAX_DIGITS)
-                let negativeReducer := and(TOW_COMPLEMENT_SIGN_MASK, mantissaReducer)
-                if negativeReducer{
-                    addition := mul(addition,exp(BASE, sub(0, mantissaReducer))) 
-                    r := sub(r, shl(EXPONENT_BIT, mantissaReducer))
+        console2.log("isSubtraction", isSubtraction);
+        console2.log("sameExponent", sameExponent);
+        if(isSubtraction){
+            if(addition > MAX_38_DIGIT_NUMBER || addition < MIN_38_DIGIT_NUMBER){
+                uint digitsMantissa = findNumberOfDigits(addition);
+                assembly{
+                    let mantissaReducer := sub(digitsMantissa, MAX_DIGITS)
+                    let negativeReducer := and(TOW_COMPLEMENT_SIGN_MASK, mantissaReducer)
+                    if negativeReducer{
+                        addition := mul(addition,exp(BASE, sub(0, mantissaReducer))) 
+                        r := sub(r, shl(EXPONENT_BIT, mantissaReducer))
+                    }
+                    if iszero(negativeReducer){
+                        addition := div(addition,exp(BASE, mantissaReducer))
+                        r := add(r, shl(EXPONENT_BIT, mantissaReducer))
+                    }
+                    r := or(r, addition)
                 }
-                if iszero(negativeReducer){
-                    addition := div(addition,exp(BASE, mantissaReducer))
-                    r := add(r, shl(EXPONENT_BIT, mantissaReducer))
+            }else{
+                assembly{
+                    r := or(r, addition)
                 }
-                r := or(r, addition)
             }
         }else{
             assembly{
+                if iszero(sameExponent){
+                    let is77digit := gt(addition, MAX_76_DIGIT_NUMBER)
+                    if is77digit{
+                        addition := div(addition,exp(BASE, MAX_DIGITS_PLUS_1))
+                        r := add(r, shl(EXPONENT_BIT, MAX_DIGITS_PLUS_1))
+                    }
+                    if iszero(is77digit){
+                        addition := div(addition,exp(BASE, MAX_DIGITS))
+                        r := add(r, shl(EXPONENT_BIT, MAX_DIGITS))
+                    }
+                }
+                if sameExponent{
+                    if gt(addition, MAX_38_DIGIT_NUMBER){
+                        addition := div(addition,BASE)
+                        r := add(r, shl(EXPONENT_BIT, 1))
+                    }
+                }
                 r := or(r, addition)
             }
         }
