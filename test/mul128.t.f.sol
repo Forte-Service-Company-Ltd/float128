@@ -179,9 +179,9 @@ contract Mul128FuzzTest is FloatPythonUtils {
     }
 
     function testEncoded_sub(int aMan, int aExp, int bMan, int bExp) public {
-        aMan = bound(aMan, 1, 1 << 128 - 1);
+        aMan = bound(aMan, 1, 99999999999999999999999999999999999999);
         aExp = bound(aExp, -100, 100);
-        bMan = bound(bMan,  1, 1 << 128 - 1);
+        bMan = bound(bMan,  1, 99999999999999999999999999999999999999);
         bExp = bound(bExp, -100, 100);
 
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "sub");
@@ -194,13 +194,22 @@ contract Mul128FuzzTest is FloatPythonUtils {
         packedFloat result = Float128.sub(a, b);
         console2.log("result: ", packedFloat.unwrap(result));
         (int rMan, int rExp) = Float128.decode(result);
+        assertEq(findNumberOfDigits(uint(rMan < 0 ? rMan * -1: rMan)), 38, "Solidity result is not normalized");
         // we fix the python result due to the imprecision of the log10. We cut precision where needed
-        
-        console2.log("rMan: ", rMan);
-        console2.log("rExp: ", rExp);
-        console2.log("pyMan: ", pyMan);
-        console2.log("pyExp: ", pyExp);
-        assertEq(pyMan, rMan);
+        if(pyExp != rExp){
+            if(pyExp > rExp){
+                ++rExp;
+                rMan /= 10;
+            }else{
+                ++pyExp;
+                pyMan /= 10;
+            }
+        }
+        // we could be off by one due to rounding issues. The error should be less than 1/1e76
+        if (pyMan != rMan){
+            if(pyMan > rMan) assertEq(pyMan , rMan + 1);
+            else assertEq(pyMan + 1, rMan);
+        }
         assertEq(pyExp, rExp);
     }
 
@@ -219,7 +228,10 @@ contract Mul128FuzzTest is FloatPythonUtils {
         console2.log("rExp: ", result.exponent);
         console2.log("pyMan: ", pyMan);
         console2.log("pyExp: ", pyExp);
-        assertEq(pyMan, result.significand);
+        if (pyMan != result.significand){
+            if(pyMan > result.significand) assertEq(pyMan + 1, result.significand);
+            else assertEq(pyMan, result.significand + 1);
+        }
         assertEq(pyExp, result.exponent);
     }
 

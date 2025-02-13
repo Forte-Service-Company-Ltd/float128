@@ -26,25 +26,27 @@ def calculate_float_mul(args):
     isNegative = False
     if(operation == "mul"): 
         result_float = a * b
-        result_digits = int(log10(result_float)) + 1
+        result_digits = int(log10(abs(result_float))) + 1
         if (result_digits < 0): result_digits -= 1
         result_exp = Decimal(result_digits - max_digits)
         result_man = int(result_float*10**(-result_exp))
     elif(operation == "div"):
         result_float = a / b
-        result_digits = int(log10(result_float)) + 1
+        result_digits = int(log10(abs(result_float))) + 1
         if (result_digits < 0): result_digits -= 1
         result_exp = Decimal(result_digits - max_digits)
         result_man = int(result_float*10**(-result_exp))
     elif(operation == "add"):
         result_float = a + b
-        result_digits = int(log10(result_float)) + 1
+        result_digits = int(log10(abs(result_float))) + 1
         if (result_digits < 0): result_digits -= 1
         result_exp = Decimal(result_digits - max_digits)
         result_man = int(result_float*10**(-result_exp))
     elif(operation == "sub"):
         result_float = a - b
-        result_exp = max(aExp, bExp)
+        result_digits = int(log10(abs(result_float))) + 1
+        if (result_digits < 0): result_digits -= 1
+        result_exp = Decimal(result_digits - max_digits)
         result_man = int(result_float*10**(-result_exp))
         
     return result_man, int(result_exp)

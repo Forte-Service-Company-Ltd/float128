@@ -99,6 +99,10 @@ library Float128{
                 }
                 r := or(r, addition)
             }
+        }else{
+            assembly{
+                r := or(r, addition)
+            }
         }
     }
 
@@ -153,6 +157,7 @@ library Float128{
                 addition := sub(0,addition) // convert back from 2's complement
             }
         }
+        console2.log("addition", addition);
         if(addition > MAX_38_DIGIT_NUMBER || addition < MIN_38_DIGIT_NUMBER){
             uint digitsMantissa = findNumberOfDigits(addition);
             assembly{
@@ -166,6 +171,10 @@ library Float128{
                     addition := div(addition,exp(BASE, mantissaReducer))
                     r := add(r, shl(EXPONENT_BIT, mantissaReducer))
                 }
+                r := or(r, addition)
+            }
+        }else{
+            assembly{
                 r := or(r, addition)
             }
         }
