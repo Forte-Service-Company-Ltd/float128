@@ -97,7 +97,7 @@ library Float128{
                     let negativeReducer := and(TOW_COMPLEMENT_SIGN_MASK, mantissaReducer)
                     if negativeReducer{
                         addition := mul(addition,exp(BASE, sub(0, mantissaReducer))) 
-                        r := sub(r, shl(EXPONENT_BIT, mantissaReducer))
+                        r := sub(r, shl(EXPONENT_BIT, sub(0, mantissaReducer)))
                     }
                     if iszero(negativeReducer){
                         addition := div(addition,exp(BASE, mantissaReducer))
@@ -188,9 +188,6 @@ library Float128{
                 addition := sub(0,addition) // convert back from 2's complement
             }
         }
-        console2.log("addition", addition);
-        console2.log("isSubtraction", isSubtraction);
-        console2.log("sameExponent", sameExponent);
         if(isSubtraction){
             if(addition > MAX_38_DIGIT_NUMBER || addition < MIN_38_DIGIT_NUMBER){
                 uint digitsMantissa = findNumberOfDigits(addition);
@@ -199,7 +196,7 @@ library Float128{
                     let negativeReducer := and(TOW_COMPLEMENT_SIGN_MASK, mantissaReducer)
                     if negativeReducer{
                         addition := mul(addition,exp(BASE, sub(0, mantissaReducer))) 
-                        r := sub(r, shl(EXPONENT_BIT, mantissaReducer))
+                        r := sub(r, shl(EXPONENT_BIT, sub(0, mantissaReducer)))
                     }
                     if iszero(negativeReducer){
                         addition := div(addition,exp(BASE, mantissaReducer))

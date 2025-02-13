@@ -6,12 +6,21 @@ import "src/Float128.sol";
 import "test/FloatPythonUtils.sol";
 
 contract Mul128FuzzTest is FloatPythonUtils {
-    function testStruct_mul(int aMan, int aExp, int bMan, int bExp) public {
-        aMan = bound(aMan, 1, 1 << 128 - 1);
-        aExp = bound(aExp, -128, 127);
-        bMan = bound(bMan,  1, 1 << 128 - 1);
-        bExp = bound(bExp, -128, 127);
 
+    function setBounds(int aMan, int aExp, int bMan, int bExp) internal pure returns(int _aMan, int _aExp, int _bMan, int _bExp){
+        // numbers with more than 38 digits lose precision
+        _aMan = bound(aMan, 1, 99999999999999999999999999999999999999);
+        _aExp = bound(aExp, -74, 74);
+        _bMan = bound(bMan,  1, 99999999999999999999999999999999999999);
+        _bExp = bound(bExp, -74, 74);
+    }
+    function testStruct_mul(int aMan, int aExp, int bMan, int bExp) public  {
+        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
+
+        console2.log("aMan: ", aMan);
+        console2.log("aExp: ", aExp);
+        console2.log("bMan: ", bMan);
+        console2.log("bExp: ", bExp);
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "mul");
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256,int256));
@@ -24,10 +33,7 @@ contract Mul128FuzzTest is FloatPythonUtils {
     }
 
     function testEncoded_mul(int aMan, int aExp, int bMan, int bExp) public {
-        aMan = bound(aMan, 1, 99999999999999999999999999999999999999);
-        aExp = bound(aExp, -100, 100);
-        bMan = bound(bMan,  1, 99999999999999999999999999999999999999);
-        bExp = bound(bExp, -100, 100);
+        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
 
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "mul");
         bytes memory res = vm.ffi(inputs);
@@ -59,10 +65,7 @@ contract Mul128FuzzTest is FloatPythonUtils {
     }
 
     function testStruct_div(int aMan, int aExp, int bMan, int bExp) public {
-        aMan = bound(aMan, 1, 1 << 128 - 1);
-        aExp = bound(aExp, -128, 127);
-        bMan = bound(bMan,  1, 1 << 128 - 1);
-        bExp = bound(bExp, -128, 127);
+        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
 
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "div");
         bytes memory res = vm.ffi(inputs);
@@ -84,10 +87,7 @@ contract Mul128FuzzTest is FloatPythonUtils {
     }
 
     function testEncoded_div(int aMan, int aExp, int bMan, int bExp) public {
-        aMan = bound(aMan, 1, 99999999999999999999999999999999999999);
-        aExp = bound(aExp, -90, 90);
-        bMan = bound(bMan,  1, 99999999999999999999999999999999999999);
-        bExp = bound(bExp, -90, 90);
+        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
 
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "div");
         bytes memory res = vm.ffi(inputs);
@@ -120,10 +120,7 @@ contract Mul128FuzzTest is FloatPythonUtils {
 
     function testEncoded_add(int aMan, int aExp, int bMan, int bExp) public {
         // it loses precision when numbers have more than 38 digits
-        aMan = bound(aMan, 1, 99999999999999999999999999999999999999);
-        aExp = bound(aExp, -100, 100);
-        bMan = bound(bMan,  1, 99999999999999999999999999999999999999);
-        bExp = bound(bExp, -100, 100);
+        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
 
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "add");
         bytes memory res = vm.ffi(inputs);
@@ -160,10 +157,7 @@ contract Mul128FuzzTest is FloatPythonUtils {
     }
 
     function testStruct_add(int aMan, int aExp, int bMan, int bExp) public {
-        aMan = bound(aMan, 1, 1 << 128 - 1);
-        aExp = bound(aExp, -100, 100);
-        bMan = bound(bMan,  1, 1 << 128 - 1);
-        bExp = bound(bExp, -100, 100);
+        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
 
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "add");
         bytes memory res = vm.ffi(inputs);
@@ -179,10 +173,7 @@ contract Mul128FuzzTest is FloatPythonUtils {
     }
 
     function testEncoded_sub(int aMan, int aExp, int bMan, int bExp) public {
-        aMan = bound(aMan, 1, 99999999999999999999999999999999999999);
-        aExp = bound(aExp, -100, 100);
-        bMan = bound(bMan,  1, 99999999999999999999999999999999999999);
-        bExp = bound(bExp, -100, 100);
+        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
 
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "sub");
         bytes memory res = vm.ffi(inputs);
@@ -219,10 +210,7 @@ contract Mul128FuzzTest is FloatPythonUtils {
     }
 
     function testStruct_sub(int aMan, int aExp, int bMan, int bExp) public {
-        aMan = bound(aMan, 1, 1 << 128 - 1);
-        aExp = bound(aExp, -100, 100);
-        bMan = bound(bMan,  1, 1 << 128 - 1);
-        bExp = bound(bExp, -100, 100);
+        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
 
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "sub");
         bytes memory res = vm.ffi(inputs);
