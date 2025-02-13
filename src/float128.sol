@@ -249,55 +249,58 @@ library Float128{
         uint rMan;
         uint rExp;
         assembly {
-            if or(iszero(a), iszero(b)){
-                return 0
+            // if any of the elements is zero then the result will be zero
+            if iszero(or(iszero(a), iszero(b))){
+                // we extract the exponent and mantissas for both
+                let aExp := and(a, EXPONENT_MASK)
+                let bExp := and(b, EXPONENT_MASK)
+                let aMan := and(a, MANTISSA_MASK)
+                let bMan := and(b, MANTISSA_MASK)
+        
+                rMan := mul(aMan, bMan)
+                rExp := sub(add(shr(EXPONENT_BIT, aExp), shr(EXPONENT_BIT, bExp)), ZERO_OFFSET)
+                // multiplication between 2 numbers with k digits can result in a number between 2*k - 1 and 2*k digits
+                // we check first if rMan is a 2k-digit number
+                let is76digit := gt(rMan, MAX_75_DIGIT_NUMBER)
+                if is76digit {
+                    rMan := div(rMan, exp(BASE, MAX_DIGITS))
+                    rExp := add(rExp, MAX_DIGITS)
+                }
+                // if not, we then know that it is a 2k-1-digit number
+                if iszero(is76digit) {
+                    rMan := div(rMan, exp(BASE, MAX_DIGITS_MINUS_1))
+                    rExp := add(rExp, MAX_DIGITS_MINUS_1)
+                }
+                r :=  or(xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK)),or(rMan,shl(EXPONENT_BIT, rExp)))
             }
-            // we extract the exponent and mantissas for both
-            let aExp := and(a, EXPONENT_MASK)
-            let bExp := and(b, EXPONENT_MASK)
-            let aMan := and(a, MANTISSA_MASK)
-            let bMan := and(b, MANTISSA_MASK)
-    
-            rMan := mul(aMan, bMan)
-            rExp := sub(add(shr(EXPONENT_BIT, aExp), shr(EXPONENT_BIT, bExp)), ZERO_OFFSET)
-            // multiplication between 2 numbers with k digits can result in a number between 2*k - 1 and 2*k digits
-            // we check first if rMan is a 2k-digit number
-            let is76digit := gt(rMan, MAX_75_DIGIT_NUMBER)
-            if is76digit {
-                rMan := div(rMan, exp(BASE, MAX_DIGITS))
-                rExp := add(rExp, MAX_DIGITS)
-            }
-            // if not, we then know that it is a 2k-1-digit number
-            if iszero(is76digit) {
-                rMan := div(rMan, exp(BASE, MAX_DIGITS_MINUS_1))
-                rExp := add(rExp, MAX_DIGITS_MINUS_1)
-            }
-            r :=  or(xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK)),or(rMan,shl(EXPONENT_BIT, rExp)))
         }
     }
 
     function div(packedFloat a, packedFloat b) internal pure returns(packedFloat r){
         assembly{
-            let aMan := and(a, MANTISSA_MASK)
-            let aExp := shr(EXPONENT_BIT, and(a, EXPONENT_MASK))
-            let bMan := and(b, MANTISSA_MASK)
-            let bExp :=  shr(EXPONENT_BIT, and(b, EXPONENT_MASK))
-            // we can add 39 digits since we have extra room in the bits for one more digit
-            aMan := mul(aMan, exp(BASE, MAX_DIGITS))
-            aExp := sub(aExp,  MAX_DIGITS)
-            let rMan := div(aMan, bMan)
+            // if a is zero then the result will be zero
+            if gt(a, 0){
+                let aMan := and(a, MANTISSA_MASK)
+                let aExp := shr(EXPONENT_BIT, and(a, EXPONENT_MASK))
+                let bMan := and(b, MANTISSA_MASK)
+                let bExp :=  shr(EXPONENT_BIT, and(b, EXPONENT_MASK))
+                // we can add 39 digits since we have extra room in the bits for one more digit
+                aMan := mul(aMan, exp(BASE, MAX_DIGITS))
+                aExp := sub(aExp,  MAX_DIGITS)
+                let rMan := div(aMan, bMan)
 
-            let rExp := sub(add(aExp, ZERO_OFFSET), bExp)
-            // a division between a k-digit number and a j-digit number will result in a number between (k - j) 
-            // and (k - j + 1) digits. Since we are dividing a 76-digit number by a 38-digit number, we know 
-            // that the result could have either 39 or 38 digitis.
-            let is39digit := gt(rMan, MAX_38_DIGIT_NUMBER)
-            if is39digit {
-                // we need to truncate the 2 last digits
-                rExp := add(rExp, 1)
-                rMan := div(rMan, exp(BASE, 1))
+                let rExp := sub(add(aExp, ZERO_OFFSET), bExp)
+                // a division between a k-digit number and a j-digit number will result in a number between (k - j) 
+                // and (k - j + 1) digits. Since we are dividing a 76-digit number by a 38-digit number, we know 
+                // that the result could have either 39 or 38 digitis.
+                let is39digit := gt(rMan, MAX_38_DIGIT_NUMBER)
+                if is39digit {
+                    // we need to truncate the 2 last digits
+                    rExp := add(rExp, 1)
+                    rMan := div(rMan, exp(BASE, 1))
+                }
+                r :=  or(xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK)),or(rMan,shl(EXPONENT_BIT, rExp)))
             }
-            r :=  or(xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK)),or(rMan,shl(EXPONENT_BIT, rExp)))
         }
     }
 
