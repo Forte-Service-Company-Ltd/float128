@@ -10,11 +10,11 @@ struct Float {
 }
 
 library Float128{
-    /**  
-    * Bitmap:
-    * 255 ... UNUSED ... 138, 137 ... EXPONENT ... 129, MANTISSA_SIGN (128), 127 .. MANTISSA ... 0
-    * The exponent is signed using the offset zero to 128. max values: -128 and +127. Plenty for our case
-    **/
+    /************************************************************************************************************
+     * Bitmap:                                                                                                  *
+     * 255 ... UNUSED ... 138, 137 ... EXPONENT ... 129, MANTISSA_SIGN (128), 127 .. MANTISSA ... 0             *
+     * The exponent is signed using the offset zero to 256. max values: -128 and +127. Plenty for our case      *
+     ************************************************************************************************************/
     uint constant MANTISSA_MASK = 0xffffffffffffffffffffffffffffffff;
     uint constant MANTISSA_SIGN_MASK = 0x100000000000000000000000000000000;
     uint constant EXPONENT_MASK = 0xfffffffffffffffffffffffffffffffe00000000000000000000000000000000;
@@ -48,7 +48,7 @@ library Float128{
             // we adjust the significant digits and set the exponent of the result. we add 38 digits of precision
             if gt(aExp, bExp) {
                 r := sub(aExp, shl(EXPONENT_BIT, MAX_DIGITS))
-                let adj := sub(sub(shr(EXPONENT_BIT, aExp), MAX_DIGITS), shr(EXPONENT_BIT, bExp))
+                let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, bExp))
                 let neg := and(TOW_COMPLEMENT_SIGN_MASK, adj)
                 if neg{
                     bMan := mul(bMan, exp(BASE, sub(0, adj)))
@@ -60,7 +60,7 @@ library Float128{
             }
             if gt(bExp, aExp) {
                 r := sub(bExp, shl(EXPONENT_BIT, MAX_DIGITS))
-                let adj := sub(sub(shr(EXPONENT_BIT, bExp), MAX_DIGITS), shr(EXPONENT_BIT, aExp))
+                let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, aExp))
                 let neg := and(TOW_COMPLEMENT_SIGN_MASK, adj)
                 if neg{
                     aMan := mul(aMan, exp(BASE, sub(0, adj)))
@@ -89,47 +89,53 @@ library Float128{
                 addition := sub(0,addition) // convert back from 2's complement
             }
         }
-        if(isSubtraction){
-            if(addition > MAX_38_DIGIT_NUMBER || addition < MIN_38_DIGIT_NUMBER){
-                uint digitsMantissa = findNumberOfDigits(addition);
-                assembly{
-                    let mantissaReducer := sub(digitsMantissa, MAX_DIGITS)
-                    let negativeReducer := and(TOW_COMPLEMENT_SIGN_MASK, mantissaReducer)
-                    if negativeReducer{
-                        addition := mul(addition,exp(BASE, sub(0, mantissaReducer))) 
-                        r := sub(r, shl(EXPONENT_BIT, sub(0, mantissaReducer)))
+        if( addition == 0){
+            assembly{
+                r := 0
+            }
+        }else{
+            if(isSubtraction){
+                if(addition > MAX_38_DIGIT_NUMBER || addition < MIN_38_DIGIT_NUMBER){
+                    uint digitsMantissa = findNumberOfDigits(addition);
+                    assembly{
+                        let mantissaReducer := sub(digitsMantissa, MAX_DIGITS)
+                        let negativeReducer := and(TOW_COMPLEMENT_SIGN_MASK, mantissaReducer)
+                        if negativeReducer{
+                            addition := mul(addition,exp(BASE, sub(0, mantissaReducer))) 
+                            r := sub(r, shl(EXPONENT_BIT, sub(0, mantissaReducer)))
+                        }
+                        if iszero(negativeReducer){
+                            addition := div(addition,exp(BASE, mantissaReducer))
+                            r := add(r, shl(EXPONENT_BIT, mantissaReducer))
+                        }
+                        r := or(r, addition)
                     }
-                    if iszero(negativeReducer){
-                        addition := div(addition,exp(BASE, mantissaReducer))
-                        r := add(r, shl(EXPONENT_BIT, mantissaReducer))
+                }else{
+                    assembly{
+                        r := or(r, addition)
                     }
-                    r := or(r, addition)
                 }
             }else{
                 assembly{
+                    if iszero(sameExponent){
+                        let is77digit := gt(addition, MAX_76_DIGIT_NUMBER)
+                        if is77digit{
+                            addition := div(addition,exp(BASE, MAX_DIGITS_PLUS_1))
+                            r := add(r, shl(EXPONENT_BIT, MAX_DIGITS_PLUS_1))
+                        }
+                        if iszero(is77digit){
+                            addition := div(addition,exp(BASE, MAX_DIGITS))
+                            r := add(r, shl(EXPONENT_BIT, MAX_DIGITS))
+                        }
+                    }
+                    if sameExponent{
+                        if gt(addition, MAX_38_DIGIT_NUMBER){
+                            addition := div(addition,BASE)
+                            r := add(r, shl(EXPONENT_BIT, 1))
+                        }
+                    }
                     r := or(r, addition)
                 }
-            }
-        }else{
-            assembly{
-                if iszero(sameExponent){
-                    let is77digit := gt(addition, MAX_76_DIGIT_NUMBER)
-                    if is77digit{
-                        addition := div(addition,exp(BASE, MAX_DIGITS_PLUS_1))
-                        r := add(r, shl(EXPONENT_BIT, MAX_DIGITS_PLUS_1))
-                    }
-                    if iszero(is77digit){
-                        addition := div(addition,exp(BASE, MAX_DIGITS))
-                        r := add(r, shl(EXPONENT_BIT, MAX_DIGITS))
-                    }
-                }
-                if sameExponent{
-                    if gt(addition, MAX_38_DIGIT_NUMBER){
-                        addition := div(addition,BASE)
-                        r := add(r, shl(EXPONENT_BIT, 1))
-                    }
-                }
-                r := or(r, addition)
             }
         }
     }
@@ -147,7 +153,7 @@ library Float128{
             // we adjust the significant digits and set the exponent of the result. we add 38 digits of precision
             if gt(aExp, bExp) {
                 r := sub(aExp, shl(EXPONENT_BIT, MAX_DIGITS))
-                let adj := sub(sub(shr(EXPONENT_BIT, aExp), MAX_DIGITS), shr(EXPONENT_BIT, bExp))
+                let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, bExp))
                 let neg := and(TOW_COMPLEMENT_SIGN_MASK, adj)
                 if neg{
                     bMan := mul(bMan, exp(BASE, sub(0, adj)))
@@ -159,7 +165,7 @@ library Float128{
             }
             if gt(bExp, aExp) {
                 r := sub(bExp, shl(EXPONENT_BIT, MAX_DIGITS))
-                let adj := sub(sub(shr(EXPONENT_BIT, bExp), MAX_DIGITS), shr(EXPONENT_BIT, aExp))
+                let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, aExp))
                 let neg := and(TOW_COMPLEMENT_SIGN_MASK, adj)
                 if neg{
                     aMan := mul(aMan, exp(BASE, sub(0, adj)))
@@ -177,7 +183,7 @@ library Float128{
             if and(a, MANTISSA_SIGN_MASK) {
                 aMan := sub(0,aMan)
             }
-            if xor(b, MANTISSA_SIGN_MASK) {
+            if iszero(and(b, MANTISSA_SIGN_MASK)) {
                 bMan := sub(0,bMan)
             }
             addition := add(aMan, bMan)
@@ -188,47 +194,53 @@ library Float128{
                 addition := sub(0,addition) // convert back from 2's complement
             }
         }
-        if(isSubtraction){
-            if(addition > MAX_38_DIGIT_NUMBER || addition < MIN_38_DIGIT_NUMBER){
-                uint digitsMantissa = findNumberOfDigits(addition);
-                assembly{
-                    let mantissaReducer := sub(digitsMantissa, MAX_DIGITS)
-                    let negativeReducer := and(TOW_COMPLEMENT_SIGN_MASK, mantissaReducer)
-                    if negativeReducer{
-                        addition := mul(addition,exp(BASE, sub(0, mantissaReducer))) 
-                        r := sub(r, shl(EXPONENT_BIT, sub(0, mantissaReducer)))
+        if( addition == 0){
+            assembly{
+                r := 0
+            }
+        }else{
+            if(isSubtraction){
+                if(addition > MAX_38_DIGIT_NUMBER || addition < MIN_38_DIGIT_NUMBER){
+                    uint digitsMantissa = findNumberOfDigits(addition);
+                    assembly{
+                        let mantissaReducer := sub(digitsMantissa, MAX_DIGITS)
+                        let negativeReducer := and(TOW_COMPLEMENT_SIGN_MASK, mantissaReducer)
+                        if negativeReducer{
+                            addition := mul(addition,exp(BASE, sub(0, mantissaReducer))) 
+                            r := sub(r, shl(EXPONENT_BIT, sub(0, mantissaReducer)))
+                        }
+                        if iszero(negativeReducer){
+                            addition := div(addition,exp(BASE, mantissaReducer))
+                            r := add(r, shl(EXPONENT_BIT, mantissaReducer))
+                        }
+                        r := or(r, addition)
                     }
-                    if iszero(negativeReducer){
-                        addition := div(addition,exp(BASE, mantissaReducer))
-                        r := add(r, shl(EXPONENT_BIT, mantissaReducer))
+                }else{
+                    assembly{
+                        r := or(r, addition)
                     }
-                    r := or(r, addition)
                 }
             }else{
                 assembly{
+                    if iszero(sameExponent){
+                        let is77digit := gt(addition, MAX_76_DIGIT_NUMBER)
+                        if is77digit{
+                            addition := div(addition,exp(BASE, MAX_DIGITS_PLUS_1))
+                            r := add(r, shl(EXPONENT_BIT, MAX_DIGITS_PLUS_1))
+                        }
+                        if iszero(is77digit){
+                            addition := div(addition,exp(BASE, MAX_DIGITS))
+                            r := add(r, shl(EXPONENT_BIT, MAX_DIGITS))
+                        }
+                    }
+                    if sameExponent{
+                        if gt(addition, MAX_38_DIGIT_NUMBER){
+                            addition := div(addition,BASE)
+                            r := add(r, shl(EXPONENT_BIT, 1))
+                        }
+                    }
                     r := or(r, addition)
                 }
-            }
-        }else{
-            assembly{
-                if iszero(sameExponent){
-                    let is77digit := gt(addition, MAX_76_DIGIT_NUMBER)
-                    if is77digit{
-                        addition := div(addition,exp(BASE, MAX_DIGITS_PLUS_1))
-                        r := add(r, shl(EXPONENT_BIT, MAX_DIGITS_PLUS_1))
-                    }
-                    if iszero(is77digit){
-                        addition := div(addition,exp(BASE, MAX_DIGITS))
-                        r := add(r, shl(EXPONENT_BIT, MAX_DIGITS))
-                    }
-                }
-                if sameExponent{
-                    if gt(addition, MAX_38_DIGIT_NUMBER){
-                        addition := div(addition,BASE)
-                        r := add(r, shl(EXPONENT_BIT, 1))
-                    }
-                }
-                r := or(r, addition)
             }
         }
     }
@@ -237,6 +249,9 @@ library Float128{
         uint rMan;
         uint rExp;
         assembly {
+            if or(iszero(a), iszero(b)){
+                return 0
+            }
             // we extract the exponent and mantissas for both
             let aExp := and(a, EXPONENT_MASK)
             let bExp := and(b, EXPONENT_MASK)
@@ -285,150 +300,8 @@ library Float128{
             r :=  or(xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK)),or(rMan,shl(EXPONENT_BIT, rExp)))
         }
     }
-    
 
-    function toPackedFloat(int mantissa,int exponent) internal pure returns (packedFloat float) {
-        uint digitsMantissa;
-        uint mantissaMultiplier;
-        // we start by extracting the sign of the mantissa
-        assembly {
-            if and(mantissa, TOW_COMPLEMENT_SIGN_MASK) {
-                float := MANTISSA_SIGN_MASK
-                mantissa := sub(0,mantissa)
-            }
-        }
-        // we normalize only if necessary
-        if(uint(mantissa) > MAX_38_DIGIT_NUMBER || uint(mantissa) < MIN_38_DIGIT_NUMBER){
-            digitsMantissa = findNumberOfDigits(uint(mantissa));
-            assembly{
-                mantissaMultiplier := sub(digitsMantissa, MAX_DIGITS)
-                exponent := add(exponent, mantissaMultiplier)
-                let negativeMultiplier := and(TOW_COMPLEMENT_SIGN_MASK, mantissaMultiplier)
-                if negativeMultiplier{
-                    mantissa := mul(mantissa,exp(BASE, sub(0, mantissaMultiplier)))
-                }
-                if iszero(negativeMultiplier){
-                    mantissa := div(mantissa,exp(BASE, mantissaMultiplier))
-                }
-            }
-        }
-        // final encoding
-        assembly{
-            float := or(float, or(mantissa, shl(EXPONENT_BIT, add(exponent, ZERO_OFFSET))))
-        }
-    }
-
-    function convertToPackedFloat(Float memory _float) internal pure returns(packedFloat float){
-        float = toPackedFloat(_float.significand, _float.exponent);
-    }
-
-    function convertToUnpackedFloat(packedFloat _float) internal pure returns(Float memory float){
-        (float.significand, float.exponent) = decode(_float);
-    }
-
-    function decode(
-        packedFloat float
-    ) internal pure returns (int mantissa, int exponent) {
-        assembly {
-            // exponent
-            let _exp := shr(EXPONENT_BIT, float)
-            if gt(ZERO_OFFSET, _exp) {
-                exponent := sub(0,sub(ZERO_OFFSET, _exp))
-            }
-            if gt(_exp, ZERO_OFFSET_MINUS_1) {
-                exponent := sub(_exp, ZERO_OFFSET)
-            }
-            // mantissa
-            mantissa := and(float, MANTISSA_MASK)
-            /// we use complements 2 for mantissa sign
-            if and(float, MANTISSA_SIGN_MASK) {
-                mantissa := sub(0,mantissa)
-            }
-        }
-    }
-
-    function normalize(Float memory x) internal pure returns(Float memory float){
-        uint digitsMantissa;
-        uint mantissaMultiplier;
-        bool isMantissaNegative;
-
-        assembly{
-            isMantissaNegative := and(mload(x), MANTISSA_SIGN_MASK)
-            if isMantissaNegative{
-                mstore(x, sub(0, mload(x)))
-            }
-        }
-        if(uint(x.significand) > MAX_38_DIGIT_NUMBER || uint(x.significand) < MIN_38_DIGIT_NUMBER){
-            digitsMantissa = findNumberOfDigits(uint(x.significand));
-            assembly{
-                mantissaMultiplier := sub(digitsMantissa, MAX_DIGITS)
-                mstore(add(x, 0x20), add(mload(add(x, 0x20)), mantissaMultiplier))
-                let negativeMultiplier := and(MANTISSA_SIGN_MASK, mantissaMultiplier)
-                if negativeMultiplier{
-                    mstore(x, mul(mload(x),exp(BASE, sub(0, mantissaMultiplier))))
-                }
-                if iszero(negativeMultiplier){
-                    mstore(x, div(mload(x),exp(BASE, mantissaMultiplier)))
-                }
-            }
-        }
-        assembly{
-            if isMantissaNegative{
-                mstore(x, sub(0, mload(x)))
-            }
-        }
-        float = x;
-    }
-
-    function toFloat(int _significand, int _exponent) internal pure returns(Float memory float){
-        float = normalize(Float({significand: _significand, exponent: _exponent}));
-    }
-
-    function findNumberOfDigits(uint x) internal pure returns (uint log) {
-        assembly {
-            if gt(x, 0) {
-                if gt(
-                    x,
-                    9999999999999999999999999999999999999999999999999999999999999999
-                ) {
-                    log := 64
-                    x := div(
-                        x,
-                        10000000000000000000000000000000000000000000000000000000000000000
-                    )
-                }
-                if gt(x, 99999999999999999999999999999999) {
-                    log := add(log, 32)
-                    x := div(x, 100000000000000000000000000000000)
-                }
-                if gt(x, 9999999999999999) {
-                    log := add(log, 16)
-                    x := div(x, 10000000000000000)
-                }
-                if gt(x, 99999999) {
-                    log := add(log, 8)
-                    x := div(x, 100000000)
-                }
-                if gt(x, 9999) {
-                    log := add(log, 4)
-                    x := div(x, 10000)
-                }
-                if gt(x, 99) {
-                    log := add(log, 2)
-                    x := div(x, 100)
-                }
-                if gt(x, 9) {
-                    log := add(log, 1)
-                }
-                log := add(log, 1)
-            }
-        }
-    }
-
-    function add(
-        Float memory a,
-        Float memory b
-    ) internal pure returns (Float memory r) {
+    function add(Float memory a, Float memory b) internal pure returns (Float memory r) {
         // assembly {
             
         //     if gt(mload(add(a, 0x20)), mload(add(b, 0x20))) {
@@ -478,6 +351,9 @@ library Float128{
         //     }
         // }
         unchecked{
+            bool isSubtraction = (uint(a.significand) >> 1) ^ (uint(b.significand) >> 1) > 0;
+
+            bool sameExponent;
             if(a.exponent > b.exponent){
                 b.significand /= int(BASE**(uint(a.exponent - b.exponent)));
                 r.exponent = a.exponent;
@@ -610,4 +486,149 @@ library Float128{
         // }
     }
 
+    function toPackedFloat(int mantissa,int exponent) internal pure returns (packedFloat float) {
+        uint digitsMantissa;
+        uint mantissaMultiplier;
+        // we start by extracting the sign of the mantissa
+        if(mantissa != 0){
+            assembly {
+                if and(mantissa, TOW_COMPLEMENT_SIGN_MASK) {
+                    float := MANTISSA_SIGN_MASK
+                    mantissa := sub(0,mantissa)
+                }
+            }
+            // we normalize only if necessary
+            if(uint(mantissa) > MAX_38_DIGIT_NUMBER || uint(mantissa) < MIN_38_DIGIT_NUMBER){
+                digitsMantissa = findNumberOfDigits(uint(mantissa));
+                assembly{
+                    mantissaMultiplier := sub(digitsMantissa, MAX_DIGITS)
+                    exponent := add(exponent, mantissaMultiplier)
+                    let negativeMultiplier := and(TOW_COMPLEMENT_SIGN_MASK, mantissaMultiplier)
+                    if negativeMultiplier{
+                        mantissa := mul(mantissa,exp(BASE, sub(0, mantissaMultiplier)))
+                    }
+                    if iszero(negativeMultiplier){
+                        mantissa := div(mantissa,exp(BASE, mantissaMultiplier))
+                    }
+                }
+            }
+            // final encoding
+            assembly{
+                float := or(float, or(mantissa, shl(EXPONENT_BIT, add(exponent, ZERO_OFFSET))))
+            }
+        }
+    }
+
+    function decode(
+        packedFloat float
+    ) internal pure returns (int mantissa, int exponent) {
+        assembly {
+            // exponent
+            let _exp := shr(EXPONENT_BIT, float)
+            if gt(ZERO_OFFSET, _exp) {
+                exponent := sub(0,sub(ZERO_OFFSET, _exp))
+            }
+            if gt(_exp, ZERO_OFFSET_MINUS_1) {
+                exponent := sub(_exp, ZERO_OFFSET)
+            }
+            // mantissa
+            mantissa := and(float, MANTISSA_MASK)
+            /// we use complements 2 for mantissa sign
+            if and(float, MANTISSA_SIGN_MASK) {
+                mantissa := sub(0,mantissa)
+            }
+        }
+    }
+
+    function normalize(Float memory x) internal pure returns(Float memory float){
+        uint digitsMantissa;
+        uint mantissaMultiplier;
+        bool isMantissaNegative;
+
+        if(x.significand == 0){
+            float.exponent = -128;
+            float.significand = 0;
+        }
+        else {
+            assembly{
+                isMantissaNegative := and(mload(x), MANTISSA_SIGN_MASK)
+                if isMantissaNegative{
+                    mstore(x, sub(0, mload(x)))
+                }
+            }
+            if(uint(x.significand) > MAX_38_DIGIT_NUMBER || uint(x.significand) < MIN_38_DIGIT_NUMBER){
+                digitsMantissa = findNumberOfDigits(uint(x.significand));
+                assembly{
+                    mantissaMultiplier := sub(digitsMantissa, MAX_DIGITS)
+                    mstore(add(x, 0x20), add(mload(add(x, 0x20)), mantissaMultiplier))
+                    let negativeMultiplier := and(MANTISSA_SIGN_MASK, mantissaMultiplier)
+                    if negativeMultiplier{
+                        mstore(x, mul(mload(x),exp(BASE, sub(0, mantissaMultiplier))))
+                    }
+                    if iszero(negativeMultiplier){
+                        mstore(x, div(mload(x),exp(BASE, mantissaMultiplier)))
+                    }
+                }
+            }
+            assembly{
+                if isMantissaNegative{
+                    mstore(x, sub(0, mload(x)))
+                }
+            }
+            float = x;
+        }
+    }
+
+    function toFloat(int _significand, int _exponent) internal pure returns(Float memory float){
+        float = normalize(Float({significand: _significand, exponent: _exponent}));
+    }
+
+    function convertToPackedFloat(Float memory _float) internal pure returns(packedFloat float){
+        float = toPackedFloat(_float.significand, _float.exponent);
+    }
+
+    function convertToUnpackedFloat(packedFloat _float) internal pure returns(Float memory float){
+        (float.significand, float.exponent) = decode(_float);
+    }
+
+    function findNumberOfDigits(uint x) internal pure returns (uint log) {
+        assembly {
+            if gt(x, 0) {
+                if gt(
+                    x,
+                    9999999999999999999999999999999999999999999999999999999999999999
+                ) {
+                    log := 64
+                    x := div(
+                        x,
+                        10000000000000000000000000000000000000000000000000000000000000000
+                    )
+                }
+                if gt(x, 99999999999999999999999999999999) {
+                    log := add(log, 32)
+                    x := div(x, 100000000000000000000000000000000)
+                }
+                if gt(x, 9999999999999999) {
+                    log := add(log, 16)
+                    x := div(x, 10000000000000000)
+                }
+                if gt(x, 99999999) {
+                    log := add(log, 8)
+                    x := div(x, 100000000)
+                }
+                if gt(x, 9999) {
+                    log := add(log, 4)
+                    x := div(x, 10000)
+                }
+                if gt(x, 99) {
+                    log := add(log, 2)
+                    x := div(x, 100)
+                }
+                if gt(x, 9) {
+                    log := add(log, 1)
+                }
+                log := add(log, 1)
+            }
+        }
+    }
 }
