@@ -16,6 +16,10 @@ contract Float128FuzzTest is FloatPythonUtils {
     }
 
     function checkResults(int rMan, int rExp, int pyMan, int pyExp) internal pure {
+        checkResults(rMan, rExp, pyMan, pyExp, false);
+    }
+
+    function checkResults(int rMan, int rExp, int pyMan, int pyExp, bool couldBeOffBy1) internal pure {
         // we always check that the result is normalized since this is vital for the library. Only exception is when the result is zero
         if (pyMan != 0) assertEq(findNumberOfDigits(uint(rMan < 0 ? rMan * -1 : rMan)), 38, "Solidity result is not normalized");
         // we fix the python result due to the imprecision of python's log10. We cut precision where needed
@@ -28,10 +32,15 @@ contract Float128FuzzTest is FloatPythonUtils {
                 pyMan /= 10;
             }
         }
-        // we could be off by one due to rounding issues. The error should be less than 1/1e76
-        if (pyMan != rMan) {
-            if (pyMan > rMan) assertEq(pyMan, rMan + 1);
-            else assertEq(pyMan + 1, rMan);
+        // we only accept off by 1 if explicitly signaled. (addition/subtraction are famous for rounding difference with Python)
+        if (couldBeOffBy1) {
+            // we could be off by one due to rounding issues. The error should be less than 1/1e76
+            if (pyMan != rMan) {
+                if (pyMan > rMan) assertEq(pyMan, rMan + 1);
+                else assertEq(pyMan + 1, rMan);
+            }
+        } else {
+            assertEq(pyMan, rMan);
         }
         if (pyMan != 0) assertEq(pyExp, rExp);
     }
@@ -111,7 +120,7 @@ contract Float128FuzzTest is FloatPythonUtils {
         packedFloat result = Float128.add(a, b);
         (int rMan, int rExp) = Float128.decode(result);
 
-        checkResults(rMan, rExp, pyMan, pyExp);
+        checkResults(rMan, rExp, pyMan, pyExp, true);
     }
 
     function testStruct_add(int aMan, int aExp, int bMan, int bExp) public {
@@ -125,7 +134,7 @@ contract Float128FuzzTest is FloatPythonUtils {
         int rMan = result.significand;
         int rExp = result.exponent;
 
-        checkResults(rMan, rExp, pyMan, pyExp);
+        checkResults(rMan, rExp, pyMan, pyExp, true);
     }
 
     function testEncoded_sub(int aMan, int aExp, int bMan, int bExp) public {
@@ -141,7 +150,7 @@ contract Float128FuzzTest is FloatPythonUtils {
         packedFloat result = Float128.sub(a, b);
         (int rMan, int rExp) = Float128.decode(result);
 
-        checkResults(rMan, rExp, pyMan, pyExp);
+        checkResults(rMan, rExp, pyMan, pyExp, true);
     }
 
     function testStruct_sub(int aMan, int aExp, int bMan, int bExp) public {
@@ -156,7 +165,7 @@ contract Float128FuzzTest is FloatPythonUtils {
         int rExp = result.exponent;
         if (pyMan != 0) assertEq(findNumberOfDigits(uint(rMan < 0 ? rMan * -1 : rMan)), 38, "Solidity result is not normalized");
 
-        checkResults(rMan, rExp, pyMan, pyExp);
+        checkResults(rMan, rExp, pyMan, pyExp, true);
     }
 
     function testEncoded_sqrt(int aMan, int aExp) public {

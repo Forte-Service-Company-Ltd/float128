@@ -99,13 +99,13 @@ Once you have your floating-point numbers in the correct format, you can start u
 
 ## Normalization
 
-Normalization is a vital step to ensure the highest gas efficiency and precision in this library. Normalization in this context means that the number is always expressed using 38 significand digits without leading zeros. Never more, and never less. The way to achieve this is by playing with the exponent.
+Normalization is a vital step to ensure the highest gas efficiency and precision in this library. Normalization in this context means that the number is always expressed using 38 significant digits without leading zeros. Never more, and never less. The way to achieve this is by playing with the exponent.
 
 For example, the number 12345.678 will have only one proper representation in this library: 12345678000000000000000000000000000000 x $10^{-33}$
 
 For this reason, it is important to use the functions `toFloat()` and `toPackedFloat()` since these functions will normalize the numbers automatically.
 
-_Note: It is encouraged to store the numbers as floating-point values, and not to convert them to fixed-point numbers or any other conversion that might truncate the significand digits as this will mean nothing less than loss of precision._
+_Note: It is encouraged to store the numbers as floating-point values, and not to convert them to fixed-point numbers or any other conversion that might truncate the significant digits as this will mean nothing less than loss of precision._
 
 ### Representation of zero
 
