@@ -106,3 +106,7 @@ For example, the number 12345.678 will have only one proper representation in th
 For this reason, it is important to use the functions `toFloat()` and `toPackedFloat()` since these functions will normalize the numbers automatically.
 
 _Note: It is encouraged to store the numbers as floating-point values, and not to convert them to fixed-point numbers or any other conversion that might truncate the significand digits as this will mean nothing less than loss of precision._
+
+### Representation of zero
+
+Zero is a special case in this library. It is the only number which mantissa is represented by all zeros. Its exponent is the smallest possible which is -16384.
