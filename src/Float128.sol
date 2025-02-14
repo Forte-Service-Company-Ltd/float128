@@ -1,6 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.24;
 
+/**
+ * @title Floatig point Library base 10 with 38 digits signed
+ * @dev the library uses 2 exclusive types which means they can carry out operations only with their own type. They can
+ * be easily converted, however, to ensure max flexibility. The reason for 2 different types to exist is that one is
+ * optimized for operational gas efficiency (Float), and the other one is optimized for storage gas efficiency
+ * (packedFloat). Their gas usage is nevertheless very similar in terms of operational consumption.
+ * @author Inspired by a Python proposal by @miguel-ot and refined/implemented in Solidity by @oscarsernarosero @Palmerg4
+ */
+
 type packedFloat is uint256;
 
 struct Float {
