@@ -13,7 +13,7 @@ pragma solidity 0.8.24;
 type packedFloat is uint256;
 
 struct Float {
-    int significand;
+    int mantissa;
     int exponent;
 }
 
@@ -424,53 +424,53 @@ library Float128 {
      */
     function add(Float memory a, Float memory b) internal pure returns (Float memory r) {
         unchecked {
-            bool isSubtraction = (uint(a.significand) >> 255) ^ (uint(b.significand) >> 255) > 0;
+            bool isSubtraction = (uint(a.mantissa) >> 255) ^ (uint(b.mantissa) >> 255) > 0;
             bool sameExponent;
-            // increase precision and adjust significands according to their exponent
+            // increase precision and adjust mantissas according to their exponent
             if (a.exponent > b.exponent) {
                 r.exponent = a.exponent - int(MAX_DIGITS);
                 int adj = r.exponent - b.exponent;
-                if (adj < 0) b.significand *= int(BASE ** uint(adj * -1));
-                else b.significand /= int(BASE ** (uint(adj)));
-                a.significand *= int(BASE ** (MAX_DIGITS));
+                if (adj < 0) b.mantissa *= int(BASE ** uint(adj * -1));
+                else b.mantissa /= int(BASE ** (uint(adj)));
+                a.mantissa *= int(BASE ** (MAX_DIGITS));
             } else if (a.exponent < b.exponent) {
                 r.exponent = b.exponent - int(MAX_DIGITS);
                 int adj = r.exponent - a.exponent;
-                if (adj < 0) a.significand *= int(BASE ** uint(adj * -1));
-                else a.significand /= int(BASE ** (uint(adj)));
-                b.significand *= int(BASE ** (MAX_DIGITS));
+                if (adj < 0) a.mantissa *= int(BASE ** uint(adj * -1));
+                else a.mantissa /= int(BASE ** (uint(adj)));
+                b.mantissa *= int(BASE ** (MAX_DIGITS));
             } else {
                 r.exponent = a.exponent;
                 sameExponent = true;
             }
-            r.significand = a.significand + b.significand;
+            r.mantissa = a.mantissa + b.mantissa;
             // normalization
-            if (r.significand == 0) r.exponent = -256;
+            if (r.mantissa == 0) r.exponent = -256;
             else {
                 if (isSubtraction) {
-                    if (r.significand > int(MAX_38_DIGIT_NUMBER) || r.significand < int(MIN_38_DIGIT_NUMBER)) {
-                        uint digitsMantissa = findNumberOfDigits(r.significand < 0 ? uint(r.significand * -1) : uint(r.significand));
+                    if (r.mantissa > int(MAX_38_DIGIT_NUMBER) || r.mantissa < int(MIN_38_DIGIT_NUMBER)) {
+                        uint digitsMantissa = findNumberOfDigits(r.mantissa < 0 ? uint(r.mantissa * -1) : uint(r.mantissa));
                         int mantissaReducer = int(digitsMantissa - MAX_DIGITS);
                         if (mantissaReducer < 0) {
-                            r.significand *= int(BASE ** uint(mantissaReducer * -1));
+                            r.mantissa *= int(BASE ** uint(mantissaReducer * -1));
                             r.exponent += mantissaReducer;
                         } else {
-                            r.significand /= int(BASE ** uint(mantissaReducer));
+                            r.mantissa /= int(BASE ** uint(mantissaReducer));
                             r.exponent += mantissaReducer;
                         }
                     } else return r;
                 } else {
                     if (sameExponent) {
-                        if (r.significand > int(MAX_38_DIGIT_NUMBER) || r.significand < int(0 - MAX_38_DIGIT_NUMBER)) {
-                            r.significand /= int(BASE);
+                        if (r.mantissa > int(MAX_38_DIGIT_NUMBER) || r.mantissa < int(0 - MAX_38_DIGIT_NUMBER)) {
+                            r.mantissa /= int(BASE);
                             ++r.exponent;
                         }
                     } else {
-                        if (r.significand > int(MAX_76_DIGIT_NUMBER) || r.significand < int(0 - MAX_76_DIGIT_NUMBER)) {
-                            r.significand /= int(BASE ** MAX_DIGITS_PLUS_1);
+                        if (r.mantissa > int(MAX_76_DIGIT_NUMBER) || r.mantissa < int(0 - MAX_76_DIGIT_NUMBER)) {
+                            r.mantissa /= int(BASE ** MAX_DIGITS_PLUS_1);
                             r.exponent += int(MAX_DIGITS_PLUS_1);
                         } else {
-                            r.significand /= int(BASE ** MAX_DIGITS);
+                            r.mantissa /= int(BASE ** MAX_DIGITS);
                             r.exponent += int(MAX_DIGITS);
                         }
                     }
@@ -488,53 +488,53 @@ library Float128 {
      */
     function sub(Float memory a, Float memory b) internal pure returns (Float memory r) {
         unchecked {
-            bool isSubtraction = (uint(a.significand) >> 255) == (uint(b.significand) >> 255);
+            bool isSubtraction = (uint(a.mantissa) >> 255) == (uint(b.mantissa) >> 255);
             bool sameExponent;
-            // increase precision and adjust significands according to their exponent
+            // increase precision and adjust mantissas according to their exponent
             if (a.exponent > b.exponent) {
                 r.exponent = a.exponent - int(MAX_DIGITS);
                 int adj = r.exponent - b.exponent;
-                if (adj < 0) b.significand *= int(BASE ** uint(adj * -1));
-                else b.significand /= int(BASE ** (uint(adj)));
-                a.significand *= int(BASE ** (MAX_DIGITS));
+                if (adj < 0) b.mantissa *= int(BASE ** uint(adj * -1));
+                else b.mantissa /= int(BASE ** (uint(adj)));
+                a.mantissa *= int(BASE ** (MAX_DIGITS));
             } else if (a.exponent < b.exponent) {
                 r.exponent = b.exponent - int(MAX_DIGITS);
                 int adj = r.exponent - a.exponent;
-                if (adj < 0) a.significand *= int(BASE ** uint(adj * -1));
-                else a.significand /= int(BASE ** (uint(adj)));
-                b.significand *= int(BASE ** (MAX_DIGITS));
+                if (adj < 0) a.mantissa *= int(BASE ** uint(adj * -1));
+                else a.mantissa /= int(BASE ** (uint(adj)));
+                b.mantissa *= int(BASE ** (MAX_DIGITS));
             } else {
                 r.exponent = a.exponent;
                 sameExponent = true;
             }
-            r.significand = a.significand - b.significand;
+            r.mantissa = a.mantissa - b.mantissa;
             // normalization
-            if (r.significand == 0) r.exponent = -256;
+            if (r.mantissa == 0) r.exponent = -256;
             else {
                 if (isSubtraction) {
-                    if (r.significand > int(MAX_38_DIGIT_NUMBER) || r.significand < int(MIN_38_DIGIT_NUMBER)) {
-                        uint digitsMantissa = findNumberOfDigits(r.significand < 0 ? uint(r.significand * -1) : uint(r.significand));
+                    if (r.mantissa > int(MAX_38_DIGIT_NUMBER) || r.mantissa < int(MIN_38_DIGIT_NUMBER)) {
+                        uint digitsMantissa = findNumberOfDigits(r.mantissa < 0 ? uint(r.mantissa * -1) : uint(r.mantissa));
                         int mantissaReducer = int(digitsMantissa - MAX_DIGITS);
                         if (mantissaReducer < 0) {
-                            r.significand *= int(BASE ** uint(mantissaReducer * -1));
+                            r.mantissa *= int(BASE ** uint(mantissaReducer * -1));
                             r.exponent += mantissaReducer;
                         } else {
-                            r.significand /= int(BASE ** uint(mantissaReducer));
+                            r.mantissa /= int(BASE ** uint(mantissaReducer));
                             r.exponent += mantissaReducer;
                         }
                     } else return r;
                 } else {
                     if (sameExponent) {
-                        if (r.significand > int(MAX_38_DIGIT_NUMBER) || r.significand < int(0 - MAX_38_DIGIT_NUMBER)) {
-                            r.significand /= int(BASE);
+                        if (r.mantissa > int(MAX_38_DIGIT_NUMBER) || r.mantissa < int(0 - MAX_38_DIGIT_NUMBER)) {
+                            r.mantissa /= int(BASE);
                             ++r.exponent;
                         }
                     } else {
-                        if (r.significand > int(MAX_76_DIGIT_NUMBER) || r.significand < int(0 - MAX_76_DIGIT_NUMBER)) {
-                            r.significand /= int(BASE ** MAX_DIGITS_PLUS_1);
+                        if (r.mantissa > int(MAX_76_DIGIT_NUMBER) || r.mantissa < int(0 - MAX_76_DIGIT_NUMBER)) {
+                            r.mantissa /= int(BASE ** MAX_DIGITS_PLUS_1);
                             r.exponent += int(MAX_DIGITS_PLUS_1);
                         } else {
-                            r.significand /= int(BASE ** MAX_DIGITS);
+                            r.mantissa /= int(BASE ** MAX_DIGITS);
                             r.exponent += int(MAX_DIGITS);
                         }
                     }
@@ -611,8 +611,8 @@ library Float128 {
      * @notice this version of the function uses only the Float type
      */
     function sqrt(Float memory a) internal pure returns (Float memory r) {
-        if (a.significand < 0) revert("float128: square root of negative number");
-        if (a.significand != 0) {
+        if (a.mantissa < 0) revert("float128: square root of negative number");
+        if (a.mantissa != 0) {
             uint s;
             int aExp = a.exponent;
             uint x;
@@ -685,7 +685,7 @@ library Float128 {
      * @dev encodes a pair of signed integer values describing a floating point number into a packedFloat
      * Examples: 1234.567 can be expressed as: 123456 x 10**(-3), or 1234560 x 10**(-4), or 12345600 x 10**(-5), etc.
      * @notice the mantissa can hold a maximum of 38 digits. Any number with more digits will lose precision.
-     * @param mantissa the integer that holds the significand digits (38 digits max)
+     * @param mantissa the integer that holds the mantissa digits (38 digits max)
      * @param exponent the exponent of the floating point number (between -16384 and +16383)
      * @return float the encoded number. This value will ocupy a single 256-bit word and will hold the normalized
      * version of the floating-point number (shifts the exponent enough times to have exactly 38 significant digits)
@@ -726,7 +726,7 @@ library Float128 {
     /**
      * @dev decodes a packedFloat into its mantissa and its exponent
      * @param float the floating-point number expressed as a packedFloat to decode
-     * @return mantissa the 38 significand digits of the floating-point number
+     * @return mantissa the 38 mantissa digits of the floating-point number
      * @return exponent the exponent of the floating-point number
      */
     function decode(packedFloat float) internal pure returns (int mantissa, int exponent) {
@@ -759,9 +759,9 @@ library Float128 {
         uint mantissaMultiplier;
         bool isMantissaNegative;
 
-        if (x.significand == 0) {
+        if (x.mantissa == 0) {
             float.exponent = -128;
-            float.significand = 0;
+            float.mantissa = 0;
         } else {
             assembly {
                 isMantissaNegative := and(mload(x), MANTISSA_SIGN_MASK)
@@ -769,8 +769,8 @@ library Float128 {
                     mstore(x, sub(0, mload(x)))
                 }
             }
-            if (uint(x.significand) > MAX_38_DIGIT_NUMBER || uint(x.significand) < MIN_38_DIGIT_NUMBER) {
-                digitsMantissa = findNumberOfDigits(uint(x.significand));
+            if (uint(x.mantissa) > MAX_38_DIGIT_NUMBER || uint(x.mantissa) < MIN_38_DIGIT_NUMBER) {
+                digitsMantissa = findNumberOfDigits(uint(x.mantissa));
                 assembly {
                     mantissaMultiplier := sub(digitsMantissa, MAX_DIGITS)
                     mstore(add(x, 0x20), add(mload(add(x, 0x20)), mantissaMultiplier))
@@ -796,12 +796,12 @@ library Float128 {
      * @dev packs a pair of signed integer values describing a floating-point number into a Float struct.
      * Examples: 1234.567 can be expressed as: 123456 x 10**(-3), or 1234560 x 10**(-4), or 12345600 x 10**(-5), etc.
      * @notice the mantissa can hold a maximum of 38 digits. Any number with more digits will lose precision.
-     * @param _significand the integer that holds the significand digits (38 digits max)
+     * @param _mantissa the integer that holds the mantissa digits (38 digits max)
      * @param _exponent the exponent of the floating point number (between -16384 and +16383)
      * @return float the normalized version of the floating-point number packed in a Float struct.
      */
-    function toFloat(int _significand, int _exponent) internal pure returns (Float memory float) {
-        float = normalize(Float({significand: _significand, exponent: _exponent}));
+    function toFloat(int _mantissa, int _exponent) internal pure returns (Float memory float) {
+        float = normalize(Float({mantissa: _mantissa, exponent: _exponent}));
     }
 
     /**
@@ -810,7 +810,7 @@ library Float128 {
      * @return float the packed version of Float
      */
     function convertToPackedFloat(Float memory _float) internal pure returns (packedFloat float) {
-        float = toPackedFloat(_float.significand, _float.exponent);
+        float = toPackedFloat(_float.mantissa, _float.exponent);
     }
 
     /**
@@ -819,7 +819,7 @@ library Float128 {
      * @return float the unpacked version of packedFloat
      */
     function convertToUnpackedFloat(packedFloat _float) internal pure returns (Float memory float) {
-        (float.significand, float.exponent) = decode(_float);
+        (float.mantissa, float.exponent) = decode(_float);
     }
 
     /**

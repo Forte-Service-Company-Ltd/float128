@@ -13,8 +13,8 @@ contract GasReport is Test, GasHelpers {
         _primer();
         uint256 gasUsed = 0;
 
-        Float memory A = Float({exponent: -36, significand: int(22345000000000000000000000000000000000)});
-        Float memory B = Float({exponent: -26, significand: int(33678000000000000000000000000000000000)});
+        Float memory A = Float({exponent: -36, mantissa: int(22345000000000000000000000000000000000)});
+        Float memory B = Float({exponent: -26, mantissa: int(33678000000000000000000000000000000000)});
         startMeasuringGas("Gas used - structs");
         Float128.add(A, B);
 
@@ -26,8 +26,8 @@ contract GasReport is Test, GasHelpers {
         _primer();
         uint256 gasUsed = 0;
 
-        Float memory A = Float({exponent: -26, significand: int(22345000000000000000000000000000000000)});
-        Float memory B = Float({exponent: -36, significand: int(33678000000000000000000000000000000000)});
+        Float memory A = Float({exponent: -26, mantissa: int(22345000000000000000000000000000000000)});
+        Float memory B = Float({exponent: -36, mantissa: int(33678000000000000000000000000000000000)});
         startMeasuringGas("Gas used - structs");
         Float128.sub(A, B);
 
@@ -39,8 +39,8 @@ contract GasReport is Test, GasHelpers {
         _primer();
         uint256 gasUsed = 0;
 
-        Float memory A = Float({exponent: -26, significand: int(22345000000000000000000000000000000000)});
-        Float memory B = Float({exponent: -36, significand: int(33678000000000000000000000000000000000)});
+        Float memory A = Float({exponent: -26, mantissa: int(22345000000000000000000000000000000000)});
+        Float memory B = Float({exponent: -36, mantissa: int(33678000000000000000000000000000000000)});
         startMeasuringGas("Gas used - structs");
         Float128.mul(A, B);
 
@@ -52,8 +52,8 @@ contract GasReport is Test, GasHelpers {
         _primer();
         uint256 gasUsed = 0;
 
-        Float memory A = Float({exponent: -36, significand: int(22345000000000000000000000000000000000)});
-        Float memory B = Float({exponent: -36, significand: int(33678000000000000000000000000000000000)});
+        Float memory A = Float({exponent: -36, mantissa: int(22345000000000000000000000000000000000)});
+        Float memory B = Float({exponent: -36, mantissa: int(33678000000000000000000000000000000000)});
         startMeasuringGas("Gas used - structs");
         Float128.div(A, B);
 
@@ -65,7 +65,7 @@ contract GasReport is Test, GasHelpers {
         _primer();
         uint256 gasUsed = 0;
 
-        Float memory A = Float({exponent: -36, significand: int(22345000000000000000000000000000000000)});
+        Float memory A = Float({exponent: -36, mantissa: int(22345000000000000000000000000000000000)});
 
         startMeasuringGas("Gas used - sqrt128");
         Float128.sqrt(A);

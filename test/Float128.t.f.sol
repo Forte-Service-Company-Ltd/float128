@@ -53,7 +53,7 @@ contract Float128FuzzTest is FloatPythonUtils {
 
         Float memory result = Float128.mul(aMan.toFloat(aExp), bMan.toFloat(bExp));
 
-        int rMan = result.significand;
+        int rMan = result.mantissa;
         int rExp = result.exponent;
 
         checkResults(rMan, rExp, pyMan, pyExp);
@@ -84,7 +84,7 @@ contract Float128FuzzTest is FloatPythonUtils {
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
 
         Float memory result = Float128.div(aMan.toFloat(aExp), bMan.toFloat(bExp));
-        int rMan = result.significand;
+        int rMan = result.mantissa;
         int rExp = result.exponent;
 
         checkResults(rMan, rExp, pyMan, pyExp);
@@ -131,7 +131,7 @@ contract Float128FuzzTest is FloatPythonUtils {
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
 
         Float memory result = Float128.add(aMan.toFloat(aExp), bMan.toFloat(bExp));
-        int rMan = result.significand;
+        int rMan = result.mantissa;
         int rExp = result.exponent;
 
         checkResults(rMan, rExp, pyMan, pyExp, true);
@@ -161,7 +161,7 @@ contract Float128FuzzTest is FloatPythonUtils {
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
 
         Float memory result = Float128.sub(aMan.toFloat(aExp), bMan.toFloat(bExp));
-        int rMan = result.significand;
+        int rMan = result.mantissa;
         int rExp = result.exponent;
         if (pyMan != 0) assertEq(findNumberOfDigits(uint(rMan < 0 ? rMan * -1 : rMan)), 38, "Solidity result is not normalized");
 
@@ -195,7 +195,7 @@ contract Float128FuzzTest is FloatPythonUtils {
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
 
         Float memory result = Float128.sqrt(aMan.toFloat(aExp));
-        int rMan = result.significand;
+        int rMan = result.mantissa;
         int rExp = result.exponent;
 
         checkResults(rMan, rExp, pyMan, pyExp);
