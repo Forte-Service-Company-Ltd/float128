@@ -13,7 +13,7 @@ library Float128{
     /************************************************************************************************************
      * Bitmap:                                                                                                  *
      * 255 ... UNUSED ... 138, 137 ... EXPONENT ... 129, MANTISSA_SIGN (128), 127 .. MANTISSA ... 0             *
-     * The exponent is signed using the offset zero to 256. max values: -128 and +127. Plenty for our case      *
+     * The exponent is signed using the offset zero to 256. max values: -256 and +255. Plenty for our case      *
      ************************************************************************************************************/
     uint constant MANTISSA_MASK = 0xffffffffffffffffffffffffffffffff;
     uint constant MANTISSA_SIGN_MASK = 0x100000000000000000000000000000000;
@@ -305,108 +305,116 @@ library Float128{
     }
 
     function add(Float memory a, Float memory b) internal pure returns (Float memory r) {
-        // assembly {
-            
-        //     if gt(mload(add(a, 0x20)), mload(add(b, 0x20))) {
-        //         mstore(add(r, 0x20), mload(add(a, 0x20)))
-        //         mstore(
-        //             b,
-                   
-        //                 div(
-        //                     mload(b),
-        //                     exp(
-        //                         BASE,
-        //                         add(
-        //                             mload(add(a, 0x20)),
-        //                             sub(0,mload(add(b, 0x20)))
-        //                         )
-        //                     )
-        //                 )
-                    
-        //         )
-        //     }
-        //     if gt(mload(add(b, 0x20)), mload(add(a, 0x20))) {
-        //         mstore(add(r, 0x20), mload(add(b, 0x20)))
-        //         mstore(
-        //             a,
-                    
-        //                 div(
-        //                     mload(a),
-        //                     exp(
-        //                         BASE,
-        //                         add(
-        //                             mload(add(b, 0x20)),
-        //                             sub(0,mload(add(a, 0x20)))
-        //                         )
-        //                     )
-        //                 )
-                    
-        //         )
-        //     }
-        //     if eq(mload(add(a, 0x20)), mload(add(b, 0x20))) {
-        //         mstore(add(r, 0x20), mload(add(a, 0x20)))
-        //     }
-
-        //     mstore(r, add(mload(a), mload(b)))
-        //     if gt(r, MAX_38_DIGIT_NUMBER){
-        //         mstore(r, div(r, BASE))
-        //         mstore(add(r, 0x20), add(1, mload(r)))
-        //     }
-        // }
         unchecked{
-            bool isSubtraction = (uint(a.significand) >> 1) ^ (uint(b.significand) >> 1) > 0;
-
+            bool isSubtraction = (uint(a.significand) >> 255) ^ (uint(b.significand) >> 255) > 0;
             bool sameExponent;
+            // increase precision and adjust significands according to their exponent
             if(a.exponent > b.exponent){
-                b.significand /= int(BASE**(uint(a.exponent - b.exponent)));
-                r.exponent = a.exponent;
+                r.exponent = a.exponent - int(MAX_DIGITS);
+                int adj = r.exponent - b.exponent;
+                if(adj < 0) b.significand *= int(BASE**uint(adj * -1));
+                else b.significand /= int(BASE**(uint(adj)));
+                a.significand *= int(BASE**(MAX_DIGITS));
             }else if(a.exponent < b.exponent){
-                a.significand /= int(BASE**(uint(b.exponent - a.exponent)));
-                r.exponent = b.exponent;
-            }else r.exponent = a.exponent;
-
+                r.exponent = b.exponent - int(MAX_DIGITS);
+                int adj = r.exponent - a.exponent;
+                if(adj < 0) a.significand *= int(BASE**uint(adj * -1));
+                else a.significand /= int(BASE**(uint(adj)));
+                b.significand *= int(BASE**(MAX_DIGITS));
+            }else{
+                r.exponent = a.exponent;
+                sameExponent = true;
+            }
             r.significand = a.significand + b.significand;
-            if(uint(r.significand) > MAX_38_DIGIT_NUMBER){
-                ++r.exponent;
-                r.significand /= int(BASE);
+            // normalization
+            if(r.significand == 0) r.exponent = -256;
+            else{
+                if(isSubtraction){
+                    if(r.significand > int(MAX_38_DIGIT_NUMBER) || r.significand < int(MIN_38_DIGIT_NUMBER)){
+                        uint digitsMantissa = findNumberOfDigits(r.significand < 0 ? uint(r.significand * -1) : uint(r.significand));
+                        int mantissaReducer = int(digitsMantissa - MAX_DIGITS);
+                        if(mantissaReducer < 0){
+                            r.significand *= int(BASE**uint(mantissaReducer * -1));
+                            r.exponent += mantissaReducer;
+                        }else{
+                            r.significand /= int(BASE**uint(mantissaReducer));
+                            r.exponent += mantissaReducer;
+                        }
+                    }else return r;
+                }else{
+                    if(sameExponent){
+                         if(r.significand > int(MAX_38_DIGIT_NUMBER) || r.significand < int(0-MAX_38_DIGIT_NUMBER)){
+                            r.significand /= int(BASE);
+                            ++r.exponent;
+                        }
+                    }else{
+                        if(r.significand > int(MAX_76_DIGIT_NUMBER) || r.significand < int(0-MAX_76_DIGIT_NUMBER)){
+                            r.significand /= int(BASE**MAX_DIGITS_PLUS_1);
+                            r.exponent += int(MAX_DIGITS_PLUS_1);
+                        }else{
+                            r.significand /= int(BASE**MAX_DIGITS);
+                            r.exponent += int(MAX_DIGITS);
+                        }
+                    }
+                }
             }
         }
     }
 
     function sub(Float memory a, Float memory b) internal pure returns (Float memory r) {
-        // assembly {
-        //     /// we negate the sign of b to do subtraction instead of addition
-        //     mstore(b, sub(0,mload(add(b, 0x20))))
-        //     /// we perform regular addition 
-        //     if eq(mload(add(a, 0x20)), mload(add(b, 0x20))) {
-        //         mstore(add(r, 0x20), mload(add(a, 0x20)))
-        //         mstore(r, add(mload(a), mload(b)))
-        //     }
-        //     if gt(mload(add(a, 0x20)), mload(add(b, 0x20))) {
-        //         mstore(add(r, 0x20), mload(add(a, 0x20)))
-        //         mstore(r, add(
-        //             mload(a),
-        //             div(mload(b), exp(10, add(mload(add(a, 0x20)), sub(0,mload(add(b, 0x20)))))))
-        //         )
-        //     }
-        //     if gt(mload(add(b, 0x20)), mload(add(a, 0x20))) {
-        //         mstore(add(r, 0x20), mload(add(b, 0x20)))
-        //         mstore(r, add(
-        //             mload(b),
-        //             div(mload(a), exp(10, add(mload(add(b, 0x20)), sub(0,mload(add(a, 0x20)))))))
-        //         )
-        //     }
-        // }
         unchecked{
+            bool isSubtraction = (uint(a.significand) >> 255) == (uint(b.significand) >> 255);
+            bool sameExponent;
+            // increase precision and adjust significands according to their exponent
             if(a.exponent > b.exponent){
-                b.significand /= int(BASE**(uint(a.exponent - b.exponent)));
-                r.exponent = a.exponent;
+                r.exponent = a.exponent - int(MAX_DIGITS);
+                int adj = r.exponent - b.exponent;
+                if(adj < 0) b.significand *= int(BASE**uint(adj * -1));
+                else b.significand /= int(BASE**(uint(adj)));
+                a.significand *= int(BASE**(MAX_DIGITS));
             }else if(a.exponent < b.exponent){
-                a.significand /= int(BASE**(uint(b.exponent - a.exponent)));
-                r.exponent = b.exponent;
-            }else r.exponent = a.exponent;
-
+                r.exponent = b.exponent - int(MAX_DIGITS);
+                int adj = r.exponent - a.exponent;
+                if(adj < 0) a.significand *= int(BASE**uint(adj * -1));
+                else a.significand /= int(BASE**(uint(adj)));
+                b.significand *= int(BASE**(MAX_DIGITS));
+            }else{
+                r.exponent = a.exponent;
+                sameExponent = true;
+            }
             r.significand = a.significand - b.significand;
+            // normalization
+            if(r.significand == 0) r.exponent = -256;
+            else{
+                if(isSubtraction){
+                    if(r.significand > int(MAX_38_DIGIT_NUMBER) || r.significand < int(MIN_38_DIGIT_NUMBER)){
+                        uint digitsMantissa = findNumberOfDigits(r.significand < 0 ? uint(r.significand * -1) : uint(r.significand));
+                        int mantissaReducer = int(digitsMantissa - MAX_DIGITS);
+                        if(mantissaReducer < 0){
+                            r.significand *= int(BASE**uint(mantissaReducer * -1));
+                            r.exponent += mantissaReducer;
+                        }else{
+                            r.significand /= int(BASE**uint(mantissaReducer));
+                            r.exponent += mantissaReducer;
+                        }
+                    }else return r;
+                }else{
+                    if(sameExponent){
+                         if(r.significand > int(MAX_38_DIGIT_NUMBER) || r.significand < int(0-MAX_38_DIGIT_NUMBER)){
+                            r.significand /= int(BASE);
+                            ++r.exponent;
+                        }
+                    }else{
+                        if(r.significand > int(MAX_76_DIGIT_NUMBER) || r.significand < int(0-MAX_76_DIGIT_NUMBER)){
+                            r.significand /= int(BASE**MAX_DIGITS_PLUS_1);
+                            r.exponent += int(MAX_DIGITS_PLUS_1);
+                        }else{
+                            r.significand /= int(BASE**MAX_DIGITS);
+                            r.exponent += int(MAX_DIGITS);
+                        }
+                    }
+                }
+            }
         }
     }
 

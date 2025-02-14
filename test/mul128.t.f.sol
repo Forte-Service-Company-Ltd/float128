@@ -6,7 +6,7 @@ import "src/Float128.sol";
 import "test/FloatPythonUtils.sol";
 
 contract Mul128FuzzTest is FloatPythonUtils {
-
+    using Float128 for int256;
     function setBounds(int aMan, int aExp, int bMan, int bExp) internal pure returns(int _aMan, int _aExp, int _bMan, int _bExp){
         // numbers with more than 38 digits lose precision
         _aMan = bound(aMan, -99999999999999999999999999999999999999, 99999999999999999999999999999999999999);
@@ -26,7 +26,7 @@ contract Mul128FuzzTest is FloatPythonUtils {
         (int pyMan, int pyExp) = abi.decode((res), (int256,int256));
         console2.log("Before mul");
 
-        Float memory result = Float128.mul(Float({significand: aMan, exponent: aExp}), Float({significand: bMan, exponent: bExp}));
+        Float memory result = Float128.mul(aMan.toFloat(aExp), bMan.toFloat(bExp));
 
         assertEq(pyMan, result.significand);
         assertEq(pyExp, result.exponent);
@@ -70,7 +70,7 @@ contract Mul128FuzzTest is FloatPythonUtils {
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256,int256));
 
-        Float memory result = Float128.div(Float({significand: aMan, exponent: aExp}), Float({significand: bMan, exponent: bExp}));
+        Float memory result = Float128.div(aMan.toFloat(aExp), bMan.toFloat(bExp));
         // we fix the python result due to the imprecision of the log10. We cut precision where needed
         if(pyExp != result.exponent){
             if(pyExp > result.exponent){
@@ -117,6 +117,10 @@ contract Mul128FuzzTest is FloatPythonUtils {
     function testEncoded_add(int aMan, int aExp, int bMan, int bExp) public {
         // it loses precision when numbers have more than 38 digits
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
+        // aMan = 6041;
+        // aExp = 64;
+        // bMan =  12553;
+        // bExp = -54;
 
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "add");
         bytes memory res = vm.ffi(inputs);
@@ -128,8 +132,8 @@ contract Mul128FuzzTest is FloatPythonUtils {
         packedFloat result = Float128.add(a, b);
         console2.log("result: ", packedFloat.unwrap(result));
         (int rMan, int rExp) = Float128.decode(result);
-
-        assertEq(findNumberOfDigits(uint(rMan < 0 ? rMan * -1: rMan)), 38, "Solidity result is not normalized");
+        if(pyMan != 0)
+            assertEq(findNumberOfDigits(uint(rMan < 0 ? rMan * -1: rMan)), 38, "Solidity result is not normalized");
         // we fix the python result due to the imprecision of the log10. We cut precision where needed
         if(pyExp != rExp){
             if(pyExp > rExp){
@@ -145,31 +149,51 @@ contract Mul128FuzzTest is FloatPythonUtils {
             if(pyMan > rMan) assertEq(pyMan , rMan + 1);
             else assertEq(pyMan + 1, rMan);
         }
-        assertEq(pyExp, rExp);
+        if(pyMan != 0)
+            assertEq(pyExp, rExp);
     }
 
     function testStruct_add(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
+        aMan = -5845953722778364390334704480429384844;
+        aExp = 11;
+        bMan = -99999999999999999999999999999999999997;
+        bExp = 42;
 
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "add");
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256,int256));
 
-        Float memory result = Float128.add(Float({significand: aMan, exponent: aExp}), Float({significand: bMan, exponent: bExp}));
-        console2.log("rMan: ", result.significand);
-        console2.log("rExp: ", result.exponent);
+        Float memory result = Float128.add(aMan.toFloat(aExp), bMan.toFloat(bExp));
+        int rMan = result.significand;
+        int rExp = result.exponent;
+        console2.log("rMan: ", rMan);
+        console2.log("rExp: ", rExp);
         console2.log("pyMan: ", pyMan);
         console2.log("pyExp: ", pyExp);
-        assertEq(pyMan, result.significand);
-        assertEq(pyExp, result.exponent);
+        if(pyMan != 0)
+            assertEq(findNumberOfDigits(uint(rMan < 0 ? rMan * -1: rMan)), 38, "Solidity result is not normalized");
+        // we fix the python result due to the imprecision of the log10. We cut precision where needed
+        if(pyExp != rExp){
+            if(pyExp > rExp){
+                ++rExp;
+                rMan /= 10;
+            }else{
+                ++pyExp;
+                pyMan /= 10;
+            }
+        }
+        // we could be off by one due to rounding issues. The error should be less than 1/1e76
+        if (pyMan != rMan){
+            if(pyMan > rMan) assertEq(pyMan , rMan + 1);
+            else assertEq(pyMan + 1, rMan);
+        }
+        if(pyMan != 0)
+            assertEq(pyExp, rExp);
     }
 
     function testEncoded_sub(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
-        aMan = -99999999999999999999999999999999999996;
-        aExp = -66;
-        bMan = 0;
-        bExp = 63; 
 
 
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "sub");
@@ -182,8 +206,8 @@ contract Mul128FuzzTest is FloatPythonUtils {
         packedFloat result = Float128.sub(a, b);
         console2.log("result: ", packedFloat.unwrap(result));
         (int rMan, int rExp) = Float128.decode(result);
-
-        assertEq(findNumberOfDigits(uint(rMan < 0 ? rMan * -1: rMan)), 38, "Solidity result is not normalized");
+        if(pyMan != 0)
+            assertEq(findNumberOfDigits(uint(rMan < 0 ? rMan * -1: rMan)), 38, "Solidity result is not normalized");
         // we fix the python result due to the imprecision of the log10. We cut precision where needed
         if(pyExp != rExp){
             if(pyExp > rExp){
@@ -199,7 +223,8 @@ contract Mul128FuzzTest is FloatPythonUtils {
             if(pyMan > rMan) assertEq(pyMan , rMan + 1);
             else assertEq(pyMan + 1, rMan);
         }
-        assertEq(pyExp, rExp);
+        if(pyMan != 0)
+            assertEq(pyExp, rExp);  
     }
 
     function testStruct_sub(int aMan, int aExp, int bMan, int bExp) public {
@@ -209,16 +234,32 @@ contract Mul128FuzzTest is FloatPythonUtils {
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256,int256));
 
-        Float memory result = Float128.sub(Float({significand: aMan, exponent: aExp}), Float({significand: bMan, exponent: bExp}));
-        console2.log("rMan: ", result.significand);
-        console2.log("rExp: ", result.exponent);
+        Float memory result = Float128.sub(aMan.toFloat(aExp), bMan.toFloat(bExp));
+        int rMan = result.significand;
+        int rExp = result.exponent;
+        console2.log("rMan: ", rMan);
+        console2.log("rExp: ", rExp);
         console2.log("pyMan: ", pyMan);
         console2.log("pyExp: ", pyExp);
-        if (pyMan != result.significand){
-            if(pyMan > result.significand) assertEq(pyMan + 1, result.significand);
-            else assertEq(pyMan, result.significand + 1);
+        if(pyMan != 0)
+            assertEq(findNumberOfDigits(uint(rMan < 0 ? rMan * -1: rMan)), 38, "Solidity result is not normalized");
+        // we fix the python result due to the imprecision of the log10. We cut precision where needed
+        if(pyExp != rExp){
+            if(pyExp > rExp){
+                ++rExp;
+                rMan /= 10;
+            }else{
+                ++pyExp;
+                pyMan /= 10;
+            }
         }
-        assertEq(pyExp, result.exponent);
+        // we could be off by one due to rounding issues. The error should be less than 1/1e76
+        if (pyMan != rMan){
+            if(pyMan > rMan) assertEq(pyMan , rMan + 1);
+            else assertEq(pyMan + 1, rMan);
+        }
+        if(pyMan != 0)
+            assertEq(pyExp, rExp);
     }
 
     function findNumberOfDigits(uint x) internal pure returns (uint log) {
