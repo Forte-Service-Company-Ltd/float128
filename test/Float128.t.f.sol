@@ -17,23 +17,14 @@ contract Float128FuzzTest is FloatPythonUtils {
     function testStruct_mul(int aMan, int aExp, int bMan, int bExp) public  {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
 
-        console2.log("aMan: ", aMan);
-        console2.log("aExp: ", aExp);
-        console2.log("bMan: ", bMan);
-        console2.log("bExp: ", bExp);
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "mul");
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256,int256));
-        console2.log("Before mul");
 
         Float memory result = Float128.mul(aMan.toFloat(aExp), bMan.toFloat(bExp));
 
         int rMan = result.significand;
         int rExp = result.exponent;
-        console2.log("rMan: ", rMan);
-        console2.log("rExp: ", rExp);
-        console2.log("pyMan: ", pyMan);
-        console2.log("pyExp: ", pyExp);
         if(pyMan != 0)
             assertEq(findNumberOfDigits(uint(rMan < 0 ? rMan * -1: rMan)), 38, "Solidity result is not normalized");
         // we fix the python result due to the imprecision of the log10. We cut precision where needed
@@ -61,7 +52,6 @@ contract Float128FuzzTest is FloatPythonUtils {
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "mul");
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256,int256));
-        console2.log("Before mul");
 
         packedFloat a = Float128.toPackedFloat(aMan, aExp);
         packedFloat b = Float128.toPackedFloat(bMan, bExp);
@@ -96,10 +86,6 @@ contract Float128FuzzTest is FloatPythonUtils {
         Float memory result = Float128.div(aMan.toFloat(aExp), bMan.toFloat(bExp));
         int rMan = result.significand;
         int rExp = result.exponent;
-        console2.log("rMan: ", rMan);
-        console2.log("rExp: ", rExp);
-        console2.log("pyMan: ", pyMan);
-        console2.log("pyExp: ", pyExp);
         if(pyMan != 0)
             assertEq(findNumberOfDigits(uint(rMan < 0 ? rMan * -1: rMan)), 38, "Solidity result is not normalized");
         // we fix the python result due to the imprecision of the log10. We cut precision where needed
@@ -133,7 +119,6 @@ contract Float128FuzzTest is FloatPythonUtils {
         packedFloat b = Float128.toPackedFloat(bMan, bExp);
 
         packedFloat result = Float128.div(a, b);
-        console2.log("result: ", packedFloat.unwrap(result));
         (int rMan, int rExp) = Float128.decode(result);
 
         if(pyMan != 0)
@@ -158,12 +143,7 @@ contract Float128FuzzTest is FloatPythonUtils {
     }
 
     function testEncoded_add(int aMan, int aExp, int bMan, int bExp) public {
-        // it loses precision when numbers have more than 38 digits
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
-        // aMan = 6041;
-        // aExp = 64;
-        // bMan =  12553;
-        // bExp = -54;
 
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "add");
         bytes memory res = vm.ffi(inputs);
@@ -173,7 +153,6 @@ contract Float128FuzzTest is FloatPythonUtils {
         packedFloat b = Float128.toPackedFloat(bMan, bExp);
 
         packedFloat result = Float128.add(a, b);
-        console2.log("result: ", packedFloat.unwrap(result));
         (int rMan, int rExp) = Float128.decode(result);
         if(pyMan != 0)
             assertEq(findNumberOfDigits(uint(rMan < 0 ? rMan * -1: rMan)), 38, "Solidity result is not normalized");
@@ -198,10 +177,6 @@ contract Float128FuzzTest is FloatPythonUtils {
 
     function testStruct_add(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
-        aMan = -5845953722778364390334704480429384844;
-        aExp = 11;
-        bMan = -99999999999999999999999999999999999997;
-        bExp = 42;
 
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "add");
         bytes memory res = vm.ffi(inputs);
@@ -210,10 +185,6 @@ contract Float128FuzzTest is FloatPythonUtils {
         Float memory result = Float128.add(aMan.toFloat(aExp), bMan.toFloat(bExp));
         int rMan = result.significand;
         int rExp = result.exponent;
-        console2.log("rMan: ", rMan);
-        console2.log("rExp: ", rExp);
-        console2.log("pyMan: ", pyMan);
-        console2.log("pyExp: ", pyExp);
         if(pyMan != 0)
             assertEq(findNumberOfDigits(uint(rMan < 0 ? rMan * -1: rMan)), 38, "Solidity result is not normalized");
         // we fix the python result due to the imprecision of the log10. We cut precision where needed
@@ -238,7 +209,6 @@ contract Float128FuzzTest is FloatPythonUtils {
     function testEncoded_sub(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
 
-
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "sub");
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256,int256));
@@ -247,7 +217,6 @@ contract Float128FuzzTest is FloatPythonUtils {
         packedFloat b = Float128.toPackedFloat(bMan, bExp);
 
         packedFloat result = Float128.sub(a, b);
-        console2.log("result: ", packedFloat.unwrap(result));
         (int rMan, int rExp) = Float128.decode(result);
         if(pyMan != 0)
             assertEq(findNumberOfDigits(uint(rMan < 0 ? rMan * -1: rMan)), 38, "Solidity result is not normalized");
@@ -280,10 +249,6 @@ contract Float128FuzzTest is FloatPythonUtils {
         Float memory result = Float128.sub(aMan.toFloat(aExp), bMan.toFloat(bExp));
         int rMan = result.significand;
         int rExp = result.exponent;
-        console2.log("rMan: ", rMan);
-        console2.log("rExp: ", rExp);
-        console2.log("pyMan: ", pyMan);
-        console2.log("pyExp: ", pyExp);
         if(pyMan != 0)
             assertEq(findNumberOfDigits(uint(rMan < 0 ? rMan * -1: rMan)), 38, "Solidity result is not normalized");
         // we fix the python result due to the imprecision of the log10. We cut precision where needed
@@ -317,13 +282,8 @@ contract Float128FuzzTest is FloatPythonUtils {
         packedFloat a = Float128.toPackedFloat(aMan, aExp);
 
         packedFloat result = Float128.sqrt(a);
-        console2.log("result: ", packedFloat.unwrap(result));
         (int rMan, int rExp) = Float128.decode(result);
 
-        console2.log("rMan: ", rMan);
-        console2.log("rExp: ", rExp);
-        console2.log("pyMan: ", pyMan);
-        console2.log("pyExp: ", pyExp);
         if(pyMan != 0)
             assertEq(findNumberOfDigits(uint(rMan < 0 ? rMan * -1: rMan)), 38, "Solidity result is not normalized");
         // we fix the python result due to the imprecision of the log10. We cut precision where needed
@@ -358,10 +318,6 @@ contract Float128FuzzTest is FloatPythonUtils {
         int rMan = result.significand;
         int rExp = result.exponent;
 
-        console2.log("rMan: ", rMan);
-        console2.log("rExp: ", rExp);
-        console2.log("pyMan: ", pyMan);
-        console2.log("pyExp: ", pyExp);
         if(pyMan != 0)
             assertEq(findNumberOfDigits(uint(rMan < 0 ? rMan * -1: rMan)), 38, "Solidity result is not normalized");
         // we fix the python result due to the imprecision of the log10. We cut precision where needed
