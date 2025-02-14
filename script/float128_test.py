@@ -18,7 +18,6 @@ def calculate_float_mul(args):
     a = Decimal(aMan * base**aExp)
     b = Decimal(bMan * base**bExp)
 
-    isNegative = False
     if(operation == "mul"): 
         result_float = a * b
     elif(operation == "div"):
@@ -31,15 +30,12 @@ def calculate_float_mul(args):
         result_float = a.sqrt()
     
     log_10 = 0 if result_float == 0 else Decimal(abs(result_float)).log10()
-    # print(result_float)
     result_digits = int(log_10) + 1
     if (result_digits < 0): result_digits -= 1
     result_exp = Decimal(result_digits - max_digits)
     result_man = int(result_float*10**(-result_exp))
 
     return result_man, int(result_exp)
-
-
 
 
 def parse_args():

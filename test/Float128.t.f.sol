@@ -5,7 +5,7 @@ import "forge-std/console2.sol";
 import "src/Float128.sol";
 import "test/FloatPythonUtils.sol";
 
-contract Mul128FuzzTest is FloatPythonUtils {
+contract Float128FuzzTest is FloatPythonUtils {
     using Float128 for int256;
     function setBounds(int aMan, int aExp, int bMan, int bExp) internal pure returns(int _aMan, int _aExp, int _bMan, int _bExp){
         // numbers with more than 38 digits lose precision

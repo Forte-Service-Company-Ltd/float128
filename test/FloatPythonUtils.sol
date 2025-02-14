@@ -13,7 +13,7 @@ contract FloatPythonUtils is Test {
     ) internal pure returns (string[] memory) {
         string[] memory inputs = new string[](7);
         inputs[0] = "python3";
-        inputs[1] = "script/mul.py";
+        inputs[1] = "script/float128_test.py";
         inputs[2] = vm.toString(aMan);
         inputs[3] = vm.toString(aExp);
         inputs[4] = vm.toString(bMan);
