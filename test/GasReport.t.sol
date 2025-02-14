@@ -13,14 +13,8 @@ contract GasReport is Test, GasHelpers {
         _primer();
         uint256 gasUsed = 0;
 
-        Float memory A = Float({
-            exponent: -36,
-            significand: int(22345000000000000000000000000000000000)
-        });
-        Float memory B = Float({
-            exponent: -26,
-            significand: int(33678000000000000000000000000000000000)
-        });
+        Float memory A = Float({exponent: -36, significand: int(22345000000000000000000000000000000000)});
+        Float memory B = Float({exponent: -26, significand: int(33678000000000000000000000000000000000)});
         startMeasuringGas("Gas used - structs");
         Float128.add(A, B);
 
@@ -32,14 +26,8 @@ contract GasReport is Test, GasHelpers {
         _primer();
         uint256 gasUsed = 0;
 
-        Float memory A = Float({
-            exponent: -26,
-            significand: int(22345000000000000000000000000000000000)
-        });
-        Float memory B = Float({
-            exponent: -36,
-            significand: int(33678000000000000000000000000000000000)
-        });
+        Float memory A = Float({exponent: -26, significand: int(22345000000000000000000000000000000000)});
+        Float memory B = Float({exponent: -36, significand: int(33678000000000000000000000000000000000)});
         startMeasuringGas("Gas used - structs");
         Float128.sub(A, B);
 
@@ -51,14 +39,8 @@ contract GasReport is Test, GasHelpers {
         _primer();
         uint256 gasUsed = 0;
 
-        Float memory A = Float({
-            exponent: -26,
-            significand: int(22345000000000000000000000000000000000)
-        });
-        Float memory B = Float({
-            exponent: -36,
-            significand: int(33678000000000000000000000000000000000)
-        });
+        Float memory A = Float({exponent: -26, significand: int(22345000000000000000000000000000000000)});
+        Float memory B = Float({exponent: -36, significand: int(33678000000000000000000000000000000000)});
         startMeasuringGas("Gas used - structs");
         Float128.mul(A, B);
 
@@ -70,14 +52,8 @@ contract GasReport is Test, GasHelpers {
         _primer();
         uint256 gasUsed = 0;
 
-        Float memory A = Float({
-            exponent: -36,
-            significand: int(22345000000000000000000000000000000000)
-        });
-        Float memory B = Float({
-            exponent: -36,
-            significand: int(33678000000000000000000000000000000000)
-        });
+        Float memory A = Float({exponent: -36, significand: int(22345000000000000000000000000000000000)});
+        Float memory B = Float({exponent: -36, significand: int(33678000000000000000000000000000000000)});
         startMeasuringGas("Gas used - structs");
         Float128.div(A, B);
 
@@ -89,10 +65,7 @@ contract GasReport is Test, GasHelpers {
         _primer();
         uint256 gasUsed = 0;
 
-        Float memory A = Float({
-            exponent: -36,
-            significand: int(22345000000000000000000000000000000000)
-        });
+        Float memory A = Float({exponent: -36, significand: int(22345000000000000000000000000000000000)});
 
         startMeasuringGas("Gas used - sqrt128");
         Float128.sqrt(A);
@@ -105,16 +78,9 @@ contract GasReport is Test, GasHelpers {
         _primer();
         uint256 gasUsed = 0;
 
-        packedFloat a = Float128.toPackedFloat(
-            22345000000000000000000000000000000000,
-            -26
-        );
-        packedFloat b = Float128.toPackedFloat(
-            33678000000000000000000000000000000000,
-            -36
-        );
+        packedFloat a = Float128.toPackedFloat(22345000000000000000000000000000000000, -26);
+        packedFloat b = Float128.toPackedFloat(33678000000000000000000000000000000000, -36);
 
-        
         // packedFloat a = packedFloat.wrap(_a);
         // packedFloat b = packedFloat.wrap(_b);
 
@@ -140,14 +106,8 @@ contract GasReport is Test, GasHelpers {
         _primer();
         uint256 gasUsed = 0;
 
-        packedFloat a = Float128.toPackedFloat(
-            22345000000000000000000000000000000000,
-            -26
-        );
-        packedFloat b = Float128.toPackedFloat(
-            33678000000000000000000000000000000000,
-            -36
-        );
+        packedFloat a = Float128.toPackedFloat(22345000000000000000000000000000000000, -26);
+        packedFloat b = Float128.toPackedFloat(33678000000000000000000000000000000000, -36);
 
         startMeasuringGas("Gas used - mul128");
         Float128.mul(a, b);
@@ -160,14 +120,8 @@ contract GasReport is Test, GasHelpers {
         _primer();
         uint256 gasUsed = 0;
 
-        packedFloat a = Float128.toPackedFloat(
-            22345000000000000000000000000000000000,
-            -26
-        );
-        packedFloat b = Float128.toPackedFloat(
-            33678000000000000000000000000000000000,
-            -36
-        );
+        packedFloat a = Float128.toPackedFloat(22345000000000000000000000000000000000, -26);
+        packedFloat b = Float128.toPackedFloat(33678000000000000000000000000000000000, -36);
 
         startMeasuringGas("Gas used - div128");
         Float128.div(a, b);
@@ -180,14 +134,8 @@ contract GasReport is Test, GasHelpers {
         _primer();
         uint256 gasUsed = 0;
 
-        packedFloat a = Float128.toPackedFloat(
-            22345000000000000000000000000000000000,
-            -26
-        );
-        packedFloat b = Float128.toPackedFloat(
-            33678000000000000000000000000000000000,
-            -36
-        );
+        packedFloat a = Float128.toPackedFloat(22345000000000000000000000000000000000, -26);
+        packedFloat b = Float128.toPackedFloat(33678000000000000000000000000000000000, -36);
 
         startMeasuringGas("Gas used - sub128");
         Float128.sub(a, b);
@@ -200,14 +148,8 @@ contract GasReport is Test, GasHelpers {
         _primer();
         uint256 gasUsed = 0;
 
-        packedFloat a = Float128.toPackedFloat(
-            22345000000000000000000000000000000000,
-            -26
-        );
-        packedFloat b = Float128.toPackedFloat(
-            33678000000000000000000000000000000000,
-            -36
-        );
+        packedFloat a = Float128.toPackedFloat(22345000000000000000000000000000000000, -26);
+        packedFloat b = Float128.toPackedFloat(33678000000000000000000000000000000000, -36);
 
         startMeasuringGas("Gas used - add128");
         Float128.add(a, b);
@@ -220,10 +162,7 @@ contract GasReport is Test, GasHelpers {
         _primer();
         uint256 gasUsed = 0;
 
-        packedFloat a = Float128.toPackedFloat(
-            22345000000000000000000000000000000000,
-            -26
-        );
+        packedFloat a = Float128.toPackedFloat(22345000000000000000000000000000000000, -26);
 
         startMeasuringGas("Gas used - sqrt128");
         Float128.sqrt(a);

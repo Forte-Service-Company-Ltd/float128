@@ -8,12 +8,12 @@ struct Float {
     int exponent;
 }
 
-library Float128{
-    /************************************************************************************************************
-     * Packeded Float Bitmap:                                                                                   *
-     * 255 ... UNUSED ... 144, 143 ... EXPONENT ... 129, MANTISSA_SIGN (128), 127 .. MANTISSA ... 0             *
-     * The exponent is signed using the offset zero to 16383. max values: -16384 and +16383.                    *
-     ************************************************************************************************************/
+library Float128 {
+    /*****************************************************************************************************************
+     *      Packeded Float Bitmap:                                                                                   *
+     *      255 ... UNUSED ... 144, 143 ... EXPONENT ... 129, MANTISSA_SIGN (128), 127 .. MANTISSA ... 0             *
+     *      The exponent is signed using the offset zero to 16383. max values: -16384 and +16383.                    *
+     ****************************************************************************************************************/
     uint constant MANTISSA_MASK = 0xffffffffffffffffffffffffffffffff;
     uint constant MANTISSA_SIGN_MASK = 0x100000000000000000000000000000000;
     uint constant EXPONENT_MASK = 0xfffffffffffffffffffffffffffffffe00000000000000000000000000000000;
@@ -52,10 +52,10 @@ library Float128{
                 r := sub(aExp, shl(EXPONENT_BIT, MAX_DIGITS))
                 let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, bExp))
                 let neg := and(TOW_COMPLEMENT_SIGN_MASK, adj)
-                if neg{
+                if neg {
                     bMan := mul(bMan, exp(BASE, sub(0, adj)))
                 }
-                if iszero(neg){
+                if iszero(neg) {
                     bMan := div(bMan, exp(BASE, adj))
                 }
                 aMan := mul(aMan, exp(BASE, MAX_DIGITS))
@@ -64,10 +64,10 @@ library Float128{
                 r := sub(bExp, shl(EXPONENT_BIT, MAX_DIGITS))
                 let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, aExp))
                 let neg := and(TOW_COMPLEMENT_SIGN_MASK, adj)
-                if neg{
+                if neg {
                     aMan := mul(aMan, exp(BASE, sub(0, adj)))
                 }
-                if iszero(neg){
+                if iszero(neg) {
                     aMan := div(aMan, exp(BASE, adj))
                 }
                 bMan := mul(bMan, exp(BASE, MAX_DIGITS))
@@ -78,61 +78,61 @@ library Float128{
             }
             // we use complements 2 for mantissa sign
             if and(a, MANTISSA_SIGN_MASK) {
-                aMan := sub(0,aMan)
+                aMan := sub(0, aMan)
             }
             if and(b, MANTISSA_SIGN_MASK) {
-                bMan := sub(0,bMan)
+                bMan := sub(0, bMan)
             }
             addition := add(aMan, bMan)
             isSubtraction := xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK))
 
             if and(TOW_COMPLEMENT_SIGN_MASK, addition) {
                 r := or(r, MANTISSA_SIGN_MASK) // assign the negative sign
-                addition := sub(0,addition) // convert back from 2's complement
+                addition := sub(0, addition) // convert back from 2's complement
             }
         }
-        if( addition == 0){
-            assembly{
+        if (addition == 0) {
+            assembly {
                 r := 0
             }
-        }else{
-            if(isSubtraction){
-                if(addition > MAX_38_DIGIT_NUMBER || addition < MIN_38_DIGIT_NUMBER){
+        } else {
+            if (isSubtraction) {
+                if (addition > MAX_38_DIGIT_NUMBER || addition < MIN_38_DIGIT_NUMBER) {
                     uint digitsMantissa = findNumberOfDigits(addition);
-                    assembly{
+                    assembly {
                         let mantissaReducer := sub(digitsMantissa, MAX_DIGITS)
                         let negativeReducer := and(TOW_COMPLEMENT_SIGN_MASK, mantissaReducer)
-                        if negativeReducer{
-                            addition := mul(addition,exp(BASE, sub(0, mantissaReducer))) 
+                        if negativeReducer {
+                            addition := mul(addition, exp(BASE, sub(0, mantissaReducer)))
                             r := sub(r, shl(EXPONENT_BIT, sub(0, mantissaReducer)))
                         }
-                        if iszero(negativeReducer){
-                            addition := div(addition,exp(BASE, mantissaReducer))
+                        if iszero(negativeReducer) {
+                            addition := div(addition, exp(BASE, mantissaReducer))
                             r := add(r, shl(EXPONENT_BIT, mantissaReducer))
                         }
                         r := or(r, addition)
                     }
-                }else{
-                    assembly{
+                } else {
+                    assembly {
                         r := or(r, addition)
                     }
                 }
-            }else{
-                assembly{
-                    if iszero(sameExponent){
+            } else {
+                assembly {
+                    if iszero(sameExponent) {
                         let is77digit := gt(addition, MAX_76_DIGIT_NUMBER)
-                        if is77digit{
-                            addition := div(addition,exp(BASE, MAX_DIGITS_PLUS_1))
+                        if is77digit {
+                            addition := div(addition, exp(BASE, MAX_DIGITS_PLUS_1))
                             r := add(r, shl(EXPONENT_BIT, MAX_DIGITS_PLUS_1))
                         }
-                        if iszero(is77digit){
-                            addition := div(addition,exp(BASE, MAX_DIGITS))
+                        if iszero(is77digit) {
+                            addition := div(addition, exp(BASE, MAX_DIGITS))
                             r := add(r, shl(EXPONENT_BIT, MAX_DIGITS))
                         }
                     }
-                    if sameExponent{
-                        if gt(addition, MAX_38_DIGIT_NUMBER){
-                            addition := div(addition,BASE)
+                    if sameExponent {
+                        if gt(addition, MAX_38_DIGIT_NUMBER) {
+                            addition := div(addition, BASE)
                             r := add(r, shl(EXPONENT_BIT, 1))
                         }
                     }
@@ -164,10 +164,10 @@ library Float128{
                 r := sub(aExp, shl(EXPONENT_BIT, MAX_DIGITS))
                 let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, bExp))
                 let neg := and(TOW_COMPLEMENT_SIGN_MASK, adj)
-                if neg{
+                if neg {
                     bMan := mul(bMan, exp(BASE, sub(0, adj)))
                 }
-                if iszero(neg){
+                if iszero(neg) {
                     bMan := div(bMan, exp(BASE, adj))
                 }
                 aMan := mul(aMan, exp(BASE, MAX_DIGITS))
@@ -176,10 +176,10 @@ library Float128{
                 r := sub(bExp, shl(EXPONENT_BIT, MAX_DIGITS))
                 let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, aExp))
                 let neg := and(TOW_COMPLEMENT_SIGN_MASK, adj)
-                if neg{
+                if neg {
                     aMan := mul(aMan, exp(BASE, sub(0, adj)))
                 }
-                if iszero(neg){
+                if iszero(neg) {
                     aMan := div(aMan, exp(BASE, adj))
                 }
                 bMan := mul(bMan, exp(BASE, MAX_DIGITS))
@@ -190,61 +190,61 @@ library Float128{
             }
             // we use complements 2 for mantissa sign
             if and(a, MANTISSA_SIGN_MASK) {
-                aMan := sub(0,aMan)
+                aMan := sub(0, aMan)
             }
             if iszero(and(b, MANTISSA_SIGN_MASK)) {
-                bMan := sub(0,bMan)
+                bMan := sub(0, bMan)
             }
             addition := add(aMan, bMan)
             isSubtraction := eq(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK))
 
             if and(TOW_COMPLEMENT_SIGN_MASK, addition) {
                 r := or(r, MANTISSA_SIGN_MASK) // assign the negative sign
-                addition := sub(0,addition) // convert back from 2's complement
+                addition := sub(0, addition) // convert back from 2's complement
             }
         }
-        if( addition == 0){
-            assembly{
+        if (addition == 0) {
+            assembly {
                 r := 0
             }
-        }else{
-            if(isSubtraction){
-                if(addition > MAX_38_DIGIT_NUMBER || addition < MIN_38_DIGIT_NUMBER){
+        } else {
+            if (isSubtraction) {
+                if (addition > MAX_38_DIGIT_NUMBER || addition < MIN_38_DIGIT_NUMBER) {
                     uint digitsMantissa = findNumberOfDigits(addition);
-                    assembly{
+                    assembly {
                         let mantissaReducer := sub(digitsMantissa, MAX_DIGITS)
                         let negativeReducer := and(TOW_COMPLEMENT_SIGN_MASK, mantissaReducer)
-                        if negativeReducer{
-                            addition := mul(addition,exp(BASE, sub(0, mantissaReducer))) 
+                        if negativeReducer {
+                            addition := mul(addition, exp(BASE, sub(0, mantissaReducer)))
                             r := sub(r, shl(EXPONENT_BIT, sub(0, mantissaReducer)))
                         }
-                        if iszero(negativeReducer){
-                            addition := div(addition,exp(BASE, mantissaReducer))
+                        if iszero(negativeReducer) {
+                            addition := div(addition, exp(BASE, mantissaReducer))
                             r := add(r, shl(EXPONENT_BIT, mantissaReducer))
                         }
                         r := or(r, addition)
                     }
-                }else{
-                    assembly{
+                } else {
+                    assembly {
                         r := or(r, addition)
                     }
                 }
-            }else{
-                assembly{
-                    if iszero(sameExponent){
+            } else {
+                assembly {
+                    if iszero(sameExponent) {
                         let is77digit := gt(addition, MAX_76_DIGIT_NUMBER)
-                        if is77digit{
-                            addition := div(addition,exp(BASE, MAX_DIGITS_PLUS_1))
+                        if is77digit {
+                            addition := div(addition, exp(BASE, MAX_DIGITS_PLUS_1))
                             r := add(r, shl(EXPONENT_BIT, MAX_DIGITS_PLUS_1))
                         }
-                        if iszero(is77digit){
-                            addition := div(addition,exp(BASE, MAX_DIGITS))
+                        if iszero(is77digit) {
+                            addition := div(addition, exp(BASE, MAX_DIGITS))
                             r := add(r, shl(EXPONENT_BIT, MAX_DIGITS))
                         }
                     }
-                    if sameExponent{
-                        if gt(addition, MAX_38_DIGIT_NUMBER){
-                            addition := div(addition,BASE)
+                    if sameExponent {
+                        if gt(addition, MAX_38_DIGIT_NUMBER) {
+                            addition := div(addition, BASE)
                             r := add(r, shl(EXPONENT_BIT, 1))
                         }
                     }
@@ -266,13 +266,13 @@ library Float128{
         uint rExp;
         assembly {
             // if any of the elements is zero then the result will be zero
-            if iszero(or(iszero(a), iszero(b))){
+            if iszero(or(iszero(a), iszero(b))) {
                 // we extract the exponent and mantissas for both
                 let aExp := and(a, EXPONENT_MASK)
                 let bExp := and(b, EXPONENT_MASK)
                 let aMan := and(a, MANTISSA_MASK)
                 let bMan := and(b, MANTISSA_MASK)
-        
+
                 rMan := mul(aMan, bMan)
                 rExp := sub(add(shr(EXPONENT_BIT, aExp), shr(EXPONENT_BIT, bExp)), ZERO_OFFSET)
                 // multiplication between 2 numbers with k digits can result in a number between 2*k - 1 and 2*k digits
@@ -287,7 +287,7 @@ library Float128{
                     rMan := div(rMan, exp(BASE, MAX_DIGITS_MINUS_1))
                     rExp := add(rExp, MAX_DIGITS_MINUS_1)
                 }
-                r :=  or(xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK)),or(rMan,shl(EXPONENT_BIT, rExp)))
+                r := or(xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK)), or(rMan, shl(EXPONENT_BIT, rExp)))
             }
         }
     }
@@ -299,22 +299,22 @@ library Float128{
      * @return r the result of a / b
      * @notice this version of the function uses only the packedFloat type
      */
-    function div(packedFloat a, packedFloat b) internal pure returns(packedFloat r){
-        assembly{
+    function div(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
+        assembly {
             // if a is zero then the result will be zero
-            if gt(a, 0){
+            if gt(a, 0) {
                 let aMan := and(a, MANTISSA_MASK)
                 let aExp := shr(EXPONENT_BIT, and(a, EXPONENT_MASK))
                 let bMan := and(b, MANTISSA_MASK)
-                let bExp :=  shr(EXPONENT_BIT, and(b, EXPONENT_MASK))
+                let bExp := shr(EXPONENT_BIT, and(b, EXPONENT_MASK))
                 // we add 38 more digits of precision
                 aMan := mul(aMan, exp(BASE, MAX_DIGITS))
-                aExp := sub(aExp,  MAX_DIGITS)
+                aExp := sub(aExp, MAX_DIGITS)
                 let rMan := div(aMan, bMan)
 
                 let rExp := sub(add(aExp, ZERO_OFFSET), bExp)
-                // a division between a k-digit number and a j-digit number will result in a number between (k - j) 
-                // and (k - j + 1) digits. Since we are dividing a 76-digit number by a 38-digit number, we know 
+                // a division between a k-digit number and a j-digit number will result in a number between (k - j)
+                // and (k - j + 1) digits. Since we are dividing a 76-digit number by a 38-digit number, we know
                 // that the result could have either 39 or 38 digitis.
                 let is39digit := gt(rMan, MAX_38_DIGIT_NUMBER)
                 if is39digit {
@@ -322,7 +322,7 @@ library Float128{
                     rExp := add(rExp, 1)
                     rMan := div(rMan, exp(BASE, 1))
                 }
-                r :=  or(xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK)),or(rMan,shl(EXPONENT_BIT, rExp)))
+                r := or(xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK)), or(rMan, shl(EXPONENT_BIT, rExp)))
             }
         }
     }
@@ -334,20 +334,21 @@ library Float128{
      * @return r the result of √a
      * @notice this version of the function uses only the packedFloat type
      */
-    function sqrt(packedFloat a) internal pure returns(packedFloat r){
-        if(packedFloat.unwrap(a) & MANTISSA_SIGN_MASK > 0) revert("float128: square root of negative number");
-        if(packedFloat.unwrap(a) > 0){
+    function sqrt(packedFloat a) internal pure returns (packedFloat r) {
+        if (packedFloat.unwrap(a) & MANTISSA_SIGN_MASK > 0) revert("float128: square root of negative number");
+        if (packedFloat.unwrap(a) > 0) {
             uint s;
             uint aExp;
             uint x;
             assembly {
                 aExp := shr(EXPONENT_BIT, and(a, EXPONENT_MASK))
                 // we need the exponent to be even so we can calculate the square root correctly
-                if iszero(mod(aExp,2)){
+                if iszero(mod(aExp, 2)) {
                     x := mul(and(a, MANTISSA_MASK), exp(BASE, MAX_DIGITS))
                     aExp := sub(aExp, MAX_DIGITS)
-                }if mod(aExp,2){
-                    x := mul(and(a, MANTISSA_MASK), exp(BASE, MAX_DIGITS_PLUS_1 ))
+                }
+                if mod(aExp, 2) {
+                    x := mul(and(a, MANTISSA_MASK), exp(BASE, MAX_DIGITS_PLUS_1))
                     aExp := sub(aExp, MAX_DIGITS_PLUS_1)
                 }
                 s := 1
@@ -379,7 +380,6 @@ library Float128{
                 s := shl(mul(cmp, 2), s)
 
                 s := shl(mul(or(gt(xAux, 0x8), eq(xAux, 0x8)), 2), s)
-                
             }
             unchecked {
                 s = (s + x / s) >> 1;
@@ -392,17 +392,16 @@ library Float128{
                 uint256 roundedDownResult = x / s;
                 s = s >= roundedDownResult ? roundedDownResult : s;
             }
-            assembly{
-                // exponent should be now halve of what it was 
+            assembly {
+                // exponent should be now halve of what it was
                 aExp := add(div(sub(aExp, ZERO_OFFSET), 2), ZERO_OFFSET)
                 // if we have extra digits, we know it comes from the extra digit to make the exponent even
-                if gt(s, MAX_38_DIGIT_NUMBER){
+                if gt(s, MAX_38_DIGIT_NUMBER) {
                     aExp := add(aExp, 1)
                     s := div(s, exp(BASE, 1))
                 }
                 // final encoding
                 r := or(shl(EXPONENT_BIT, aExp), s)
-                
             }
         }
     }
@@ -415,54 +414,54 @@ library Float128{
      * @notice this version of the function uses only the Float type
      */
     function add(Float memory a, Float memory b) internal pure returns (Float memory r) {
-        unchecked{
+        unchecked {
             bool isSubtraction = (uint(a.significand) >> 255) ^ (uint(b.significand) >> 255) > 0;
             bool sameExponent;
             // increase precision and adjust significands according to their exponent
-            if(a.exponent > b.exponent){
+            if (a.exponent > b.exponent) {
                 r.exponent = a.exponent - int(MAX_DIGITS);
                 int adj = r.exponent - b.exponent;
-                if(adj < 0) b.significand *= int(BASE**uint(adj * -1));
-                else b.significand /= int(BASE**(uint(adj)));
-                a.significand *= int(BASE**(MAX_DIGITS));
-            }else if(a.exponent < b.exponent){
+                if (adj < 0) b.significand *= int(BASE ** uint(adj * -1));
+                else b.significand /= int(BASE ** (uint(adj)));
+                a.significand *= int(BASE ** (MAX_DIGITS));
+            } else if (a.exponent < b.exponent) {
                 r.exponent = b.exponent - int(MAX_DIGITS);
                 int adj = r.exponent - a.exponent;
-                if(adj < 0) a.significand *= int(BASE**uint(adj * -1));
-                else a.significand /= int(BASE**(uint(adj)));
-                b.significand *= int(BASE**(MAX_DIGITS));
-            }else{
+                if (adj < 0) a.significand *= int(BASE ** uint(adj * -1));
+                else a.significand /= int(BASE ** (uint(adj)));
+                b.significand *= int(BASE ** (MAX_DIGITS));
+            } else {
                 r.exponent = a.exponent;
                 sameExponent = true;
             }
             r.significand = a.significand + b.significand;
             // normalization
-            if(r.significand == 0) r.exponent = -256;
-            else{
-                if(isSubtraction){
-                    if(r.significand > int(MAX_38_DIGIT_NUMBER) || r.significand < int(MIN_38_DIGIT_NUMBER)){
+            if (r.significand == 0) r.exponent = -256;
+            else {
+                if (isSubtraction) {
+                    if (r.significand > int(MAX_38_DIGIT_NUMBER) || r.significand < int(MIN_38_DIGIT_NUMBER)) {
                         uint digitsMantissa = findNumberOfDigits(r.significand < 0 ? uint(r.significand * -1) : uint(r.significand));
                         int mantissaReducer = int(digitsMantissa - MAX_DIGITS);
-                        if(mantissaReducer < 0){
-                            r.significand *= int(BASE**uint(mantissaReducer * -1));
+                        if (mantissaReducer < 0) {
+                            r.significand *= int(BASE ** uint(mantissaReducer * -1));
                             r.exponent += mantissaReducer;
-                        }else{
-                            r.significand /= int(BASE**uint(mantissaReducer));
+                        } else {
+                            r.significand /= int(BASE ** uint(mantissaReducer));
                             r.exponent += mantissaReducer;
                         }
-                    }else return r;
-                }else{
-                    if(sameExponent){
-                         if(r.significand > int(MAX_38_DIGIT_NUMBER) || r.significand < int(0-MAX_38_DIGIT_NUMBER)){
+                    } else return r;
+                } else {
+                    if (sameExponent) {
+                        if (r.significand > int(MAX_38_DIGIT_NUMBER) || r.significand < int(0 - MAX_38_DIGIT_NUMBER)) {
                             r.significand /= int(BASE);
                             ++r.exponent;
                         }
-                    }else{
-                        if(r.significand > int(MAX_76_DIGIT_NUMBER) || r.significand < int(0-MAX_76_DIGIT_NUMBER)){
-                            r.significand /= int(BASE**MAX_DIGITS_PLUS_1);
+                    } else {
+                        if (r.significand > int(MAX_76_DIGIT_NUMBER) || r.significand < int(0 - MAX_76_DIGIT_NUMBER)) {
+                            r.significand /= int(BASE ** MAX_DIGITS_PLUS_1);
                             r.exponent += int(MAX_DIGITS_PLUS_1);
-                        }else{
-                            r.significand /= int(BASE**MAX_DIGITS);
+                        } else {
+                            r.significand /= int(BASE ** MAX_DIGITS);
                             r.exponent += int(MAX_DIGITS);
                         }
                     }
@@ -479,54 +478,54 @@ library Float128{
      * @notice this version of the function uses only the Float type
      */
     function sub(Float memory a, Float memory b) internal pure returns (Float memory r) {
-        unchecked{
+        unchecked {
             bool isSubtraction = (uint(a.significand) >> 255) == (uint(b.significand) >> 255);
             bool sameExponent;
             // increase precision and adjust significands according to their exponent
-            if(a.exponent > b.exponent){
+            if (a.exponent > b.exponent) {
                 r.exponent = a.exponent - int(MAX_DIGITS);
                 int adj = r.exponent - b.exponent;
-                if(adj < 0) b.significand *= int(BASE**uint(adj * -1));
-                else b.significand /= int(BASE**(uint(adj)));
-                a.significand *= int(BASE**(MAX_DIGITS));
-            }else if(a.exponent < b.exponent){
+                if (adj < 0) b.significand *= int(BASE ** uint(adj * -1));
+                else b.significand /= int(BASE ** (uint(adj)));
+                a.significand *= int(BASE ** (MAX_DIGITS));
+            } else if (a.exponent < b.exponent) {
                 r.exponent = b.exponent - int(MAX_DIGITS);
                 int adj = r.exponent - a.exponent;
-                if(adj < 0) a.significand *= int(BASE**uint(adj * -1));
-                else a.significand /= int(BASE**(uint(adj)));
-                b.significand *= int(BASE**(MAX_DIGITS));
-            }else{
+                if (adj < 0) a.significand *= int(BASE ** uint(adj * -1));
+                else a.significand /= int(BASE ** (uint(adj)));
+                b.significand *= int(BASE ** (MAX_DIGITS));
+            } else {
                 r.exponent = a.exponent;
                 sameExponent = true;
             }
             r.significand = a.significand - b.significand;
             // normalization
-            if(r.significand == 0) r.exponent = -256;
-            else{
-                if(isSubtraction){
-                    if(r.significand > int(MAX_38_DIGIT_NUMBER) || r.significand < int(MIN_38_DIGIT_NUMBER)){
+            if (r.significand == 0) r.exponent = -256;
+            else {
+                if (isSubtraction) {
+                    if (r.significand > int(MAX_38_DIGIT_NUMBER) || r.significand < int(MIN_38_DIGIT_NUMBER)) {
                         uint digitsMantissa = findNumberOfDigits(r.significand < 0 ? uint(r.significand * -1) : uint(r.significand));
                         int mantissaReducer = int(digitsMantissa - MAX_DIGITS);
-                        if(mantissaReducer < 0){
-                            r.significand *= int(BASE**uint(mantissaReducer * -1));
+                        if (mantissaReducer < 0) {
+                            r.significand *= int(BASE ** uint(mantissaReducer * -1));
                             r.exponent += mantissaReducer;
-                        }else{
-                            r.significand /= int(BASE**uint(mantissaReducer));
+                        } else {
+                            r.significand /= int(BASE ** uint(mantissaReducer));
                             r.exponent += mantissaReducer;
                         }
-                    }else return r;
-                }else{
-                    if(sameExponent){
-                         if(r.significand > int(MAX_38_DIGIT_NUMBER) || r.significand < int(0-MAX_38_DIGIT_NUMBER)){
+                    } else return r;
+                } else {
+                    if (sameExponent) {
+                        if (r.significand > int(MAX_38_DIGIT_NUMBER) || r.significand < int(0 - MAX_38_DIGIT_NUMBER)) {
                             r.significand /= int(BASE);
                             ++r.exponent;
                         }
-                    }else{
-                        if(r.significand > int(MAX_76_DIGIT_NUMBER) || r.significand < int(0-MAX_76_DIGIT_NUMBER)){
-                            r.significand /= int(BASE**MAX_DIGITS_PLUS_1);
+                    } else {
+                        if (r.significand > int(MAX_76_DIGIT_NUMBER) || r.significand < int(0 - MAX_76_DIGIT_NUMBER)) {
+                            r.significand /= int(BASE ** MAX_DIGITS_PLUS_1);
                             r.exponent += int(MAX_DIGITS_PLUS_1);
-                        }else{
-                            r.significand /= int(BASE**MAX_DIGITS);
+                        } else {
+                            r.significand /= int(BASE ** MAX_DIGITS);
                             r.exponent += int(MAX_DIGITS);
                         }
                     }
@@ -560,7 +559,6 @@ library Float128{
             }
             mstore(r, rMan)
             mstore(add(0x20, r), rExp)
-
         }
     }
 
@@ -572,18 +570,18 @@ library Float128{
      * @notice this version of the function uses only the Float type
      */
     function div(Float memory a, Float memory b) internal pure returns (Float memory r) {
-        assembly{
+        assembly {
             // we add 38 more digits of precision
             let aMan := mload(a)
             let aExp := mload(add(a, 0x20))
             let bMan := mload(b)
             let bExp := mload(add(b, 0x20))
             aMan := mul(aMan, exp(BASE, MAX_DIGITS))
-            aExp := sub(aExp,  MAX_DIGITS)
+            aExp := sub(aExp, MAX_DIGITS)
             let rMan := sdiv(aMan, bMan)
             let rExp := sub(aExp, bExp)
-            // a division between a k-digit number and a j-digit number will result in a number between (k - j) 
-            // and (k - j + 1) digits. Since we are dividing a 76-digit number by a 38-digit number, we know 
+            // a division between a k-digit number and a j-digit number will result in a number between (k - j)
+            // and (k - j + 1) digits. Since we are dividing a 76-digit number by a 38-digit number, we know
             // that the result could have either 39 or 38 digitis.
             let is39digit := or(sgt(rMan, MAX_38_DIGIT_NUMBER), slt(rMan, sub(0, MAX_38_DIGIT_NUMBER)))
             if is39digit {
@@ -592,7 +590,7 @@ library Float128{
                 rMan := sdiv(rMan, exp(BASE, 1))
             }
             mstore(r, rMan)
-            mstore(add(0x20,r), rExp)
+            mstore(add(0x20, r), rExp)
         }
     }
 
@@ -603,19 +601,20 @@ library Float128{
      * @return r the result of √a
      * @notice this version of the function uses only the Float type
      */
-    function sqrt(Float memory a) internal pure returns(Float memory r){
-        if(a.significand < 0) revert("float128: square root of negative number");
-        if(a.significand != 0){
+    function sqrt(Float memory a) internal pure returns (Float memory r) {
+        if (a.significand < 0) revert("float128: square root of negative number");
+        if (a.significand != 0) {
             uint s;
             int aExp = a.exponent;
             uint x;
             assembly {
                 // we need the exponent to be even so we can calculate the square root correctly
-                if iszero(mod(aExp,2)){
+                if iszero(mod(aExp, 2)) {
                     x := mul(and(mload(a), MANTISSA_MASK), exp(BASE, MAX_DIGITS))
                     aExp := sub(aExp, MAX_DIGITS)
-                }if mod(aExp,2){
-                    x := mul(and(mload(a), MANTISSA_MASK), exp(BASE, MAX_DIGITS_PLUS_1 ))
+                }
+                if mod(aExp, 2) {
+                    x := mul(and(mload(a), MANTISSA_MASK), exp(BASE, MAX_DIGITS_PLUS_1))
                     aExp := sub(aExp, MAX_DIGITS_PLUS_1)
                 }
                 s := 1
@@ -647,7 +646,6 @@ library Float128{
                 s := shl(mul(cmp, 2), s)
 
                 s := shl(mul(or(gt(xAux, 0x8), eq(xAux, 0x8)), 2), s)
-                
             }
             unchecked {
                 s = (s + x / s) >> 1;
@@ -660,18 +658,18 @@ library Float128{
                 uint256 roundedDownResult = x / s;
                 s = s >= roundedDownResult ? roundedDownResult : s;
             }
-            assembly{
-                // exponent should be now halve of what it was 
+            assembly {
+                // exponent should be now halve of what it was
                 aExp := sdiv(aExp, 2)
                 // if we have extra digits, we know it comes from the extra digit to make the exponent even
-                if gt(s, MAX_38_DIGIT_NUMBER){
+                if gt(s, MAX_38_DIGIT_NUMBER) {
                     aExp := add(aExp, 1)
                     s := div(s, exp(BASE, 1))
                 }
                 mstore(r, s)
                 mstore(add(0x20, r), aExp)
             }
-        }else r.exponent = 0 - int(ZERO_OFFSET);
+        } else r.exponent = 0 - int(ZERO_OFFSET);
     }
 
     /**
@@ -680,37 +678,37 @@ library Float128{
      * @notice the mantissa can hold a maximum of 38 digits. Any number with more digits will lose precision.
      * @param mantissa the integer that holds the significand digits (38 digits max)
      * @param exponent the exponent of the floating point number (between -16384 and +16383)
-     * @return float the encoded number. This value will ocupy a single 256-bit word and will hold the normalized 
+     * @return float the encoded number. This value will ocupy a single 256-bit word and will hold the normalized
      * version of the floating-point number (shifts the exponent enough times to have exactly 38 significant digits)
      */
-    function toPackedFloat(int mantissa,int exponent) internal pure returns (packedFloat float) {
+    function toPackedFloat(int mantissa, int exponent) internal pure returns (packedFloat float) {
         uint digitsMantissa;
         uint mantissaMultiplier;
         // we start by extracting the sign of the mantissa
-        if(mantissa != 0){
+        if (mantissa != 0) {
             assembly {
                 if and(mantissa, TOW_COMPLEMENT_SIGN_MASK) {
                     float := MANTISSA_SIGN_MASK
-                    mantissa := sub(0,mantissa)
+                    mantissa := sub(0, mantissa)
                 }
             }
             // we normalize only if necessary
-            if(uint(mantissa) > MAX_38_DIGIT_NUMBER || uint(mantissa) < MIN_38_DIGIT_NUMBER){
+            if (uint(mantissa) > MAX_38_DIGIT_NUMBER || uint(mantissa) < MIN_38_DIGIT_NUMBER) {
                 digitsMantissa = findNumberOfDigits(uint(mantissa));
-                assembly{
+                assembly {
                     mantissaMultiplier := sub(digitsMantissa, MAX_DIGITS)
                     exponent := add(exponent, mantissaMultiplier)
                     let negativeMultiplier := and(TOW_COMPLEMENT_SIGN_MASK, mantissaMultiplier)
-                    if negativeMultiplier{
-                        mantissa := mul(mantissa,exp(BASE, sub(0, mantissaMultiplier)))
+                    if negativeMultiplier {
+                        mantissa := mul(mantissa, exp(BASE, sub(0, mantissaMultiplier)))
                     }
-                    if iszero(negativeMultiplier){
-                        mantissa := div(mantissa,exp(BASE, mantissaMultiplier))
+                    if iszero(negativeMultiplier) {
+                        mantissa := div(mantissa, exp(BASE, mantissaMultiplier))
                     }
                 }
             }
             // final encoding
-            assembly{
+            assembly {
                 float := or(float, or(mantissa, shl(EXPONENT_BIT, add(exponent, ZERO_OFFSET))))
             }
         }
@@ -722,14 +720,12 @@ library Float128{
      * @return mantissa the 38 significand digits of the floating-point number
      * @return exponent the exponent of the floating-point number
      */
-    function decode(
-        packedFloat float
-    ) internal pure returns (int mantissa, int exponent) {
+    function decode(packedFloat float) internal pure returns (int mantissa, int exponent) {
         assembly {
             // exponent
             let _exp := shr(EXPONENT_BIT, float)
             if gt(ZERO_OFFSET, _exp) {
-                exponent := sub(0,sub(ZERO_OFFSET, _exp))
+                exponent := sub(0, sub(ZERO_OFFSET, _exp))
             }
             if gt(_exp, ZERO_OFFSET_MINUS_1) {
                 exponent := sub(_exp, ZERO_OFFSET)
@@ -738,7 +734,7 @@ library Float128{
             mantissa := and(float, MANTISSA_MASK)
             /// we use complements 2 for mantissa sign
             if and(float, MANTISSA_SIGN_MASK) {
-                mantissa := sub(0,mantissa)
+                mantissa := sub(0, mantissa)
             }
         }
     }
@@ -749,38 +745,37 @@ library Float128{
      * @param x the Float number to normalize
      * @return float the normalized version of x
      */
-    function normalize(Float memory x) internal pure returns(Float memory float){
+    function normalize(Float memory x) internal pure returns (Float memory float) {
         uint digitsMantissa;
         uint mantissaMultiplier;
         bool isMantissaNegative;
 
-        if(x.significand == 0){
+        if (x.significand == 0) {
             float.exponent = -128;
             float.significand = 0;
-        }
-        else {
-            assembly{
+        } else {
+            assembly {
                 isMantissaNegative := and(mload(x), MANTISSA_SIGN_MASK)
-                if isMantissaNegative{
+                if isMantissaNegative {
                     mstore(x, sub(0, mload(x)))
                 }
             }
-            if(uint(x.significand) > MAX_38_DIGIT_NUMBER || uint(x.significand) < MIN_38_DIGIT_NUMBER){
+            if (uint(x.significand) > MAX_38_DIGIT_NUMBER || uint(x.significand) < MIN_38_DIGIT_NUMBER) {
                 digitsMantissa = findNumberOfDigits(uint(x.significand));
-                assembly{
+                assembly {
                     mantissaMultiplier := sub(digitsMantissa, MAX_DIGITS)
                     mstore(add(x, 0x20), add(mload(add(x, 0x20)), mantissaMultiplier))
                     let negativeMultiplier := and(MANTISSA_SIGN_MASK, mantissaMultiplier)
-                    if negativeMultiplier{
-                        mstore(x, mul(mload(x),exp(BASE, sub(0, mantissaMultiplier))))
+                    if negativeMultiplier {
+                        mstore(x, mul(mload(x), exp(BASE, sub(0, mantissaMultiplier))))
                     }
-                    if iszero(negativeMultiplier){
-                        mstore(x, div(mload(x),exp(BASE, mantissaMultiplier)))
+                    if iszero(negativeMultiplier) {
+                        mstore(x, div(mload(x), exp(BASE, mantissaMultiplier)))
                     }
                 }
             }
-            assembly{
-                if isMantissaNegative{
+            assembly {
+                if isMantissaNegative {
                     mstore(x, sub(0, mload(x)))
                 }
             }
@@ -796,7 +791,7 @@ library Float128{
      * @param _exponent the exponent of the floating point number (between -16384 and +16383)
      * @return float the normalized version of the floating-point number packed in a Float struct.
      */
-    function toFloat(int _significand, int _exponent) internal pure returns(Float memory float){
+    function toFloat(int _significand, int _exponent) internal pure returns (Float memory float) {
         float = normalize(Float({significand: _significand, exponent: _exponent}));
     }
 
@@ -805,7 +800,7 @@ library Float128{
      * @param _float the Float number to encode into a packedFloat
      * @return float the packed version of Float
      */
-    function convertToPackedFloat(Float memory _float) internal pure returns(packedFloat float){
+    function convertToPackedFloat(Float memory _float) internal pure returns (packedFloat float) {
         float = toPackedFloat(_float.significand, _float.exponent);
     }
 
@@ -814,7 +809,7 @@ library Float128{
      * @param _float the encoded floating-point number to unpack into a Float
      * @return float the unpacked version of packedFloat
      */
-    function convertToUnpackedFloat(packedFloat _float) internal pure returns(Float memory float){
+    function convertToUnpackedFloat(packedFloat _float) internal pure returns (Float memory float) {
         (float.significand, float.exponent) = decode(_float);
     }
 
@@ -826,15 +821,9 @@ library Float128{
     function findNumberOfDigits(uint x) internal pure returns (uint log) {
         assembly {
             if gt(x, 0) {
-                if gt(
-                    x,
-                    9999999999999999999999999999999999999999999999999999999999999999
-                ) {
+                if gt(x, 9999999999999999999999999999999999999999999999999999999999999999) {
                     log := 64
-                    x := div(
-                        x,
-                        10000000000000000000000000000000000000000000000000000000000000000
-                    )
+                    x := div(x, 10000000000000000000000000000000000000000000000000000000000000000)
                 }
                 if gt(x, 99999999999999999999999999999999) {
                     log := add(log, 32)
