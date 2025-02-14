@@ -1,43 +1,43 @@
-name: CI
+name: Test
 
 on:
   push:
-  pull_request:
+    branches:
+      - main
   workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
 
 env:
   FOUNDRY_PROFILE: ci
 
 jobs:
-  check:
-    strategy:
-      fail-fast: true
+  build-test:
+    name: Build and Test
+    runs-on: ubuntu-latest-m-16
 
-    name: Foundry project
-    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
+          token: ${{ secrets.XREPO_GITHUB_TOKEN}}
           submodules: recursive
 
       - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-
-      - name: Show Forge version
         run: |
-          forge --version
+          curl -sSL https://raw.githubusercontent.com/thrackle-io/foundry/refs/heads/master/foundryup/foundryup -o $HOME/foundryup
+          FOUNDRY_DIR=$HOME/foundry bash $HOME/foundryup --version $(awk '$1~/^[^#]/' script/foundryScripts/foundry.lock)
+          echo "$HOME/foundry/bin" >> $GITHUB_PATH
 
-      - name: Run Forge fmt
+      - name: Install dependencies
         run: |
-          forge fmt --check
-        id: fmt
-
-      - name: Run Forge build
+          git config user.email "cloudops@thrackle.io"
+          git config user.name "CloudOps Thrackle"
+          sudo apt-get update
+          sudo apt-get install -y python3-pip
+          pip3 install -r requirements.txt
+      - name: Build
         run: |
-          forge build --sizes
-        id: build
-
-      - name: Run Forge tests
+          forge clean && forge build --optimize
+      - name: Test
         run: |
-          forge test -vvv
-        id: test
+          forge test --ffi
