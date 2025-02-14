@@ -12,7 +12,7 @@ struct Float {
 library Float128{
     /************************************************************************************************************
      * Bitmap:                                                                                                  *
-     * 255 ... UNUSED ... 138, 137 ... EXPONENT ... 129, MANTISSA_SIGN (128), 127 .. MANTISSA ... 0             *
+     * 255 ... UNUSED ... 144, 143 ... EXPONENT ... 129, MANTISSA_SIGN (128), 127 .. MANTISSA ... 0             *
      * The exponent is signed using the offset zero to 256. max values: -256 and +255. Plenty for our case      *
      ************************************************************************************************************/
     uint constant MANTISSA_MASK = 0xffffffffffffffffffffffffffffffff;
@@ -20,18 +20,14 @@ library Float128{
     uint constant EXPONENT_MASK = 0xfffffffffffffffffffffffffffffffe00000000000000000000000000000000;
     uint constant TOW_COMPLEMENT_SIGN_MASK = 0x8000000000000000000000000000000000000000000000000000000000000000;
     uint constant BASE = 10;
-    uint constant ZERO_OFFSET = 256;
-    uint constant ZERO_OFFSET_MINUS_1 = 255;
+    uint constant ZERO_OFFSET = 16384;
+    uint constant ZERO_OFFSET_MINUS_1 = 16383;
     uint constant EXPONENT_BIT = 129;
     uint constant MAX_DIGITS = 38;
     uint constant MAX_DIGITS_MINUS_1 = 37;
     uint constant MAX_DIGITS_PLUS_1 = 39;
-    uint constant MAX_DIGITS_X_2 = 76;
-    uint constant MAX_DIGITS_X_2_MINUS_1 = 75;
-    uint constant MAX_DIGITS_X_2_PLUS_1 = 77;
     uint constant MAX_38_DIGIT_NUMBER = 99999999999999999999999999999999999999;
     uint constant MIN_38_DIGIT_NUMBER = 10000000000000000000000000000000000000;
-    uint constant MAX_39_DIGIT_NUMBER = 999999999999999999999999999999999999999;
     uint constant MAX_75_DIGIT_NUMBER = 999999999999999999999999999999999999999999999999999999999999999999999999999;
     uint constant MAX_76_DIGIT_NUMBER = 9999999999999999999999999999999999999999999999999999999999999999999999999999;
 
@@ -284,7 +280,7 @@ library Float128{
                 let aExp := shr(EXPONENT_BIT, and(a, EXPONENT_MASK))
                 let bMan := and(b, MANTISSA_MASK)
                 let bExp :=  shr(EXPONENT_BIT, and(b, EXPONENT_MASK))
-                // we can add 39 digits since we have extra room in the bits for one more digit
+                // we add 38 more digits of precision
                 aMan := mul(aMan, exp(BASE, MAX_DIGITS))
                 aExp := sub(aExp,  MAX_DIGITS)
                 let rMan := div(aMan, bMan)
@@ -295,11 +291,86 @@ library Float128{
                 // that the result could have either 39 or 38 digitis.
                 let is39digit := gt(rMan, MAX_38_DIGIT_NUMBER)
                 if is39digit {
-                    // we need to truncate the 2 last digits
+                    // we need to truncate the last digit
                     rExp := add(rExp, 1)
                     rMan := div(rMan, exp(BASE, 1))
                 }
                 r :=  or(xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK)),or(rMan,shl(EXPONENT_BIT, rExp)))
+            }
+        }
+    }
+
+    function sqrt(packedFloat a) internal pure returns(packedFloat r){
+        console2.log("packedFloat.unwrap(a): ", packedFloat.unwrap(a));
+        if(packedFloat.unwrap(a) & MANTISSA_SIGN_MASK > 0) revert("float128: square root of negative number");
+        if(packedFloat.unwrap(a) > 0){
+            uint s;
+            uint aExp;
+            uint x;
+            assembly {
+                aExp := shr(EXPONENT_BIT, and(a, EXPONENT_MASK))
+                // we need the exponent to be even so we can calculate the square root correctly
+                if iszero(mod(aExp,2)){
+                    x := mul(and(a, MANTISSA_MASK), exp(BASE, MAX_DIGITS))
+                    aExp := sub(aExp, MAX_DIGITS)
+                }if mod(aExp,2){
+                    x := mul(and(a, MANTISSA_MASK), exp(BASE, MAX_DIGITS_PLUS_1 ))
+                    aExp := sub(aExp, MAX_DIGITS_PLUS_1)
+                }
+                s := 1
+
+                let xAux := x
+
+                let cmp := or(gt(xAux, 0x100000000000000000000000000000000), eq(xAux, 0x100000000000000000000000000000000))
+                xAux := sar(mul(cmp, 128), xAux)
+                s := shl(mul(cmp, 64), s)
+
+                cmp := or(gt(xAux, 0x10000000000000000), eq(xAux, 0x10000000000000000))
+                xAux := sar(mul(cmp, 64), xAux)
+                s := shl(mul(cmp, 32), s)
+
+                cmp := or(gt(xAux, 0x100000000), eq(xAux, 0x100000000))
+                xAux := sar(mul(cmp, 32), xAux)
+                s := shl(mul(cmp, 16), s)
+
+                cmp := or(gt(xAux, 0x10000), eq(xAux, 0x10000))
+                xAux := sar(mul(cmp, 16), xAux)
+                s := shl(mul(cmp, 8), s)
+
+                cmp := or(gt(xAux, 0x100), eq(xAux, 0x100))
+                xAux := sar(mul(cmp, 8), xAux)
+                s := shl(mul(cmp, 4), s)
+
+                cmp := or(gt(xAux, 0x10), eq(xAux, 0x10))
+                xAux := sar(mul(cmp, 4), xAux)
+                s := shl(mul(cmp, 2), s)
+
+                s := shl(mul(or(gt(xAux, 0x8), eq(xAux, 0x8)), 2), s)
+                
+            }
+            console2.log("aExp ", aExp);
+            unchecked {
+                s = (s + x / s) >> 1;
+                s = (s + x / s) >> 1;
+                s = (s + x / s) >> 1;
+                s = (s + x / s) >> 1;
+                s = (s + x / s) >> 1;
+                s = (s + x / s) >> 1;
+                s = (s + x / s) >> 1;
+                uint256 roundedDownResult = x / s;
+                s = s >= roundedDownResult ? roundedDownResult : s;
+            }
+            assembly{
+                // exponent should be now halve of what it was 
+                aExp := add(div(sub(aExp, ZERO_OFFSET), 2), ZERO_OFFSET)
+                // if we have extra digits, we know it comes from the extra digit to make the exponent even
+                if gt(s, MAX_38_DIGIT_NUMBER){
+                    aExp := add(aExp, 1)
+                    s := div(s, exp(BASE, 1))
+                }
+                // final encoding
+                r := or(shl(EXPONENT_BIT, aExp), s)
+                
             }
         }
     }
@@ -420,81 +491,121 @@ library Float128{
 
     function mul(Float memory a, Float memory b) internal pure returns (Float memory r) {
         assembly {
-            mstore(r, mul(mload(a), mload(b)))
-            mstore(add(r, 0x20), add(mload(add(a, 0x20)), mload(add(b, 0x20))))
-        }
-        uint256 rawResultSize = findNumberOfDigits(uint(r.significand));
-        assembly {
-            if gt(rawResultSize, MAX_DIGITS) {
-                let expReducer := sub(rawResultSize, MAX_DIGITS)
-                mstore(r, div(mload(r), exp(BASE, expReducer)))
-                mstore(add(r, 0x20), add(mload(add(r, 0x20)), expReducer))
+            let rMan := mul(mload(a), mload(b))
+            let rExp := add(mload(add(a, 0x20)), mload(add(b, 0x20)))
+            // multiplication between 2 numbers with k digits can result in a number between 2*k - 1 and 2*k digits
+            // we check first if rMan is a 2k-digit number
+            let is76digit := or(sgt(rMan, MAX_75_DIGIT_NUMBER), slt(rMan, sub(0, MAX_75_DIGIT_NUMBER)))
+            if is76digit {
+                rMan := sdiv(rMan, exp(BASE, MAX_DIGITS))
+                rExp := add(rExp, MAX_DIGITS)
             }
+            // if not, we then know that it is a 2k-1-digit number
+            if iszero(is76digit) {
+                rMan := sdiv(rMan, exp(BASE, MAX_DIGITS_MINUS_1))
+                rExp := add(rExp, MAX_DIGITS_MINUS_1)
+            }
+            mstore(r, rMan)
+            mstore(add(0x20, r), rExp)
+
         }
-        // unchecked{
-        //     r.exponent = a.exponent + b.exponent;
-        //     r.significand = a.significand * b.significand;
-        //     uint256 rawResultSize = findNumberOfDigits(uint(r.significand));
-        //     if(rawResultSize > MAX_DIGITS){
-        //         uint expReducer = rawResultSize -  MAX_DIGITS;
-        //         r.exponent += int(expReducer);
-        //         r.significand /= int(10**expReducer);
-        //     }
-        // }
     }
 
     function div(Float memory a, Float memory b) internal pure returns (Float memory r) {
-        bool negativeA;
-        bool negativeB;
         assembly{
-            if gt(shr(255,mload(a)),0){
-                negativeA := 1
-                mstore(a, sub(0,mload(a)))
+            // we add 38 more digits of precision
+            let aMan := mload(a)
+            let aExp := mload(add(a, 0x20))
+            let bMan := mload(b)
+            let bExp := mload(add(b, 0x20))
+            aMan := mul(aMan, exp(BASE, MAX_DIGITS))
+            aExp := sub(aExp,  MAX_DIGITS)
+            let rMan := sdiv(aMan, bMan)
+            let rExp := sub(aExp, bExp)
+            // a division between a k-digit number and a j-digit number will result in a number between (k - j) 
+            // and (k - j + 1) digits. Since we are dividing a 76-digit number by a 38-digit number, we know 
+            // that the result could have either 39 or 38 digitis.
+            let is39digit := or(sgt(rMan, MAX_38_DIGIT_NUMBER), slt(rMan, sub(0, MAX_38_DIGIT_NUMBER)))
+            if is39digit {
+                // we need to truncate the last digit
+                rExp := add(rExp, 1)
+                rMan := sdiv(rMan, exp(BASE, 1))
             }
-            if gt(shr(255,mload(b)),0){
-                negativeB := 1
-                mstore(b, sub(0,mload(b)))
-            }
+            mstore(r, rMan)
+            mstore(add(0x20,r), rExp)
         }
-        uint digitsA = findNumberOfDigits(uint(a.significand));
-        assembly{
-            let expMultiplier := sub(MAX_DIGITS_X_2_PLUS_1, digitsA)
-            mstore(a, mul(mload(a), exp(BASE, expMultiplier)))
-            let negExpMultiplier := sub(0,expMultiplier)
-            mstore(add(a, 0x20), add(mload(add(a, 0x20)),  negExpMultiplier))
-            mstore(r, div(mload(a), mload(b)))
-            mstore(add(0x20, r), add(mload(add(0x20, a)), sub(0,mload(add(0x20, b)))))
-        }
-        uint rawResultSize = findNumberOfDigits(uint(r.significand));
-        assembly{
-            let expReducer := add(rawResultSize, sub(0,MAX_DIGITS))
-            mstore(add(r, 0x20), add(mload(add(r, 0x20)), expReducer))
-            if iszero(gt(shr(255,expReducer),0)){
-                mstore(r, div(mload(r), exp(BASE, expReducer)))
+    }
+
+    function sqrt(Float memory a) internal pure returns(Float memory r){
+        if(a.significand < 0) revert("float128: square root of negative number");
+        if(a.significand != 0){
+            uint s;
+            int aExp = a.exponent;
+            uint x;
+            assembly {
+                // we need the exponent to be even so we can calculate the square root correctly
+                if iszero(mod(aExp,2)){
+                    x := mul(and(mload(a), MANTISSA_MASK), exp(BASE, MAX_DIGITS))
+                    aExp := sub(aExp, MAX_DIGITS)
+                }if mod(aExp,2){
+                    x := mul(and(mload(a), MANTISSA_MASK), exp(BASE, MAX_DIGITS_PLUS_1 ))
+                    aExp := sub(aExp, MAX_DIGITS_PLUS_1)
+                }
+                s := 1
+
+                let xAux := x
+
+                let cmp := or(gt(xAux, 0x100000000000000000000000000000000), eq(xAux, 0x100000000000000000000000000000000))
+                xAux := sar(mul(cmp, 128), xAux)
+                s := shl(mul(cmp, 64), s)
+
+                cmp := or(gt(xAux, 0x10000000000000000), eq(xAux, 0x10000000000000000))
+                xAux := sar(mul(cmp, 64), xAux)
+                s := shl(mul(cmp, 32), s)
+
+                cmp := or(gt(xAux, 0x100000000), eq(xAux, 0x100000000))
+                xAux := sar(mul(cmp, 32), xAux)
+                s := shl(mul(cmp, 16), s)
+
+                cmp := or(gt(xAux, 0x10000), eq(xAux, 0x10000))
+                xAux := sar(mul(cmp, 16), xAux)
+                s := shl(mul(cmp, 8), s)
+
+                cmp := or(gt(xAux, 0x100), eq(xAux, 0x100))
+                xAux := sar(mul(cmp, 8), xAux)
+                s := shl(mul(cmp, 4), s)
+
+                cmp := or(gt(xAux, 0x10), eq(xAux, 0x10))
+                xAux := sar(mul(cmp, 4), xAux)
+                s := shl(mul(cmp, 2), s)
+
+                s := shl(mul(or(gt(xAux, 0x8), eq(xAux, 0x8)), 2), s)
+                
             }
-            if gt(shr(255,expReducer),0){
-                expReducer := sub(0,expReducer)
-                mstore(r, mul(mload(r), exp(BASE, expReducer)))
+            console2.log("aExp ", aExp);
+            unchecked {
+                s = (s + x / s) >> 1;
+                s = (s + x / s) >> 1;
+                s = (s + x / s) >> 1;
+                s = (s + x / s) >> 1;
+                s = (s + x / s) >> 1;
+                s = (s + x / s) >> 1;
+                s = (s + x / s) >> 1;
+                uint256 roundedDownResult = x / s;
+                s = s >= roundedDownResult ? roundedDownResult : s;
             }
-            if xor(negativeA, negativeB){
-                mstore(r, sub(0,mload(r)))
+            assembly{
+                // exponent should be now halve of what it was 
+                aExp := sdiv(aExp, 2)
+                // if we have extra digits, we know it comes from the extra digit to make the exponent even
+                if gt(s, MAX_38_DIGIT_NUMBER){
+                    aExp := add(aExp, 1)
+                    s := div(s, exp(BASE, 1))
+                }
+                mstore(r, s)
+                mstore(add(0x20, r), aExp)
             }
-        }
-        // unchecked{
-        //     /// this method can only have 37 digits of precision
-        //     uint digitsA = findNumberOfDigits(uint(a.significand));
-        //     uint expMultiplier = MAX_DIGITS_X_2 - digitsA;
-        //     a.significand *= int(10**expMultiplier);
-        //     a.exponent -= int(expMultiplier);
-        //     r.exponent = a.exponent - b.exponent;
-        //     r.significand = a.significand / b.significand;
-        //     uint256 rawResultSize = findNumberOfDigits(uint(r.significand));
-        //     int expReducer = int(rawResultSize) -  int(MAX_DIGITS);
-        //     r.exponent += expReducer;
-        //     if (expReducer >= 0) r.significand /= int(10**uint(expReducer));
-        //     else r.significand *= int(10**uint(expReducer * -1));
-            
-        // }
+        }else r.exponent = 0 - int(ZERO_OFFSET);
     }
 
     function toPackedFloat(int mantissa,int exponent) internal pure returns (packedFloat float) {

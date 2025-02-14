@@ -14,8 +14,6 @@ def calculate_float_mul(args):
     bExp = Decimal(args.bExp)
     operation = args.operation
     result_float = 0
-    result_man = 0
-    result_exp = 0
 
     a = Decimal(aMan * base**aExp)
     b = Decimal(bMan * base**bExp)
@@ -29,6 +27,8 @@ def calculate_float_mul(args):
         result_float = a + b
     elif(operation == "sub"):
         result_float = a - b
+    elif(operation == "sqrt"):
+        result_float = a.sqrt()
     
     log_10 = 0 if result_float == 0 else Decimal(abs(result_float)).log10()
     # print(result_float)
