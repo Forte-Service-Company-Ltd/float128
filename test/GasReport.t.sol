@@ -85,6 +85,22 @@ contract GasReport is Test, GasHelpers {
         console2.log("struct: ", gasUsed);
     }
 
+    function testGasUsedStructs_sqrt() public {
+        _primer();
+        uint256 gasUsed = 0;
+
+        Float memory A = Float({
+            exponent: -36,
+            significand: int(22345000000000000000000000000000000000)
+        });
+
+        startMeasuringGas("Gas used - sqrt128");
+        Float128.sqrt(A);
+
+        gasUsed = stopMeasuringGas();
+        console2.log("add: ", gasUsed);
+    }
+
     function testGasUsedUints() public {
         _primer();
         uint256 gasUsed = 0;
@@ -195,6 +211,22 @@ contract GasReport is Test, GasHelpers {
 
         startMeasuringGas("Gas used - add128");
         Float128.add(a, b);
+
+        gasUsed = stopMeasuringGas();
+        console2.log("add: ", gasUsed);
+    }
+
+    function testGasUsedEncoded_sqrt() public {
+        _primer();
+        uint256 gasUsed = 0;
+
+        packedFloat a = Float128.toPackedFloat(
+            22345000000000000000000000000000000000,
+            -26
+        );
+
+        startMeasuringGas("Gas used - sqrt128");
+        Float128.sqrt(a);
 
         gasUsed = stopMeasuringGas();
         console2.log("add: ", gasUsed);

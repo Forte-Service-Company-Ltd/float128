@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.24;
-import "forge-std/console2.sol";
 
 type packedFloat is uint256;
 
@@ -11,9 +10,9 @@ struct Float {
 
 library Float128{
     /************************************************************************************************************
-     * Bitmap:                                                                                                  *
+     * Packeded Float Bitmap:                                                                                   *
      * 255 ... UNUSED ... 144, 143 ... EXPONENT ... 129, MANTISSA_SIGN (128), 127 .. MANTISSA ... 0             *
-     * The exponent is signed using the offset zero to 256. max values: -256 and +255. Plenty for our case      *
+     * The exponent is signed using the offset zero to 16383. max values: -16384 and +16383.                    *
      ************************************************************************************************************/
     uint constant MANTISSA_MASK = 0xffffffffffffffffffffffffffffffff;
     uint constant MANTISSA_SIGN_MASK = 0x100000000000000000000000000000000;
@@ -31,6 +30,13 @@ library Float128{
     uint constant MAX_75_DIGIT_NUMBER = 999999999999999999999999999999999999999999999999999999999999999999999999999;
     uint constant MAX_76_DIGIT_NUMBER = 9999999999999999999999999999999999999999999999999999999999999999999999999999;
 
+    /**
+     * @dev adds 2 signed floating point numbers
+     * @param a the first addend
+     * @param b the second addend
+     * @return r the result of a + b
+     * @notice this version of the function uses only the packedFloat type
+     */
     function add(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
         uint addition;
         bool isSubtraction;
@@ -136,6 +142,13 @@ library Float128{
         }
     }
 
+    /**
+     * @dev gets the difference between 2 signed floating point numbers
+     * @param a the minuend
+     * @param b the subtrahend
+     * @return r the result of a - b
+     * @notice this version of the function uses only the packedFloat type
+     */
     function sub(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
         uint addition;
         bool isSubtraction;
@@ -241,6 +254,13 @@ library Float128{
         }
     }
 
+    /**
+     * @dev gets the multiplication of 2 signed floating point numbers
+     * @param a the first factor
+     * @param b the second factor
+     * @return r the result of a * b
+     * @notice this version of the function uses only the packedFloat type
+     */
     function mul(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
         uint rMan;
         uint rExp;
@@ -272,6 +292,13 @@ library Float128{
         }
     }
 
+    /**
+     * @dev gets the division of 2 signed floating point numbers
+     * @param a the numerator
+     * @param b the denominator
+     * @return r the result of a / b
+     * @notice this version of the function uses only the packedFloat type
+     */
     function div(packedFloat a, packedFloat b) internal pure returns(packedFloat r){
         assembly{
             // if a is zero then the result will be zero
@@ -300,8 +327,14 @@ library Float128{
         }
     }
 
+    /**
+     * @dev gets the square root of a signed floating point
+     * @notice only positive numbers can get its square root calculated through this function
+     * @param a the numerator to get the square root of
+     * @return r the result of √a
+     * @notice this version of the function uses only the packedFloat type
+     */
     function sqrt(packedFloat a) internal pure returns(packedFloat r){
-        console2.log("packedFloat.unwrap(a): ", packedFloat.unwrap(a));
         if(packedFloat.unwrap(a) & MANTISSA_SIGN_MASK > 0) revert("float128: square root of negative number");
         if(packedFloat.unwrap(a) > 0){
             uint s;
@@ -348,7 +381,6 @@ library Float128{
                 s := shl(mul(or(gt(xAux, 0x8), eq(xAux, 0x8)), 2), s)
                 
             }
-            console2.log("aExp ", aExp);
             unchecked {
                 s = (s + x / s) >> 1;
                 s = (s + x / s) >> 1;
@@ -375,6 +407,13 @@ library Float128{
         }
     }
 
+    /**
+     * @dev adds 2 signed floating point numbers
+     * @param a the first addend
+     * @param b the second addend
+     * @return r the result of a + b
+     * @notice this version of the function uses only the Float type
+     */
     function add(Float memory a, Float memory b) internal pure returns (Float memory r) {
         unchecked{
             bool isSubtraction = (uint(a.significand) >> 255) ^ (uint(b.significand) >> 255) > 0;
@@ -432,6 +471,13 @@ library Float128{
         }
     }
 
+    /**
+     * @dev gets the difference between 2 signed floating point numbers
+     * @param a the minuend
+     * @param b the subtrahend
+     * @return r the result of a - b
+     * @notice this version of the function uses only the Float type
+     */
     function sub(Float memory a, Float memory b) internal pure returns (Float memory r) {
         unchecked{
             bool isSubtraction = (uint(a.significand) >> 255) == (uint(b.significand) >> 255);
@@ -489,6 +535,13 @@ library Float128{
         }
     }
 
+    /**
+     * @dev gets the multiplication of 2 signed floating point numbers
+     * @param a the first factor
+     * @param b the second factor
+     * @return r the result of a * b
+     * @notice this version of the function uses only the Float type
+     */
     function mul(Float memory a, Float memory b) internal pure returns (Float memory r) {
         assembly {
             let rMan := mul(mload(a), mload(b))
@@ -511,6 +564,13 @@ library Float128{
         }
     }
 
+    /**
+     * @dev gets the division of 2 signed floating point numbers
+     * @param a the numerator
+     * @param b the denominator
+     * @return r the result of a / b
+     * @notice this version of the function uses only the Float type
+     */
     function div(Float memory a, Float memory b) internal pure returns (Float memory r) {
         assembly{
             // we add 38 more digits of precision
@@ -536,6 +596,13 @@ library Float128{
         }
     }
 
+    /**
+     * @dev gets the square root of a signed floating point
+     * @notice only positive numbers can get its square root calculated through this function
+     * @param a the numerator to get the square root of
+     * @return r the result of √a
+     * @notice this version of the function uses only the Float type
+     */
     function sqrt(Float memory a) internal pure returns(Float memory r){
         if(a.significand < 0) revert("float128: square root of negative number");
         if(a.significand != 0){
@@ -582,7 +649,6 @@ library Float128{
                 s := shl(mul(or(gt(xAux, 0x8), eq(xAux, 0x8)), 2), s)
                 
             }
-            console2.log("aExp ", aExp);
             unchecked {
                 s = (s + x / s) >> 1;
                 s = (s + x / s) >> 1;
@@ -608,6 +674,15 @@ library Float128{
         }else r.exponent = 0 - int(ZERO_OFFSET);
     }
 
+    /**
+     * @dev encodes a pair of signed integer values describing a floating point number into a packedFloat
+     * Examples: 1234.567 can be expressed as: 123456 x 10**(-3), or 1234560 x 10**(-4), or 12345600 x 10**(-5), etc.
+     * @notice the mantissa can hold a maximum of 38 digits. Any number with more digits will lose precision.
+     * @param mantissa the integer that holds the significand digits (38 digits max)
+     * @param exponent the exponent of the floating point number (between -16384 and +16383)
+     * @return float the encoded number. This value will ocupy a single 256-bit word and will hold the normalized 
+     * version of the floating-point number (shifts the exponent enough times to have exactly 38 significant digits)
+     */
     function toPackedFloat(int mantissa,int exponent) internal pure returns (packedFloat float) {
         uint digitsMantissa;
         uint mantissaMultiplier;
@@ -641,6 +716,12 @@ library Float128{
         }
     }
 
+    /**
+     * @dev decodes a packedFloat into its mantissa and its exponent
+     * @param float the floating-point number expressed as a packedFloat to decode
+     * @return mantissa the 38 significand digits of the floating-point number
+     * @return exponent the exponent of the floating-point number
+     */
     function decode(
         packedFloat float
     ) internal pure returns (int mantissa, int exponent) {
@@ -662,6 +743,12 @@ library Float128{
         }
     }
 
+    /**
+     * @dev shifts the exponent enough times to have a mantissa with exactly 38 digits
+     * @notice this is a VITAL STEP to ensure the highest precision of the calculations
+     * @param x the Float number to normalize
+     * @return float the normalized version of x
+     */
     function normalize(Float memory x) internal pure returns(Float memory float){
         uint digitsMantissa;
         uint mantissaMultiplier;
@@ -701,18 +788,41 @@ library Float128{
         }
     }
 
+    /**
+     * @dev packs a pair of signed integer values describing a floating-point number into a Float struct.
+     * Examples: 1234.567 can be expressed as: 123456 x 10**(-3), or 1234560 x 10**(-4), or 12345600 x 10**(-5), etc.
+     * @notice the mantissa can hold a maximum of 38 digits. Any number with more digits will lose precision.
+     * @param _significand the integer that holds the significand digits (38 digits max)
+     * @param _exponent the exponent of the floating point number (between -16384 and +16383)
+     * @return float the normalized version of the floating-point number packed in a Float struct.
+     */
     function toFloat(int _significand, int _exponent) internal pure returns(Float memory float){
         float = normalize(Float({significand: _significand, exponent: _exponent}));
     }
 
+    /**
+     * @dev from Float to packedFloat
+     * @param _float the Float number to encode into a packedFloat
+     * @return float the packed version of Float
+     */
     function convertToPackedFloat(Float memory _float) internal pure returns(packedFloat float){
         float = toPackedFloat(_float.significand, _float.exponent);
     }
 
+    /**
+     * @dev from packedFloat to Float
+     * @param _float the encoded floating-point number to unpack into a Float
+     * @return float the unpacked version of packedFloat
+     */
     function convertToUnpackedFloat(packedFloat _float) internal pure returns(Float memory float){
         (float.significand, float.exponent) = decode(_float);
     }
 
+    /**
+     * @dev finds the amount of digits of a number
+     * @param x the number
+     * @return log the amount of digits of x
+     */
     function findNumberOfDigits(uint x) internal pure returns (uint log) {
         assembly {
             if gt(x, 0) {
