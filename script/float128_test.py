@@ -4,7 +4,7 @@ from eth_abi import encode
 from math import log10
 
 
-def calculate_float_mul(args):
+def calculate_float(args):
     getcontext().prec = 150
     max_digits = 38
     base = 10
@@ -50,7 +50,7 @@ def parse_args():
 
 def main():
     args = parse_args()
-    (result_man, result_exp) = calculate_float_mul(args)
+    (result_man, result_exp) = calculate_float(args)
     enc = encode(["(int256,int256)"], [(result_man, result_exp)])
     print("0x" + enc.hex(), end="")
 
