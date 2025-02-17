@@ -119,6 +119,11 @@ contract Float128FuzzTest is FloatPythonUtils {
 
         packedFloat result = Float128.add(a, b);
         (int rMan, int rExp) = Float128.decode(result);
+        console2.log("rMan", rMan);
+        console2.log("rExp", rExp);
+        console2.log("pyMan", pyMan);
+        console2.log("pyExp", pyExp);
+
         checkResults(rMan, rExp, pyMan, pyExp, true);
     }
 

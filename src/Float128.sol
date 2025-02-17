@@ -81,28 +81,39 @@ library Float128 {
                         addition := add(aMan, bMan)
                     }
                     if iszero(neg) {
-                        // we switch back the exponent to be simply aExp + 1 since we add 1 digit of precision
-                        r := sub(aExp, shl(EXPONENT_BIT, 1))
                         let isBZero := iszero(bMan)
-                        if iszero(isBZero){
-                            bMan := 1
-                            if and(b, MANTISSA_SIGN_MASK) {
-                                bMan := sub(0, 1)
+                        if iszero(isBZero) {
+                            // there is the edge case of the minuend being 100...000 in which case we would lose 1 digit
+                            // we just hardcode this case to safe some gas
+                            let isAMin38Number := eq(aMan, MIN_38_DIGIT_NUMBER)
+                            if isAMin38Number {
+                                let aNeg := and(a, MANTISSA_SIGN_MASK)
+                                if aNeg {
+                                    addition := sub(0, MAX_38_DIGIT_NUMBER)
+                                }
+                                if iszero(aNeg) {
+                                    addition := MAX_38_DIGIT_NUMBER
+                                }
+                                r := sub(aExp, shl(EXPONENT_BIT, 1))
                             }
-                            if and(a, MANTISSA_SIGN_MASK) {
-                                aMan := sub(0, aMan)
+                            if iszero(isAMin38Number) {
+                                bMan := 1
+                                if and(a, MANTISSA_SIGN_MASK) {
+                                    aMan := sub(0, aMan)
+                                }
+                                if and(b, MANTISSA_SIGN_MASK) {
+                                    bMan := sub(0, 1)
+                                }
+                                addition := add(aMan, bMan)
+                                r := aExp
                             }
-                            addition := add(mul(aMan, BASE), bMan)
-                            if gt(addition, MAX_38_DIGIT_NUMBER){
-                                addition := sdiv(addition, BASE)
-                                r := add(r, shl(EXPONENT_BIT, 1))
-                            }
-                        }if isBZero{
+                        }
+                        if isBZero {
                             if and(a, MANTISSA_SIGN_MASK) {
                                 aMan := sub(0, aMan)
                             }
                             addition := aMan
-                            r := add(r, shl(EXPONENT_BIT, 1))
+                            r := aExp
                         }
                     }
                 }
@@ -122,28 +133,39 @@ library Float128 {
                         addition := add(aMan, bMan)
                     }
                     if iszero(neg) {
-                        // we switch back the exponent to be simply aExp + 1 since we add 1 digit of precision
-                        r := sub(bExp, shl(EXPONENT_BIT, 1))
                         let isAZero := iszero(aMan)
-                        if iszero(isAZero){
-                            aMan := 1
-                            if and(b, MANTISSA_SIGN_MASK) {
-                                bMan := sub(0, bMan)
+                        if iszero(isAZero) {
+                            // there is the edge case of the minuend being 100...000 in which case we would lose 1 digit
+                            // we just hardcode this case to safe some gas
+                            let isBMin38Number := eq(bMan, MIN_38_DIGIT_NUMBER)
+                            if isBMin38Number {
+                                let bNeg := and(b, MANTISSA_SIGN_MASK)
+                                if bNeg {
+                                    addition := sub(0, MAX_38_DIGIT_NUMBER)
+                                }
+                                if iszero(bNeg) {
+                                    addition := MAX_38_DIGIT_NUMBER
+                                }
+                                r := sub(bExp, shl(EXPONENT_BIT, 1))
                             }
-                            if and(a, MANTISSA_SIGN_MASK) {
-                                aMan := sub(0, 1)
+                            if iszero(isBMin38Number) {
+                                aMan := 1
+                                if and(a, MANTISSA_SIGN_MASK) {
+                                    aMan := sub(0, 1)
+                                }
+                                if and(b, MANTISSA_SIGN_MASK) {
+                                    bMan := sub(0, bMan)
+                                }
+                                addition := add(aMan, bMan)
+                                r := bExp
                             }
-                            addition := add(mul(bMan, BASE), aMan)
-                            if gt(addition, MAX_38_DIGIT_NUMBER){
-                                addition := sdiv(addition, BASE)
-                                r := add(r, shl(EXPONENT_BIT, 1))
-                            }  
-                        }if isAZero{
+                        }
+                        if isAZero {
                             if and(b, MANTISSA_SIGN_MASK) {
                                 bMan := sub(0, bMan)
                             }
                             addition := bMan
-                            r := add(r, shl(EXPONENT_BIT, 1))
+                            r := bExp
                         }
                     }
                 }
@@ -158,111 +180,106 @@ library Float128 {
                     }
                     addition := add(aMan, bMan)
                 }
-            }if iszero(isSubtraction) {
+            }
+            if iszero(isSubtraction) {
                 // addition case
                 if gt(aExp, bExp) {
-                            r := aExp
-                            let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, bExp))
-                            let isInsignificant := gt(adj, 38)
-                            if iszero(isInsignificant) {
-                                bMan := div(bMan, exp(BASE, adj))
-                                
+                    r := aExp
+                    let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, bExp))
+                    let isInsignificant := gt(adj, 38)
+                    if iszero(isInsignificant) {
+                        bMan := div(bMan, exp(BASE, adj))
 
-                                    if and(b, MANTISSA_SIGN_MASK) {
-                                        bMan := sub(0, bMan)
-                                    }
-                                    if and(a, MANTISSA_SIGN_MASK) {
-                                        aMan := sub(0, aMan)
-                                    }
-                                    addition := add(aMan, bMan)    
-                                
-                            } if isInsignificant{
-                                if and(a, MANTISSA_SIGN_MASK) {
-                                    aMan := sub(0, aMan)
-                                }
-                                addition := aMan
-                            }
+                        if and(b, MANTISSA_SIGN_MASK) {
+                            bMan := sub(0, bMan)
                         }
-                        if gt(bExp, aExp) {
-                             r := bExp
-                            let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, aExp))
-                            let isInsignificant := gt(adj, 38)
-                            if iszero(isInsignificant) {
-                                aMan := div(aMan, exp(BASE, adj))
-                                
-
-                                    if and(b, MANTISSA_SIGN_MASK) {
-                                        bMan := sub(0, bMan)
-                                    }
-                                    if and(a, MANTISSA_SIGN_MASK) {
-                                        aMan := sub(0, aMan)
-                                    }
-                                    addition := add(aMan, bMan)    
-                                
-                            } if isInsignificant{
-                                if and(b, MANTISSA_SIGN_MASK) {
-                                    bMan := sub(0, bMan)
-                                }
-                                addition := bMan
-                            }
+                        if and(a, MANTISSA_SIGN_MASK) {
+                            aMan := sub(0, aMan)
                         }
-                        if eq(aExp, bExp) {
-                            r := aExp
-                            sameExponent := 1
-                            if and(a, MANTISSA_SIGN_MASK) {
-                                aMan := sub(0, aMan)
-                            }
-                            if and(b, MANTISSA_SIGN_MASK) {
-                                bMan := sub(0, bMan)
-                            }
-                            addition := add(aMan, bMan)
-                        }
-            }
-
-                if and(TOW_COMPLEMENT_SIGN_MASK, addition) {
-                    r := or(r, MANTISSA_SIGN_MASK) // assign the negative sign
-                    addition := sub(0, addition) // convert back from 2's complement
-                }
-            
-                if iszero(addition) {
-
-                        r := 0
-                    
-            }
-            }
-            // normalization
-            if(isSubtraction){
-                if (addition > MAX_38_DIGIT_NUMBER || addition < MIN_38_DIGIT_NUMBER) {
-                        uint digitsMantissa = findNumberOfDigits(addition);
-                        assembly {
-                            let mantissaReducer := sub(digitsMantissa, MAX_DIGITS)
-                            let negativeReducer := and(TOW_COMPLEMENT_SIGN_MASK, mantissaReducer)
-                            if negativeReducer {
-                                addition := mul(addition, exp(BASE, sub(0, mantissaReducer)))
-                                r := sub(r, shl(EXPONENT_BIT, sub(0, mantissaReducer)))
-                            }
-                            if iszero(negativeReducer) {
-                                addition := div(addition, exp(BASE, mantissaReducer))
-                                r := add(r, shl(EXPONENT_BIT, mantissaReducer))
-                            }
-                            r := or(r, addition)
-                        }
+                        addition := add(aMan, bMan)
                     }
-            } else {
-            // addition case
-                assembly {
-                        
-                    // addition normalization
-                        if gt(addition, MAX_38_DIGIT_NUMBER) {
-                            addition := div(addition, BASE)
-                            r := add(r, shl(EXPONENT_BIT, 1))
+                    if isInsignificant {
+                        if and(a, MANTISSA_SIGN_MASK) {
+                            aMan := sub(0, aMan)
                         }
+                        addition := aMan
+                    }
+                }
+                if gt(bExp, aExp) {
+                    r := bExp
+                    let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, aExp))
+                    let isInsignificant := gt(adj, 38)
+                    if iszero(isInsignificant) {
+                        aMan := div(aMan, exp(BASE, adj))
+
+                        if and(b, MANTISSA_SIGN_MASK) {
+                            bMan := sub(0, bMan)
+                        }
+                        if and(a, MANTISSA_SIGN_MASK) {
+                            aMan := sub(0, aMan)
+                        }
+                        addition := add(aMan, bMan)
+                    }
+                    if isInsignificant {
+                        if and(b, MANTISSA_SIGN_MASK) {
+                            bMan := sub(0, bMan)
+                        }
+                        addition := bMan
+                    }
+                }
+                if eq(aExp, bExp) {
+                    r := aExp
+                    sameExponent := 1
+                    if and(a, MANTISSA_SIGN_MASK) {
+                        aMan := sub(0, aMan)
+                    }
+                    if and(b, MANTISSA_SIGN_MASK) {
+                        bMan := sub(0, bMan)
+                    }
+                    addition := add(aMan, bMan)
                 }
             }
+
+            if and(TOW_COMPLEMENT_SIGN_MASK, addition) {
+                r := or(r, MANTISSA_SIGN_MASK) // assign the negative sign
+                addition := sub(0, addition) // convert back from 2's complement
+            }
+
+            if iszero(addition) {
+                r := 0
+            }
+        }
+        // normalization
+        if (isSubtraction) {
+            if (addition > MAX_38_DIGIT_NUMBER || addition < MIN_38_DIGIT_NUMBER) {
+                uint digitsMantissa = findNumberOfDigits(addition);
+                assembly {
+                    let mantissaReducer := sub(digitsMantissa, MAX_DIGITS)
+                    let negativeReducer := and(TOW_COMPLEMENT_SIGN_MASK, mantissaReducer)
+                    if negativeReducer {
+                        addition := mul(addition, exp(BASE, sub(0, mantissaReducer)))
+                        r := sub(r, shl(EXPONENT_BIT, sub(0, mantissaReducer)))
+                    }
+                    if iszero(negativeReducer) {
+                        addition := div(addition, exp(BASE, mantissaReducer))
+                        r := add(r, shl(EXPONENT_BIT, mantissaReducer))
+                    }
+                    r := or(r, addition)
+                }
+            }
+        } else {
+            // addition case
             assembly {
-                            r := or(r, addition)
-                        }
-        
+                // addition normalization
+                if gt(addition, MAX_38_DIGIT_NUMBER) {
+                    addition := div(addition, BASE)
+                    r := add(r, shl(EXPONENT_BIT, 1))
+                }
+            }
+        }
+        assembly {
+            r := or(r, addition)
+        }
     }
 
     /**
