@@ -264,7 +264,6 @@ library Float128 {
                         addition := div(addition, exp(BASE, mantissaReducer))
                         r := add(r, shl(EXPONENT_BIT, mantissaReducer))
                     }
-                    r := or(r, addition)
                 }
             }
         } else {
