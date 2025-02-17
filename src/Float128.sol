@@ -36,6 +36,9 @@ library Float128 {
     uint constant MAX_DIGITS_PLUS_1 = 39;
     uint constant MAX_38_DIGIT_NUMBER = 99999999999999999999999999999999999999;
     uint constant MIN_38_DIGIT_NUMBER = 10000000000000000000000000000000000000;
+    uint constant BASE_TO_THE_MAX_DIGITS_MINUS_1 = 10000000000000000000000000000000000000;
+    uint constant BASE_TO_THE_MAX_DIGITS = 100000000000000000000000000000000000000;
+    uint constant BASE_TO_THE_MAX_DIGITS_PLUS_1 = 1000000000000000000000000000000000000000;
     uint constant MAX_75_DIGIT_NUMBER = 999999999999999999999999999999999999999999999999999999999999999999999999999;
     uint constant MAX_76_DIGIT_NUMBER = 9999999999999999999999999999999999999999999999999999999999999999999999999999;
 
@@ -67,7 +70,7 @@ library Float128 {
                 if iszero(neg) {
                     bMan := div(bMan, exp(BASE, adj))
                 }
-                aMan := mul(aMan, exp(BASE, MAX_DIGITS))
+                aMan := mul(aMan, BASE_TO_THE_MAX_DIGITS)
             }
             if gt(bExp, aExp) {
                 r := sub(bExp, shl(EXPONENT_BIT, MAX_DIGITS))
@@ -79,7 +82,7 @@ library Float128 {
                 if iszero(neg) {
                     aMan := div(aMan, exp(BASE, adj))
                 }
-                bMan := mul(bMan, exp(BASE, MAX_DIGITS))
+                bMan := mul(bMan, BASE_TO_THE_MAX_DIGITS)
             }
             if eq(aExp, bExp) {
                 r := aExp
@@ -131,11 +134,11 @@ library Float128 {
                     if iszero(sameExponent) {
                         let is77digit := gt(addition, MAX_76_DIGIT_NUMBER)
                         if is77digit {
-                            addition := div(addition, exp(BASE, MAX_DIGITS_PLUS_1))
+                            addition := div(addition, BASE_TO_THE_MAX_DIGITS_PLUS_1)
                             r := add(r, shl(EXPONENT_BIT, MAX_DIGITS_PLUS_1))
                         }
                         if iszero(is77digit) {
-                            addition := div(addition, exp(BASE, MAX_DIGITS))
+                            addition := div(addition, BASE_TO_THE_MAX_DIGITS)
                             r := add(r, shl(EXPONENT_BIT, MAX_DIGITS))
                         }
                     }
@@ -179,7 +182,7 @@ library Float128 {
                 if iszero(neg) {
                     bMan := div(bMan, exp(BASE, adj))
                 }
-                aMan := mul(aMan, exp(BASE, MAX_DIGITS))
+                aMan := mul(aMan, BASE_TO_THE_MAX_DIGITS)
             }
             if gt(bExp, aExp) {
                 r := sub(bExp, shl(EXPONENT_BIT, MAX_DIGITS))
@@ -191,7 +194,7 @@ library Float128 {
                 if iszero(neg) {
                     aMan := div(aMan, exp(BASE, adj))
                 }
-                bMan := mul(bMan, exp(BASE, MAX_DIGITS))
+                bMan := mul(bMan, BASE_TO_THE_MAX_DIGITS)
             }
             if eq(aExp, bExp) {
                 r := aExp
@@ -243,11 +246,11 @@ library Float128 {
                     if iszero(sameExponent) {
                         let is77digit := gt(addition, MAX_76_DIGIT_NUMBER)
                         if is77digit {
-                            addition := div(addition, exp(BASE, MAX_DIGITS_PLUS_1))
+                            addition := div(addition, BASE_TO_THE_MAX_DIGITS_PLUS_1)
                             r := add(r, shl(EXPONENT_BIT, MAX_DIGITS_PLUS_1))
                         }
                         if iszero(is77digit) {
-                            addition := div(addition, exp(BASE, MAX_DIGITS))
+                            addition := div(addition, BASE_TO_THE_MAX_DIGITS)
                             r := add(r, shl(EXPONENT_BIT, MAX_DIGITS))
                         }
                     }
@@ -288,12 +291,12 @@ library Float128 {
                 // we check first if rMan is a 2k-digit number
                 let is76digit := gt(rMan, MAX_75_DIGIT_NUMBER)
                 if is76digit {
-                    rMan := div(rMan, exp(BASE, MAX_DIGITS))
+                    rMan := div(rMan, BASE_TO_THE_MAX_DIGITS)
                     rExp := add(rExp, MAX_DIGITS)
                 }
                 // if not, we then know that it is a 2k-1-digit number
                 if iszero(is76digit) {
-                    rMan := div(rMan, exp(BASE, MAX_DIGITS_MINUS_1))
+                    rMan := div(rMan, BASE_TO_THE_MAX_DIGITS_MINUS_1)
                     rExp := add(rExp, MAX_DIGITS_MINUS_1)
                 }
                 r := or(xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK)), or(rMan, shl(EXPONENT_BIT, rExp)))
@@ -317,7 +320,7 @@ library Float128 {
                 let bMan := and(b, MANTISSA_MASK)
                 let bExp := shr(EXPONENT_BIT, and(b, EXPONENT_MASK))
                 // we add 38 more digits of precision
-                aMan := mul(aMan, exp(BASE, MAX_DIGITS))
+                aMan := mul(aMan, BASE_TO_THE_MAX_DIGITS)
                 aExp := sub(aExp, MAX_DIGITS)
                 let rMan := div(aMan, bMan)
 
@@ -329,7 +332,7 @@ library Float128 {
                 if is39digit {
                     // we need to truncate the last digit
                     rExp := add(rExp, 1)
-                    rMan := div(rMan, exp(BASE, 1))
+                    rMan := div(rMan, BASE)
                 }
                 r := or(xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK)), or(rMan, shl(EXPONENT_BIT, rExp)))
             }
@@ -353,11 +356,11 @@ library Float128 {
                 aExp := shr(EXPONENT_BIT, and(a, EXPONENT_MASK))
                 // we need the exponent to be even so we can calculate the square root correctly
                 if iszero(mod(aExp, 2)) {
-                    x := mul(and(a, MANTISSA_MASK), exp(BASE, MAX_DIGITS))
+                    x := mul(and(a, MANTISSA_MASK), BASE_TO_THE_MAX_DIGITS)
                     aExp := sub(aExp, MAX_DIGITS)
                 }
                 if mod(aExp, 2) {
-                    x := mul(and(a, MANTISSA_MASK), exp(BASE, MAX_DIGITS_PLUS_1))
+                    x := mul(and(a, MANTISSA_MASK), BASE_TO_THE_MAX_DIGITS_PLUS_1)
                     aExp := sub(aExp, MAX_DIGITS_PLUS_1)
                 }
                 s := 1
@@ -407,7 +410,7 @@ library Float128 {
                 // if we have extra digits, we know it comes from the extra digit to make the exponent even
                 if gt(s, MAX_38_DIGIT_NUMBER) {
                     aExp := add(aExp, 1)
-                    s := div(s, exp(BASE, 1))
+                    s := div(s, BASE)
                 }
                 // final encoding
                 r := or(shl(EXPONENT_BIT, aExp), s)
@@ -558,12 +561,12 @@ library Float128 {
             // we check first if rMan is a 2k-digit number
             let is76digit := or(sgt(rMan, MAX_75_DIGIT_NUMBER), slt(rMan, sub(0, MAX_75_DIGIT_NUMBER)))
             if is76digit {
-                rMan := sdiv(rMan, exp(BASE, MAX_DIGITS))
+                rMan := sdiv(rMan, BASE_TO_THE_MAX_DIGITS)
                 rExp := add(rExp, MAX_DIGITS)
             }
             // if not, we then know that it is a 2k-1-digit number
             if iszero(is76digit) {
-                rMan := sdiv(rMan, exp(BASE, MAX_DIGITS_MINUS_1))
+                rMan := sdiv(rMan, BASE_TO_THE_MAX_DIGITS_MINUS_1)
                 rExp := add(rExp, MAX_DIGITS_MINUS_1)
             }
             mstore(r, rMan)
@@ -585,7 +588,7 @@ library Float128 {
             let aExp := mload(add(a, 0x20))
             let bMan := mload(b)
             let bExp := mload(add(b, 0x20))
-            aMan := mul(aMan, exp(BASE, MAX_DIGITS))
+            aMan := mul(aMan, BASE_TO_THE_MAX_DIGITS)
             aExp := sub(aExp, MAX_DIGITS)
             let rMan := sdiv(aMan, bMan)
             let rExp := sub(aExp, bExp)
@@ -596,7 +599,7 @@ library Float128 {
             if is39digit {
                 // we need to truncate the last digit
                 rExp := add(rExp, 1)
-                rMan := sdiv(rMan, exp(BASE, 1))
+                rMan := sdiv(rMan, BASE)
             }
             mstore(r, rMan)
             mstore(add(0x20, r), rExp)
@@ -619,11 +622,11 @@ library Float128 {
             assembly {
                 // we need the exponent to be even so we can calculate the square root correctly
                 if iszero(mod(aExp, 2)) {
-                    x := mul(and(mload(a), MANTISSA_MASK), exp(BASE, MAX_DIGITS))
+                    x := mul(and(mload(a), MANTISSA_MASK), BASE_TO_THE_MAX_DIGITS)
                     aExp := sub(aExp, MAX_DIGITS)
                 }
                 if mod(aExp, 2) {
-                    x := mul(and(mload(a), MANTISSA_MASK), exp(BASE, MAX_DIGITS_PLUS_1))
+                    x := mul(and(mload(a), MANTISSA_MASK), BASE_TO_THE_MAX_DIGITS_PLUS_1)
                     aExp := sub(aExp, MAX_DIGITS_PLUS_1)
                 }
                 s := 1
@@ -673,7 +676,7 @@ library Float128 {
                 // if we have extra digits, we know it comes from the extra digit to make the exponent even
                 if gt(s, MAX_38_DIGIT_NUMBER) {
                     aExp := add(aExp, 1)
-                    s := div(s, exp(BASE, 1))
+                    s := div(s, BASE)
                 }
                 mstore(r, s)
                 mstore(add(0x20, r), aExp)
