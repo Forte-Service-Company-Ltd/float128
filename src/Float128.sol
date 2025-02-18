@@ -624,14 +624,9 @@ library Float128 {
     function div(Float memory a, Float memory b) internal pure returns (Float memory r) {
         assembly {
             // we add 38 more digits of precision
-            let aMan := mload(a)
-            let aExp := mload(add(a, 0x20))
-            let bMan := mload(b)
-            let bExp := mload(add(b, 0x20))
-            aMan := mul(aMan, BASE_TO_THE_MAX_DIGITS)
-            aExp := sub(aExp, MAX_DIGITS)
-            let rMan := sdiv(aMan, bMan)
-            let rExp := sub(aExp, bExp)
+            let aMan := mul(mload(a), BASE_TO_THE_MAX_DIGITS)
+            let rMan := sdiv(aMan, mload(b))
+            let rExp := sub(sub(mload(add(a, 0x20)), MAX_DIGITS), mload(add(b, 0x20)))
             // a division between a k-digit number and a j-digit number will result in a number between (k - j)
             // and (k - j + 1) digits. Since we are dividing a 76-digit number by a 38-digit number, we know
             // that the result could have either 39 or 38 digitis.
