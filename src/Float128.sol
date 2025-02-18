@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.24;
-import "forge-std/console2.sol";
 
 /**
  * @title Floatig point Library base 10 with 38 digits signed
