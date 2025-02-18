@@ -445,54 +445,66 @@ library Float128 {
         unchecked {
             bool isSubtraction = (uint(a.mantissa) >> 255) ^ (uint(b.mantissa) >> 255) > 0;
             bool sameExponent;
-            // increase precision and adjust mantissas according to their exponent
-            if (a.exponent > b.exponent) {
-                r.exponent = a.exponent - int(MAX_DIGITS);
-                int adj = r.exponent - b.exponent;
-                if (adj < 0) b.mantissa *= int(BASE ** uint(adj * -1));
-                else b.mantissa /= int(BASE ** (uint(adj)));
-                a.mantissa *= int(BASE ** (MAX_DIGITS));
-            } else if (a.exponent < b.exponent) {
-                r.exponent = b.exponent - int(MAX_DIGITS);
-                int adj = r.exponent - a.exponent;
-                if (adj < 0) a.mantissa *= int(BASE ** uint(adj * -1));
-                else a.mantissa /= int(BASE ** (uint(adj)));
-                b.mantissa *= int(BASE ** (MAX_DIGITS));
+            if (isSubtraction) {
+                // subtraction case
+                if (a.exponent > b.exponent) {
+                    r.exponent = a.exponent - int(MAX_DIGITS);
+                    int adj = r.exponent - b.exponent;
+                    if (adj < 0) {
+                        a.mantissa *= int(BASE_TO_THE_MAX_DIGITS);
+                        b.mantissa *= int(BASE ** uint(adj * -1));
+                    } else {
+                        a.mantissa *= int(BASE_TO_THE_MAX_DIGITS);
+                        b.mantissa /= int(BASE ** (uint(adj)));
+                    }
+                } else if (a.exponent < b.exponent) {
+                    r.exponent = b.exponent - int(MAX_DIGITS);
+                    int adj = r.exponent - a.exponent;
+                    if (adj < 0) {
+                        a.mantissa *= int(BASE ** uint(adj * -1));
+                        b.mantissa *= int(BASE_TO_THE_MAX_DIGITS);
+                    } else {
+                        a.mantissa /= int(BASE ** (uint(adj)));
+                        b.mantissa *= int(BASE_TO_THE_MAX_DIGITS);
+                    }
+                }
             } else {
+                // addition case
+                if (a.exponent > b.exponent) {
+                    r.exponent = a.exponent;
+                    int adj = r.exponent - b.exponent;
+                    b.mantissa /= int(BASE ** (uint(adj)));
+                } else if (a.exponent < b.exponent) {
+                    r.exponent = b.exponent;
+                    int adj = r.exponent - a.exponent;
+                    a.mantissa /= int(BASE ** (uint(adj)));
+                }
+            }
+            // if exponents are the same, we don't need to adjust the mantissas. We just set the result's exponent
+            if (a.exponent == b.exponent) {
                 r.exponent = a.exponent;
                 sameExponent = true;
             }
+            // now we can add/subtract
             r.mantissa = a.mantissa + b.mantissa;
+            if (r.mantissa == 0) r.exponent = 0 - int(ZERO_OFFSET);
             // normalization
-            if (r.mantissa == 0) r.exponent = -256;
-            else {
-                if (isSubtraction) {
-                    if (r.mantissa > int(MAX_38_DIGIT_NUMBER) || r.mantissa < int(MIN_38_DIGIT_NUMBER)) {
-                        uint digitsMantissa = findNumberOfDigits(r.mantissa < 0 ? uint(r.mantissa * -1) : uint(r.mantissa));
-                        int mantissaReducer = int(digitsMantissa - MAX_DIGITS);
-                        if (mantissaReducer < 0) {
-                            r.mantissa *= int(BASE ** uint(mantissaReducer * -1));
-                            r.exponent += mantissaReducer;
-                        } else {
-                            r.mantissa /= int(BASE ** uint(mantissaReducer));
-                            r.exponent += mantissaReducer;
-                        }
-                    } else return r;
-                } else {
-                    if (sameExponent) {
-                        if (r.mantissa > int(MAX_38_DIGIT_NUMBER) || r.mantissa < int(0 - MAX_38_DIGIT_NUMBER)) {
-                            r.mantissa /= int(BASE);
-                            ++r.exponent;
-                        }
+            if (isSubtraction) {
+                if (r.mantissa > int(MAX_38_DIGIT_NUMBER) || r.mantissa < int(MIN_38_DIGIT_NUMBER)) {
+                    uint digitsMantissa = findNumberOfDigits(r.mantissa < 0 ? uint(r.mantissa * -1) : uint(r.mantissa));
+                    int mantissaReducer = int(digitsMantissa - MAX_DIGITS);
+                    if (mantissaReducer < 0) {
+                        r.mantissa *= int(BASE ** uint(mantissaReducer * -1));
+                        r.exponent += mantissaReducer;
                     } else {
-                        if (r.mantissa > int(MAX_76_DIGIT_NUMBER) || r.mantissa < int(0 - MAX_76_DIGIT_NUMBER)) {
-                            r.mantissa /= int(BASE ** MAX_DIGITS_PLUS_1);
-                            r.exponent += int(MAX_DIGITS_PLUS_1);
-                        } else {
-                            r.mantissa /= int(BASE ** MAX_DIGITS);
-                            r.exponent += int(MAX_DIGITS);
-                        }
+                        r.mantissa /= int(BASE ** uint(mantissaReducer));
+                        r.exponent += mantissaReducer;
                     }
+                }
+            } else {
+                if (r.mantissa > int(MAX_38_DIGIT_NUMBER) || r.mantissa * -1 > int(MAX_38_DIGIT_NUMBER)) {
+                    r.mantissa /= int(BASE);
+                    ++r.exponent;
                 }
             }
         }
@@ -509,54 +521,66 @@ library Float128 {
         unchecked {
             bool isSubtraction = (uint(a.mantissa) >> 255) == (uint(b.mantissa) >> 255);
             bool sameExponent;
-            // increase precision and adjust mantissas according to their exponent
-            if (a.exponent > b.exponent) {
-                r.exponent = a.exponent - int(MAX_DIGITS);
-                int adj = r.exponent - b.exponent;
-                if (adj < 0) b.mantissa *= int(BASE ** uint(adj * -1));
-                else b.mantissa /= int(BASE ** (uint(adj)));
-                a.mantissa *= int(BASE ** (MAX_DIGITS));
-            } else if (a.exponent < b.exponent) {
-                r.exponent = b.exponent - int(MAX_DIGITS);
-                int adj = r.exponent - a.exponent;
-                if (adj < 0) a.mantissa *= int(BASE ** uint(adj * -1));
-                else a.mantissa /= int(BASE ** (uint(adj)));
-                b.mantissa *= int(BASE ** (MAX_DIGITS));
+            if (isSubtraction) {
+                // subtraction case
+                if (a.exponent > b.exponent) {
+                    r.exponent = a.exponent - int(MAX_DIGITS);
+                    int adj = r.exponent - b.exponent;
+                    if (adj < 0) {
+                        a.mantissa *= int(BASE_TO_THE_MAX_DIGITS);
+                        b.mantissa *= int(BASE ** uint(adj * -1));
+                    } else {
+                        a.mantissa *= int(BASE_TO_THE_MAX_DIGITS);
+                        b.mantissa /= int(BASE ** (uint(adj)));
+                    }
+                } else if (a.exponent < b.exponent) {
+                    r.exponent = b.exponent - int(MAX_DIGITS);
+                    int adj = r.exponent - a.exponent;
+                    if (adj < 0) {
+                        a.mantissa *= int(BASE ** uint(adj * -1));
+                        b.mantissa *= int(BASE_TO_THE_MAX_DIGITS);
+                    } else {
+                        a.mantissa /= int(BASE ** (uint(adj)));
+                        b.mantissa *= int(BASE_TO_THE_MAX_DIGITS);
+                    }
+                }
             } else {
+                // addition case
+                if (a.exponent > b.exponent) {
+                    r.exponent = a.exponent;
+                    int adj = r.exponent - b.exponent;
+                    b.mantissa /= int(BASE ** (uint(adj)));
+                } else if (a.exponent < b.exponent) {
+                    r.exponent = b.exponent;
+                    int adj = r.exponent - a.exponent;
+                    a.mantissa /= int(BASE ** (uint(adj)));
+                }
+            }
+            // if exponents are the same, we don't need to adjust the mantissas. We just set the result's exponent
+            if (a.exponent == b.exponent) {
                 r.exponent = a.exponent;
                 sameExponent = true;
             }
+            // now we can add/subtract
             r.mantissa = a.mantissa - b.mantissa;
+            if (r.mantissa == 0) r.exponent = 0 - int(ZERO_OFFSET);
             // normalization
-            if (r.mantissa == 0) r.exponent = -256;
-            else {
-                if (isSubtraction) {
-                    if (r.mantissa > int(MAX_38_DIGIT_NUMBER) || r.mantissa < int(MIN_38_DIGIT_NUMBER)) {
-                        uint digitsMantissa = findNumberOfDigits(r.mantissa < 0 ? uint(r.mantissa * -1) : uint(r.mantissa));
-                        int mantissaReducer = int(digitsMantissa - MAX_DIGITS);
-                        if (mantissaReducer < 0) {
-                            r.mantissa *= int(BASE ** uint(mantissaReducer * -1));
-                            r.exponent += mantissaReducer;
-                        } else {
-                            r.mantissa /= int(BASE ** uint(mantissaReducer));
-                            r.exponent += mantissaReducer;
-                        }
-                    } else return r;
-                } else {
-                    if (sameExponent) {
-                        if (r.mantissa > int(MAX_38_DIGIT_NUMBER) || r.mantissa < int(0 - MAX_38_DIGIT_NUMBER)) {
-                            r.mantissa /= int(BASE);
-                            ++r.exponent;
-                        }
+            if (isSubtraction) {
+                if (r.mantissa > int(MAX_38_DIGIT_NUMBER) || r.mantissa < int(MIN_38_DIGIT_NUMBER)) {
+                    uint digitsMantissa = findNumberOfDigits(r.mantissa < 0 ? uint(r.mantissa * -1) : uint(r.mantissa));
+                    int mantissaReducer = int(digitsMantissa - MAX_DIGITS);
+                    if (mantissaReducer < 0) {
+                        r.mantissa *= int(BASE ** uint(mantissaReducer * -1));
+                        r.exponent += mantissaReducer;
                     } else {
-                        if (r.mantissa > int(MAX_76_DIGIT_NUMBER) || r.mantissa < int(0 - MAX_76_DIGIT_NUMBER)) {
-                            r.mantissa /= int(BASE ** MAX_DIGITS_PLUS_1);
-                            r.exponent += int(MAX_DIGITS_PLUS_1);
-                        } else {
-                            r.mantissa /= int(BASE ** MAX_DIGITS);
-                            r.exponent += int(MAX_DIGITS);
-                        }
+                        r.mantissa /= int(BASE ** uint(mantissaReducer));
+                        r.exponent += mantissaReducer;
                     }
+                }
+            } else {
+                if (r.mantissa > int(MAX_38_DIGIT_NUMBER) || r.mantissa * -1 > int(MAX_38_DIGIT_NUMBER)) {
+                    r.mantissa /= int(BASE);
+                    ++r.exponent;
                 }
             }
         }
