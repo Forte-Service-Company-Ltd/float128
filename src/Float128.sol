@@ -62,8 +62,8 @@ library Float128 {
             let aMan := and(a, MANTISSA_MASK)
             let bMan := and(b, MANTISSA_MASK)
             // we adjust the significant digits and set the exponent of the result
+            // subtraction case
             if isSubtraction {
-                // subtraction case
                 // we add 38 digits of precision in the case of subtraction
                 if gt(aExp, bExp) {
                     r := sub(aExp, shl(EXPONENT_BIT, MAX_DIGITS))
@@ -72,49 +72,10 @@ library Float128 {
                     if neg {
                         bMan := mul(bMan, exp(BASE, sub(0, adj)))
                         aMan := mul(aMan, BASE_TO_THE_MAX_DIGITS)
-                        if and(a, MANTISSA_SIGN_MASK) {
-                            aMan := sub(0, aMan)
-                        }
-                        if and(b, MANTISSA_SIGN_MASK) {
-                            bMan := sub(0, bMan)
-                        }
-                        addition := add(aMan, bMan)
                     }
                     if iszero(neg) {
-                        let isBZero := iszero(bMan)
-                        if iszero(isBZero) {
-                            // there is the edge case of the minuend being 100...000 in which case we would lose 1 digit
-                            // we just hardcode this case to safe some gas
-                            let isAMin38Number := eq(aMan, MIN_38_DIGIT_NUMBER)
-                            if isAMin38Number {
-                                let aNeg := and(a, MANTISSA_SIGN_MASK)
-                                if aNeg {
-                                    addition := sub(0, MAX_38_DIGIT_NUMBER)
-                                }
-                                if iszero(aNeg) {
-                                    addition := MAX_38_DIGIT_NUMBER
-                                }
-                                r := sub(aExp, shl(EXPONENT_BIT, 1))
-                            }
-                            if iszero(isAMin38Number) {
-                                bMan := 1
-                                if and(a, MANTISSA_SIGN_MASK) {
-                                    aMan := sub(0, aMan)
-                                }
-                                if and(b, MANTISSA_SIGN_MASK) {
-                                    bMan := sub(0, 1)
-                                }
-                                addition := add(aMan, bMan)
-                                r := aExp
-                            }
-                        }
-                        if isBZero {
-                            if and(a, MANTISSA_SIGN_MASK) {
-                                aMan := sub(0, aMan)
-                            }
-                            addition := aMan
-                            r := aExp
-                        }
+                        bMan := sdiv(bMan, exp(BASE, adj))
+                        aMan := mul(aMan, BASE_TO_THE_MAX_DIGITS)
                     }
                 }
                 if gt(bExp, aExp) {
@@ -124,133 +85,53 @@ library Float128 {
                     if neg {
                         aMan := mul(aMan, exp(BASE, sub(0, adj)))
                         bMan := mul(bMan, BASE_TO_THE_MAX_DIGITS)
-                        if and(a, MANTISSA_SIGN_MASK) {
-                            aMan := sub(0, aMan)
-                        }
-                        if and(b, MANTISSA_SIGN_MASK) {
-                            bMan := sub(0, bMan)
-                        }
-                        addition := add(aMan, bMan)
                     }
                     if iszero(neg) {
-                        let isAZero := iszero(aMan)
-                        if iszero(isAZero) {
-                            // there is the edge case of the minuend being 100...000 in which case we would lose 1 digit
-                            // we just hardcode this case to safe some gas
-                            let isBMin38Number := eq(bMan, MIN_38_DIGIT_NUMBER)
-                            if isBMin38Number {
-                                let bNeg := and(b, MANTISSA_SIGN_MASK)
-                                if bNeg {
-                                    addition := sub(0, MAX_38_DIGIT_NUMBER)
-                                }
-                                if iszero(bNeg) {
-                                    addition := MAX_38_DIGIT_NUMBER
-                                }
-                                r := sub(bExp, shl(EXPONENT_BIT, 1))
-                            }
-                            if iszero(isBMin38Number) {
-                                aMan := 1
-                                if and(a, MANTISSA_SIGN_MASK) {
-                                    aMan := sub(0, 1)
-                                }
-                                if and(b, MANTISSA_SIGN_MASK) {
-                                    bMan := sub(0, bMan)
-                                }
-                                addition := add(aMan, bMan)
-                                r := bExp
-                            }
-                        }
-                        if isAZero {
-                            if and(b, MANTISSA_SIGN_MASK) {
-                                bMan := sub(0, bMan)
-                            }
-                            addition := bMan
-                            r := bExp
-                        }
+                        aMan := sdiv(aMan, exp(BASE, adj))
+                        bMan := mul(bMan, BASE_TO_THE_MAX_DIGITS)
                     }
-                }
-                if eq(aExp, bExp) {
-                    r := aExp
-                    sameExponent := 1
-                    if and(a, MANTISSA_SIGN_MASK) {
-                        aMan := sub(0, aMan)
-                    }
-                    if and(b, MANTISSA_SIGN_MASK) {
-                        bMan := sub(0, bMan)
-                    }
-                    addition := add(aMan, bMan)
                 }
             }
+            // addition case
             if iszero(isSubtraction) {
-                // addition case
                 if gt(aExp, bExp) {
                     r := aExp
                     let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, bExp))
-                    let isInsignificant := gt(adj, 38)
-                    if iszero(isInsignificant) {
-                        bMan := div(bMan, exp(BASE, adj))
-
-                        if and(b, MANTISSA_SIGN_MASK) {
-                            bMan := sub(0, bMan)
-                        }
-                        if and(a, MANTISSA_SIGN_MASK) {
-                            aMan := sub(0, aMan)
-                        }
-                        addition := add(aMan, bMan)
-                    }
-                    if isInsignificant {
-                        if and(a, MANTISSA_SIGN_MASK) {
-                            aMan := sub(0, aMan)
-                        }
-                        addition := aMan
-                    }
+                    bMan := sdiv(bMan, exp(BASE, adj))
                 }
                 if gt(bExp, aExp) {
                     r := bExp
                     let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, aExp))
-                    let isInsignificant := gt(adj, 38)
-                    if iszero(isInsignificant) {
-                        aMan := div(aMan, exp(BASE, adj))
-
-                        if and(b, MANTISSA_SIGN_MASK) {
-                            bMan := sub(0, bMan)
-                        }
-                        if and(a, MANTISSA_SIGN_MASK) {
-                            aMan := sub(0, aMan)
-                        }
-                        addition := add(aMan, bMan)
-                    }
-                    if isInsignificant {
-                        if and(b, MANTISSA_SIGN_MASK) {
-                            bMan := sub(0, bMan)
-                        }
-                        addition := bMan
-                    }
-                }
-                if eq(aExp, bExp) {
-                    r := aExp
-                    sameExponent := 1
-                    if and(a, MANTISSA_SIGN_MASK) {
-                        aMan := sub(0, aMan)
-                    }
-                    if and(b, MANTISSA_SIGN_MASK) {
-                        bMan := sub(0, bMan)
-                    }
-                    addition := add(aMan, bMan)
+                    aMan := sdiv(aMan, exp(BASE, adj))
                 }
             }
-
+            // if exponents are the same, we don't need to adjust the mantissas. We just set the result's exponent
+            if eq(aExp, bExp) {
+                r := aExp
+                sameExponent := 1
+            }
+            // now we convert to 2's complement to carry out the operation
+            if and(b, MANTISSA_SIGN_MASK) {
+                bMan := sub(0, bMan)
+            }
+            if and(a, MANTISSA_SIGN_MASK) {
+                aMan := sub(0, aMan)
+            }
+            // now we can add/subtract
+            addition := add(aMan, bMan)
+            // encoding the unnormalized result
             if and(TOW_COMPLEMENT_SIGN_MASK, addition) {
                 r := or(r, MANTISSA_SIGN_MASK) // assign the negative sign
                 addition := sub(0, addition) // convert back from 2's complement
             }
-
             if iszero(addition) {
                 r := 0
             }
         }
         // normalization
         if (isSubtraction) {
+            // subtraction case can have a number of digits anywhere from 1 to 76
+            // we might get a normalized result, so we only normalize if necessary
             if (addition > MAX_38_DIGIT_NUMBER || addition < MIN_38_DIGIT_NUMBER) {
                 uint digitsMantissa = findNumberOfDigits(addition);
                 assembly {
@@ -267,9 +148,9 @@ library Float128 {
                 }
             }
         } else {
-            // addition case
+            // addition case is simpler since it can only have 2 possibilities: same digits as its addends,
+            // or + 1 digits due to an "overflow"
             assembly {
-                // addition normalization
                 if gt(addition, MAX_38_DIGIT_NUMBER) {
                     addition := div(addition, BASE)
                     r := add(r, shl(EXPONENT_BIT, 1))
