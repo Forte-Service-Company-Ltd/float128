@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
 contract GasHelpers {
@@ -19,10 +19,7 @@ contract GasHelpers {
         // Subtract 100 to account for the warm SLOAD in startMeasuringGas.
         uint256 gasDelta = checkpointGasLeft - checkpointGasLeft2 - 100;
 
-        emit Gas_Log(
-            string(abi.encodePacked(checkpointLabel, " Gas")),
-            gasDelta
-        );
+        emit Gas_Log(string(abi.encodePacked(checkpointLabel, " Gas")), gasDelta);
         return gasDelta;
     }
 
