@@ -3,9 +3,9 @@ pragma solidity ^0.8.24;
 
 import "forge-std/console2.sol";
 import "src/Float128.sol";
-import "test/FloatPythonUtils.sol";
+import "test/FloatUtils.sol";
 
-contract Float128FuzzTest is FloatPythonUtils {
+contract Float128FuzzTest is FloatUtils {
     using Float128 for int256;
     function setBounds(int aMan, int aExp, int bMan, int bExp) internal pure returns (int _aMan, int _aExp, int _bMan, int _bExp) {
         // numbers with more than 38 digits lose precision
@@ -199,6 +199,106 @@ contract Float128FuzzTest is FloatPythonUtils {
         int rExp = result.exponent;
 
         checkResults(rMan, rExp, pyMan, pyExp);
+    }
+
+    function testToFloatFuzz(int256 man, int256 exp) public {
+        (man, exp, , ) = setBounds(man, exp, 0, 0);
+
+        Float memory float = man.toFloat(exp);
+        float.exponent = float.exponent - exp;
+
+        int256 retVal = 0;
+        if(man != 0) {
+            retVal = _reverseNormalize(float);
+        } 
+        assertEq(man, retVal);
+    }
+
+    function testToPackedFloatFuzz(int256 man, int256 exp) public {
+        (man, exp, , ) = setBounds(man, exp, 0, 0);
+
+        packedFloat float = man.toPackedFloat(exp);
+        (int manDecode, int expDecode) = Float128.decode(float);
+        Float memory comp;
+        comp.mantissa = manDecode;
+        comp.exponent = expDecode;
+        comp.exponent -= exp;
+
+        int256 retVal = 0;
+        if(man != 0) {
+            retVal = _reverseNormalize(comp);
+        }
+        assertEq(man, retVal);
+    }
+
+    function testConvertToUnpackedFloatFuzz(int256 man, int256 exp) public {
+        (man, exp, , ) = setBounds(man, exp, 0, 0);
+
+        packedFloat float = man.toPackedFloat(exp);
+        Float memory unpacked = Float128.convertToUnpackedFloat(float);
+        unpacked.exponent -= exp;
+
+        int256 retVal = 0;
+        if(man != 0) {
+            retVal = _reverseNormalize(unpacked);
+        }
+        assertEq(man, retVal);
+    }
+
+    function testConvertToPackedFloatFuzz(int256 man, int256 exp) public {
+        (man, exp, , ) = setBounds(man, exp, 0, 0);
+
+        Float memory unpacked;
+        unpacked.mantissa = man;
+        unpacked.exponent = exp;
+        packedFloat packed = Float128.convertToPackedFloat(unpacked);
+
+        (int manDecode, int expDecode) = Float128.decode(packed);
+
+        Float memory comp;
+        comp.mantissa = manDecode;
+        comp.exponent = expDecode;
+        comp.exponent -= exp;
+
+        int256 retVal = 0;
+        if(man != 0) {
+            retVal = _reverseNormalize(comp);
+        }
+
+        assertEq(man, retVal);
+    }
+
+    function testConvertToNormalizeFuzz(int256 man, int256 exp) public {
+        (man, exp, , ) = setBounds(man, exp, 0, 0);
+
+
+        Float memory initial;
+        initial.mantissa = man;
+        initial.exponent = exp;
+        Float memory comp = Float128.normalize(initial);
+        comp.exponent -= exp;
+
+        int256 retVal = 0;
+        if(man != 0) {
+            retVal = _reverseNormalize(comp);
+        }
+
+        assertEq(man, retVal);
+    }
+
+    function testFindNumbeOfDigits(uint256 man) public {
+        man = bound(man, 0, 5789604461865809771178549250434395392663499233282028201972879200395656481996);
+        console2.log(man);
+        uint256 comparison = 1;
+        uint256 iter = 0;
+        while(comparison <= man) {
+            comparison *= 10;
+            iter += 1;
+        }
+
+        uint256 retVal = Float128.findNumberOfDigits(man);
+
+        assertEq(iter, retVal);
     }
 
     function findNumberOfDigits(uint x) internal pure returns (uint log) {
