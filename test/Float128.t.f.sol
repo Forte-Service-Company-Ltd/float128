@@ -75,36 +75,47 @@ contract Float128FuzzTest is FloatPythonUtils {
         checkResults(rMan, rExp, pyMan, pyExp);
     }
 
+    /// forge-config: default.allow_internal_expect_revert = true
     function testStruct_div(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
-        if (bMan == 0) bMan = 1; //TODO check for division by zero
 
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "div");
+        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan == 0 ? int(1) : bMan, bExp, "div");
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
 
-        Float memory result = Float128.div(aMan.toFloat(aExp), bMan.toFloat(bExp));
-        int rMan = result.mantissa;
-        int rExp = result.exponent;
+        Float memory aFloat = aMan.toFloat(aExp);
+        Float memory bFloat = bMan.toFloat(bExp);
+        if(bMan == 0) {
+            vm.expectRevert("float128: division by zero");
+        }
+        Float memory result = Float128.div(aFloat, bFloat);
+        if(bMan != 0) {
+            int rMan = result.mantissa;
+            int rExp = result.exponent;
 
-        checkResults(rMan, rExp, pyMan, pyExp);
+            checkResults(rMan, rExp, pyMan, pyExp);
+        }
     }
 
+    /// forge-config: default.allow_internal_expect_revert = true
     function testEncoded_div(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
-        if (bMan == 0) bMan = 1; //TODO check for division by zero
 
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "div");
+        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan == 0 ? int(1) : bMan, bExp, "div");
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
 
         packedFloat a = Float128.toPackedFloat(aMan, aExp);
         packedFloat b = Float128.toPackedFloat(bMan, bExp);
-
+        if(bMan == 0) {
+            vm.expectRevert("float128: division by zero");
+        }
         packedFloat result = Float128.div(a, b);
-        (int rMan, int rExp) = Float128.decode(result);
+        if(bMan != 0) {
+            (int rMan, int rExp) = Float128.decode(result);
 
-        checkResults(rMan, rExp, pyMan, pyExp);
+            checkResults(rMan, rExp, pyMan, pyExp);
+        }
     }
 
     function testEncoded_add(int aMan, int aExp, int bMan, int bExp) public {
@@ -168,32 +179,36 @@ contract Float128FuzzTest is FloatPythonUtils {
         checkResults(rMan, rExp, pyMan, pyExp, true);
     }
 
+    /// forge-config: default.allow_internal_expect_revert = true
     function testEncoded_sqrt(int aMan, int aExp) public {
         (aMan, aExp, , ) = setBounds(aMan, aExp, 0, 0);
-        // sqrt root should always receive a positive number
-        if (aMan < 0) aMan = aMan * -1;
-
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, 0, 0, "sqrt");
+        string[] memory inputs = _buildFFIMul128(aMan < 0 ? aMan * -1 : aMan, aExp, 0, 0, "sqrt");
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
-
         packedFloat a = Float128.toPackedFloat(aMan, aExp);
 
+        if(aMan < 0) {
+            vm.expectRevert("float128: squareroot of negative");
+        }
         packedFloat result = Float128.sqrt(a);
-        (int rMan, int rExp) = Float128.decode(result);
+        if(aMan >= 0 ) {
+            (int rMan, int rExp) = Float128.decode(result);
 
-        checkResults(rMan, rExp, pyMan, pyExp);
+            checkResults(rMan, rExp, pyMan, pyExp);
+        }
     }
 
+    /// forge-config: default.allow_internal_expect_revert = true
     function testStruct_sqrt(int aMan, int aExp) public {
         (aMan, aExp, , ) = setBounds(aMan, aExp, 0, 0);
-        // sqrt root should always receive a positive number
-        if (aMan < 0) aMan = aMan * -1;
 
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, 0, 0, "sqrt");
+        string[] memory inputs = _buildFFIMul128(aMan < 0 ? aMan * -1 : aMan, aExp, 0, 0, "sqrt");
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
-
+        
+        if(aMan < 0) {
+            vm.expectRevert("float128: squareroot of negative");
+        }
         Float memory result = Float128.sqrt(aMan.toFloat(aExp));
         int rMan = result.mantissa;
         int rExp = result.exponent;

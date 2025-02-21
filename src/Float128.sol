@@ -328,6 +328,14 @@ library Float128 {
      */
     function div(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
         assembly {
+            if eq(and(b, MANTISSA_MASK), 0) {
+                let ptr := mload(0x40) // Get free memory pointer
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                mstore(add(ptr, 0x04), 0x20) // String offset
+                mstore(add(ptr, 0x24), 26) // Revert reason length
+                mstore(add(ptr, 0x44), "float128: division by zero")
+                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+            }
             // if a is zero then the result will be zero
             if gt(a, 0) {
                 let aMan := and(a, MANTISSA_MASK)
@@ -362,74 +370,82 @@ library Float128 {
      * @notice this version of the function uses only the packedFloat type
      */
     function sqrt(packedFloat a) internal pure returns (packedFloat r) {
-        if (packedFloat.unwrap(a) & MANTISSA_SIGN_MASK > 0) revert("float128: square root of negative number");
-        if (packedFloat.unwrap(a) > 0) {
-            uint s;
-            uint aExp;
-            uint x;
-            assembly {
-                aExp := shr(EXPONENT_BIT, and(a, EXPONENT_MASK))
-                // we need the exponent to be even so we can calculate the square root correctly
-                if iszero(mod(aExp, 2)) {
-                    x := mul(and(a, MANTISSA_MASK), BASE_TO_THE_MAX_DIGITS)
-                    aExp := sub(aExp, MAX_DIGITS)
-                }
-                if mod(aExp, 2) {
-                    x := mul(and(a, MANTISSA_MASK), BASE_TO_THE_MAX_DIGITS_PLUS_1)
-                    aExp := sub(aExp, MAX_DIGITS_PLUS_1)
-                }
-                s := 1
-
-                let xAux := x
-
-                let cmp := or(gt(xAux, 0x100000000000000000000000000000000), eq(xAux, 0x100000000000000000000000000000000))
-                xAux := sar(mul(cmp, 128), xAux)
-                s := shl(mul(cmp, 64), s)
-
-                cmp := or(gt(xAux, 0x10000000000000000), eq(xAux, 0x10000000000000000))
-                xAux := sar(mul(cmp, 64), xAux)
-                s := shl(mul(cmp, 32), s)
-
-                cmp := or(gt(xAux, 0x100000000), eq(xAux, 0x100000000))
-                xAux := sar(mul(cmp, 32), xAux)
-                s := shl(mul(cmp, 16), s)
-
-                cmp := or(gt(xAux, 0x10000), eq(xAux, 0x10000))
-                xAux := sar(mul(cmp, 16), xAux)
-                s := shl(mul(cmp, 8), s)
-
-                cmp := or(gt(xAux, 0x100), eq(xAux, 0x100))
-                xAux := sar(mul(cmp, 8), xAux)
-                s := shl(mul(cmp, 4), s)
-
-                cmp := or(gt(xAux, 0x10), eq(xAux, 0x10))
-                xAux := sar(mul(cmp, 4), xAux)
-                s := shl(mul(cmp, 2), s)
-
-                s := shl(mul(or(gt(xAux, 0x8), eq(xAux, 0x8)), 2), s)
+        uint s;
+        uint aExp;
+        uint x;
+        uint256 roundedDownResult;
+        assembly {
+            if and(a, MANTISSA_SIGN_MASK) {
+                let ptr := mload(0x40) // Get free memory pointer
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                mstore(add(ptr, 0x04), 0x20) // String offset
+                mstore(add(ptr, 0x24), 32) // Revert reason length
+                mstore(add(ptr, 0x44), "float128: squareroot of negative")
+                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
             }
-            unchecked {
-                s = (s + x / s) >> 1;
-                s = (s + x / s) >> 1;
-                s = (s + x / s) >> 1;
-                s = (s + x / s) >> 1;
-                s = (s + x / s) >> 1;
-                s = (s + x / s) >> 1;
-                s = (s + x / s) >> 1;
-                uint256 roundedDownResult = x / s;
-                s = s >= roundedDownResult ? roundedDownResult : s;
+
+            aExp := shr(EXPONENT_BIT, and(a, EXPONENT_MASK))
+            // we need the exponent to be even so we can calculate the square root correctly
+            if iszero(mod(aExp, 2)) {
+                x := mul(and(a, MANTISSA_MASK), BASE_TO_THE_MAX_DIGITS)
+                aExp := sub(aExp, MAX_DIGITS)
             }
-            assembly {
-                // exponent should be now halve of what it was
-                aExp := add(div(sub(aExp, ZERO_OFFSET), 2), ZERO_OFFSET)
-                // if we have extra digits, we know it comes from the extra digit to make the exponent even
-                if gt(s, MAX_38_DIGIT_NUMBER) {
-                    aExp := add(aExp, 1)
-                    s := div(s, BASE)
-                }
-                // final encoding
-                r := or(shl(EXPONENT_BIT, aExp), s)
+            if mod(aExp, 2) {
+                x := mul(and(a, MANTISSA_MASK), BASE_TO_THE_MAX_DIGITS_PLUS_1)
+                aExp := sub(aExp, MAX_DIGITS_PLUS_1)
             }
+            s := 1
+
+            let xAux := x
+
+            let cmp := or(gt(xAux, 0x100000000000000000000000000000000), eq(xAux, 0x100000000000000000000000000000000))
+            xAux := sar(mul(cmp, 128), xAux)
+            s := shl(mul(cmp, 64), s)
+
+            cmp := or(gt(xAux, 0x10000000000000000), eq(xAux, 0x10000000000000000))
+            xAux := sar(mul(cmp, 64), xAux)
+            s := shl(mul(cmp, 32), s)
+
+            cmp := or(gt(xAux, 0x100000000), eq(xAux, 0x100000000))
+            xAux := sar(mul(cmp, 32), xAux)
+            s := shl(mul(cmp, 16), s)
+
+            cmp := or(gt(xAux, 0x10000), eq(xAux, 0x10000))
+            xAux := sar(mul(cmp, 16), xAux)
+            s := shl(mul(cmp, 8), s)
+
+            cmp := or(gt(xAux, 0x100), eq(xAux, 0x100))
+            xAux := sar(mul(cmp, 8), xAux)
+            s := shl(mul(cmp, 4), s)
+
+            cmp := or(gt(xAux, 0x10), eq(xAux, 0x10))
+            xAux := sar(mul(cmp, 4), xAux)
+            s := shl(mul(cmp, 2), s)
+
+            s := shl(mul(or(gt(xAux, 0x8), eq(xAux, 0x8)), 2), s)
+
+            s := shr(1, add(div(x, s), s))
+            s := shr(1, add(div(x, s), s))
+            s := shr(1, add(div(x, s), s))
+            s := shr(1, add(div(x, s), s))
+            s := shr(1, add(div(x, s), s))
+            s := shr(1, add(div(x, s), s))
+            s := shr(1, add(div(x, s), s))
+
+            roundedDownResult := div(x, s)
+            if or(gt(s, roundedDownResult), eq(s, roundedDownResult)) {
+                s:= roundedDownResult
+            }
+
+            // exponent should be now halve of what it was
+            aExp := add(div(sub(aExp, ZERO_OFFSET), 2), ZERO_OFFSET)
+            // if we have extra digits, we know it comes from the extra digit to make the exponent even
+            if gt(s, MAX_38_DIGIT_NUMBER) {
+                aExp := add(aExp, 1)
+                s := div(s, BASE)
+            }
+            // final encoding
+            r := or(shl(EXPONENT_BIT, aExp), s)
         }
     }
 
@@ -621,7 +637,17 @@ library Float128 {
      * @notice this version of the function uses only the Float type
      */
     function div(Float memory a, Float memory b) internal pure returns (Float memory r) {
+        int256 mantissa = b.mantissa;
         assembly {
+            if eq(mantissa, 0) {
+                let ptr := mload(0x40) // Get free memory pointer
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                mstore(add(ptr, 0x04), 0x20) // String offset
+                mstore(add(ptr, 0x24), 26) // Revert reason length
+                mstore(add(ptr, 0x44), "float128: division by zero")
+                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+            }
+
             // we add 38 more digits of precision
             let aMan := mul(mload(a), BASE_TO_THE_MAX_DIGITS)
             let rMan := sdiv(aMan, mload(b))
@@ -648,12 +674,21 @@ library Float128 {
      * @notice this version of the function uses only the Float type
      */
     function sqrt(Float memory a) internal pure returns (Float memory r) {
-        if (a.mantissa < 0) revert("float128: square root of negative number");
         if (a.mantissa != 0) {
             uint s;
             int aExp = a.exponent;
             uint x;
+            int256 mantissa = a.mantissa;
             assembly {
+                if and(mantissa, MANTISSA_SIGN_MASK) {
+                    let ptr := mload(0x40) // Get free memory pointer
+                    mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                    mstore(add(ptr, 0x04), 0x20) // String offset
+                    mstore(add(ptr, 0x24), 32) // Revert reason length
+                    mstore(add(ptr, 0x44), "float128: squareroot of negative")
+                    revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+                }
+
                 // we need the exponent to be even so we can calculate the square root correctly
                 if iszero(mod(aExp, 2)) {
                     x := mul(and(mload(a), MANTISSA_MASK), BASE_TO_THE_MAX_DIGITS)
