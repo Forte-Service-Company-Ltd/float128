@@ -129,6 +129,59 @@ For this reason, it is important to use the functions `toFloat()` and `toPackedF
 
 _Note: It is encouraged to store the numbers as floating-point values, and not to convert them to fixed-point numbers or any other conversion that might truncate the significant digits as this will mean nothing less than loss of precision._
 
+_Note: Additionally when using constants (i.e. multiplcation or division by 2) it is most efficient from a gas perspective to normalize beforehand.
+
 ### Representation of zero
 
 Zero is a special case in this library. It is the only number which mantissa is represented by all zeros. Its exponent is the smallest possible which is -16384.
+
+### Gas Profile
+
+To run the gas estimates from the repo use the following command:
+```c
+forge test --ffi -vv --match-contract GasReport
+```
+
+Here are the current Gas Results:
+
+#### Gas Report - functions using Float structs
+
+| Function (and scenario) | Gas Units |
+| ----------------------- | --------- |
+| Addition    | 648       |
+| Addition (matching exponents) | 504 |
+| Addition (subtraction via addition) | 1248 |
+| Subtraction | 1171 |
+| Subtraction (matching exponents) | 1014 |
+| Subtraction (addition via subtraction) | 610 |
+| Multiplication | 289 |
+| Multiplication (by zero) | 289 |
+| Division | 278 |
+| Division (numerator is zero) | 278 |
+| Square Root | 1277 |
+
+#### Gas Report - functions using packedFloats
+
+| Function (and scenario) | Gas Units |
+| ----------------------- | --------- |
+| Addition    | 618       |
+| Addition (matching exponents) | 524 |
+| Addition (subtraction via addition) | 1233 |
+| Subtraction | 1229 |
+| Subtraction (matching exponents) | 1048 |
+| Subtraction (addition via subtraction) | 615 |
+| Multiplication | 338 |
+| Multiplication (by zero) | 121 |
+| Division | 277 |
+| Division (numerator is zero) | 102 |
+| Square Root | 1217 |
+| Log10 | 399 |
+
+#### Gas Report - Builder + Conversion functions
+
+| Function (and scenario) | Gas Units |
+| ----------------------- | --------- |
+| toFloat    | 960       |
+| toFloat (already normalized) | 471 |
+| convertToPackedFloat | 296 |
+| convertToUnpackedFloat | 334 |
