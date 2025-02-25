@@ -2,7 +2,7 @@
 pragma solidity 0.8.24;
 
 /**
- * @title Floatig point Library base 10 with 38 digits signed
+ * @title Floating point Library base 10 with 38 digits signed
  * @dev the library uses 2 exclusive types which means they can carry out operations only with their own type. They can
  * be easily converted, however, to ensure max flexibility. The reason for 2 different types to exist is that one is
  * optimized for operational gas efficiency (Float), and the other one is optimized for storage gas efficiency
@@ -19,14 +19,14 @@ struct Float {
 
 library Float128 {
     /*****************************************************************************************************************
-     *      Packeded Float Bitmap:                                                                                   *
+     *      Packed Float Bitmap:                                                                                   *
      *      255 ... UNUSED ... 144, 143 ... EXPONENT ... 129, MANTISSA_SIGN (128), 127 .. MANTISSA ... 0             *
      *      The exponent is signed using the offset zero to 16383. max values: -16384 and +16383.                    *
      ****************************************************************************************************************/
     uint constant MANTISSA_MASK = 0xffffffffffffffffffffffffffffffff;
     uint constant MANTISSA_SIGN_MASK = 0x100000000000000000000000000000000;
     uint constant EXPONENT_MASK = 0xfffffffffffffffffffffffffffffffe00000000000000000000000000000000;
-    uint constant TOW_COMPLEMENT_SIGN_MASK = 0x8000000000000000000000000000000000000000000000000000000000000000;
+    uint constant TWO_COMPLEMENT_SIGN_MASK = 0x8000000000000000000000000000000000000000000000000000000000000000;
     uint constant BASE = 10;
     uint constant ZERO_OFFSET = 16384;
     uint constant ZERO_OFFSET_MINUS_1 = 16383;
@@ -67,7 +67,7 @@ library Float128 {
                 if gt(aExp, bExp) {
                     r := sub(aExp, shl(EXPONENT_BIT, MAX_DIGITS))
                     let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, bExp))
-                    let neg := and(TOW_COMPLEMENT_SIGN_MASK, adj)
+                    let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
                     if neg {
                         bMan := mul(bMan, exp(BASE, sub(0, adj)))
                         aMan := mul(aMan, BASE_TO_THE_MAX_DIGITS)
@@ -80,7 +80,7 @@ library Float128 {
                 if gt(bExp, aExp) {
                     r := sub(bExp, shl(EXPONENT_BIT, MAX_DIGITS))
                     let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, aExp))
-                    let neg := and(TOW_COMPLEMENT_SIGN_MASK, adj)
+                    let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
                     if neg {
                         aMan := mul(aMan, exp(BASE, sub(0, adj)))
                         bMan := mul(bMan, BASE_TO_THE_MAX_DIGITS)
@@ -119,7 +119,7 @@ library Float128 {
             // now we can add/subtract
             addition := add(aMan, bMan)
             // encoding the unnormalized result
-            if and(TOW_COMPLEMENT_SIGN_MASK, addition) {
+            if and(TWO_COMPLEMENT_SIGN_MASK, addition) {
                 r := or(r, MANTISSA_SIGN_MASK) // assign the negative sign
                 addition := sub(0, addition) // convert back from 2's complement
             }
@@ -135,7 +135,7 @@ library Float128 {
                 uint digitsMantissa = findNumberOfDigits(addition);
                 assembly {
                     let mantissaReducer := sub(digitsMantissa, MAX_DIGITS)
-                    let negativeReducer := and(TOW_COMPLEMENT_SIGN_MASK, mantissaReducer)
+                    let negativeReducer := and(TWO_COMPLEMENT_SIGN_MASK, mantissaReducer)
                     if negativeReducer {
                         addition := mul(addition, exp(BASE, sub(0, mantissaReducer)))
                         r := sub(r, shl(EXPONENT_BIT, sub(0, mantissaReducer)))
@@ -186,7 +186,7 @@ library Float128 {
                 if gt(aExp, bExp) {
                     r := sub(aExp, shl(EXPONENT_BIT, MAX_DIGITS))
                     let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, bExp))
-                    let neg := and(TOW_COMPLEMENT_SIGN_MASK, adj)
+                    let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
                     if neg {
                         bMan := mul(bMan, exp(BASE, sub(0, adj)))
                         aMan := mul(aMan, BASE_TO_THE_MAX_DIGITS)
@@ -199,7 +199,7 @@ library Float128 {
                 if gt(bExp, aExp) {
                     r := sub(bExp, shl(EXPONENT_BIT, MAX_DIGITS))
                     let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, aExp))
-                    let neg := and(TOW_COMPLEMENT_SIGN_MASK, adj)
+                    let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
                     if neg {
                         aMan := mul(aMan, exp(BASE, sub(0, adj)))
                         bMan := mul(bMan, BASE_TO_THE_MAX_DIGITS)
@@ -239,7 +239,7 @@ library Float128 {
             // now we can add/subtract
             addition := add(aMan, bMan)
             // encoding the unnormalized result
-            if and(TOW_COMPLEMENT_SIGN_MASK, addition) {
+            if and(TWO_COMPLEMENT_SIGN_MASK, addition) {
                 r := or(r, MANTISSA_SIGN_MASK) // assign the negative sign
                 addition := sub(0, addition) // convert back from 2's complement
             }
@@ -255,7 +255,7 @@ library Float128 {
                 uint digitsMantissa = findNumberOfDigits(addition);
                 assembly {
                     let mantissaReducer := sub(digitsMantissa, MAX_DIGITS)
-                    let negativeReducer := and(TOW_COMPLEMENT_SIGN_MASK, mantissaReducer)
+                    let negativeReducer := and(TWO_COMPLEMENT_SIGN_MASK, mantissaReducer)
                     if negativeReducer {
                         addition := mul(addition, exp(BASE, sub(0, mantissaReducer)))
                         r := sub(r, shl(EXPONENT_BIT, sub(0, mantissaReducer)))
@@ -733,7 +733,7 @@ library Float128 {
         // we start by extracting the sign of the mantissa
         if (mantissa != 0) {
             assembly {
-                if and(mantissa, TOW_COMPLEMENT_SIGN_MASK) {
+                if and(mantissa, TWO_COMPLEMENT_SIGN_MASK) {
                     float := MANTISSA_SIGN_MASK
                     mantissa := sub(0, mantissa)
                 }
@@ -744,7 +744,7 @@ library Float128 {
                 assembly {
                     mantissaMultiplier := sub(digitsMantissa, MAX_DIGITS)
                     exponent := add(exponent, mantissaMultiplier)
-                    let negativeMultiplier := and(TOW_COMPLEMENT_SIGN_MASK, mantissaMultiplier)
+                    let negativeMultiplier := and(TWO_COMPLEMENT_SIGN_MASK, mantissaMultiplier)
                     if negativeMultiplier {
                         mantissa := mul(mantissa, exp(BASE, sub(0, mantissaMultiplier)))
                     }
@@ -801,7 +801,7 @@ library Float128 {
             float.mantissa = 0;
         } else {
             assembly {
-                isMantissaNegative := and(mload(x), MANTISSA_SIGN_MASK)
+                isMantissaNegative := and(mload(x), TWO_COMPLEMENT_SIGN_MASK)
                 if isMantissaNegative {
                     mstore(x, sub(0, mload(x)))
                 }
