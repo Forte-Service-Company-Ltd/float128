@@ -766,7 +766,7 @@ library Float128 {
      * @return mantissa the 38 mantissa digits of the floating-point number
      * @return exponent the exponent of the floating-point number
      */
-    function decode(packedFloat float) public pure returns (int mantissa, int exponent) {
+    function decode(packedFloat float) internal pure returns (int mantissa, int exponent) {
         assembly {
             // exponent
             let _exp := shr(EXPONENT_BIT, float)

@@ -51,11 +51,11 @@ contract Float128UnitTest is FloatUtils {
         int256 exp = 1000;
 
         packedFloat float = man.toPackedFloat(exp);
-        (int manDecode, int expDecode) = Float128.decode(float);
+        Float memory retVal = Float128.convertToUnpackedFloat(float);
 
 
-        assertEq(12341234123412341234123412341234123410, manDecode);
-        assertEq(999, expDecode);
+        assertEq(12341234123412341234123412341234123410, retVal.mantissa);
+        assertEq(999, retVal.exponent);
     }
 
     function testToPackedFloatExactly38() public {
@@ -63,9 +63,9 @@ contract Float128UnitTest is FloatUtils {
         int256 exp = 1000;
 
         packedFloat float = man.toPackedFloat(exp);
-        (int manDecode, int expDecode) = Float128.decode(float);
+        Float memory retVal = Float128.convertToUnpackedFloat(float);
 
-        assertEq(12341234123412341234123412341234123412, manDecode);
+        assertEq(12341234123412341234123412341234123412, retVal.mantissa);
     }
 
     function testToPackedFloatMoreThan38() public {
@@ -73,11 +73,11 @@ contract Float128UnitTest is FloatUtils {
         int256 exp = 1000;
 
         packedFloat float = man.toPackedFloat(exp);
-        (int manDecode, int expDecode) = Float128.decode(float);
+        Float memory retVal = Float128.convertToUnpackedFloat(float);
 
         // Expect to lose two points of precision
-        assertEq(57896044618658097711785492504343953926, manDecode);
-        assertEq(1038, expDecode);
+        assertEq(57896044618658097711785492504343953926, retVal.mantissa);
+        assertEq(1038, retVal.exponent);
     }
 
     function testConvertToUnpackedFloatExactly38() public {
@@ -119,10 +119,10 @@ contract Float128UnitTest is FloatUtils {
         unpacked.exponent = exp;
         packedFloat packed = Float128.convertToPackedFloat(unpacked);
 
-        (int manDecode, int expDecode) = Float128.decode(packed);
+        Float memory retVal = Float128.convertToUnpackedFloat(packed);
 
-        assertEq(12341234123412341234123412341234123412, manDecode);
-        assertEq(1000, expDecode);
+        assertEq(12341234123412341234123412341234123412, retVal.mantissa);
+        assertEq(1000, retVal.exponent);
     }
 
     function testConvertToPackedFloatPlusDecodeLessThan38() public {
@@ -134,10 +134,10 @@ contract Float128UnitTest is FloatUtils {
         unpacked.exponent = exp;
         packedFloat packed = Float128.convertToPackedFloat(unpacked);
 
-        (int manDecode, int expDecode) = Float128.decode(packed);
+        Float memory retVal = Float128.convertToUnpackedFloat(packed);
 
-        assertEq(12341234123412341234123412341234000000, manDecode);
-        assertEq(994, expDecode);
+        assertEq(12341234123412341234123412341234000000, retVal.mantissa);
+        assertEq(994, retVal.exponent);
     }
 
     function testConvertToPackedFloatPlusDecodeMoreThan38() public {
@@ -149,10 +149,10 @@ contract Float128UnitTest is FloatUtils {
         unpacked.exponent = exp;
         packedFloat packed = Float128.convertToPackedFloat(unpacked);
 
-        (int manDecode, int expDecode) = Float128.decode(packed);
+        Float memory retVal = Float128.convertToUnpackedFloat(packed);
 
-        assertEq(57896044618658097711785492504343953926, manDecode);
-        assertEq(1038, expDecode);
+        assertEq(57896044618658097711785492504343953926, retVal.mantissa);
+        assertEq(1038, retVal.exponent);
     }
 
     function testNormalizeExactly38() public {

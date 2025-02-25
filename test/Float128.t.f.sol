@@ -248,9 +248,7 @@ contract Float128FuzzTest is FloatUtils {
     function testConvertToPackedFloatFuzz(int256 man, int256 exp) public {
         (man, exp, , ) = setBounds(man, exp, 0, 0);
 
-        Float memory unpacked;
-        unpacked.mantissa = man;
-        unpacked.exponent = exp;
+        Float memory unpacked = Float128.toFloat(man, exp);
         packedFloat packed = Float128.convertToPackedFloat(unpacked);
 
         (int manDecode, int expDecode) = Float128.decode(packed);
@@ -287,13 +285,16 @@ contract Float128FuzzTest is FloatUtils {
     }
 
     function testFindNumbeOfDigits(uint256 man) public {
-        man = bound(man, 0, 5789604461865809771178549250434395392663499233282028201972879200395656481996);
         console2.log(man);
         uint256 comparison = 1;
         uint256 iter = 0;
         while(comparison <= man) {
             comparison *= 10;
             iter += 1;
+            if(comparison == 1e77 && comparison < man) {
+                iter +=1;
+                break;
+            }
         }
 
         uint256 retVal = Float128.findNumberOfDigits(man);
