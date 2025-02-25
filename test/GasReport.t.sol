@@ -19,7 +19,33 @@ contract GasReport is Test, GasHelpers {
         Float128.add(A, B);
 
         gasUsed = stopMeasuringGas();
-        console2.log("struct: ", gasUsed);
+        console2.log("add Float structs: ", gasUsed);
+    }
+
+    function testGasUsedStructs_add_matching_exponents() public {
+        _primer();
+        uint256 gasUsed = 0;
+
+        Float memory A = Float({exponent: -36, mantissa: int(22345000000000000000000000000000000000)});
+        Float memory B = Float({exponent: -36, mantissa: int(33678000000000000000000000000000000000)});
+        startMeasuringGas("Gas used - structs");
+        Float128.add(A, B);
+
+        gasUsed = stopMeasuringGas();
+        console2.log("add Float structs (matching exponents): ", gasUsed);
+    }
+
+    function testGasUsedStructs_add_sub() public {
+        _primer();
+        uint256 gasUsed = 0;
+
+        Float memory A = Float({exponent: -36, mantissa: int(22345000000000000000000000000000000000)});
+        Float memory B = Float({exponent: -26, mantissa: int(-33678000000000000000000000000000000000)});
+        startMeasuringGas("Gas used - structs");
+        Float128.add(A, B);
+
+        gasUsed = stopMeasuringGas();
+        console2.log("add Float structs (subtraction via addition): ", gasUsed);
     }
 
     function testGasUsedStructs_sub() public {
@@ -32,7 +58,33 @@ contract GasReport is Test, GasHelpers {
         Float128.sub(A, B);
 
         gasUsed = stopMeasuringGas();
-        console2.log("struct: ", gasUsed);
+        console2.log("subtract Float structs: ", gasUsed);
+    }
+
+    function testGasUsedStructs_sub_matching_exponents() public {
+        _primer();
+        uint256 gasUsed = 0;
+
+        Float memory A = Float({exponent: -26, mantissa: int(22345000000000000000000000000000000000)});
+        Float memory B = Float({exponent: -26, mantissa: int(13678000000000000000000000000000000000)});
+        startMeasuringGas("Gas used - structs");
+        Float128.sub(A, B);
+
+        gasUsed = stopMeasuringGas();
+        console2.log("subtract Float structs (matching exponents): ", gasUsed);
+    }
+
+    function testGasUsedStructs_sub_add() public {
+        _primer();
+        uint256 gasUsed = 0;
+
+        Float memory A = Float({exponent: -26, mantissa: int(22345000000000000000000000000000000000)});
+        Float memory B = Float({exponent: -36, mantissa: int(-33678000000000000000000000000000000000)});
+        startMeasuringGas("Gas used - structs");
+        Float128.sub(A, B);
+
+        gasUsed = stopMeasuringGas();
+        console2.log("subtract Float structs (addition via subtraction): ", gasUsed);
     }
 
     function testGasUsedStructs_mul() public {
@@ -45,7 +97,20 @@ contract GasReport is Test, GasHelpers {
         Float128.mul(A, B);
 
         gasUsed = stopMeasuringGas();
-        console2.log("struct: ", gasUsed);
+        console2.log("multiply Float structs: ", gasUsed);
+    }
+
+    function testGasUsedStructs_mul_by_zero() public {
+        _primer();
+        uint256 gasUsed = 0;
+
+        Float memory A = Float({exponent: -26, mantissa: int(22345000000000000000000000000000000000)});
+        Float memory B = Float({exponent: -16384, mantissa: int(0)});
+        startMeasuringGas("Gas used - structs");
+        Float128.mul(A, B);
+
+        gasUsed = stopMeasuringGas();
+        console2.log("multiply Float structs (mul by 0): ", gasUsed);
     }
 
     function testGasUsedStructs_div() public {
@@ -58,7 +123,20 @@ contract GasReport is Test, GasHelpers {
         Float128.div(A, B);
 
         gasUsed = stopMeasuringGas();
-        console2.log("struct: ", gasUsed);
+        console2.log("divide Float structs: ", gasUsed);
+    }
+
+    function testGasUsedStructs_div_zero_num() public {
+        _primer();
+        uint256 gasUsed = 0;
+
+        Float memory A = Float({exponent: -16384, mantissa: int(0)});
+        Float memory B = Float({exponent: -36, mantissa: int(33678000000000000000000000000000000000)});
+        startMeasuringGas("Gas used - structs");
+        Float128.div(A, B);
+
+        gasUsed = stopMeasuringGas();
+        console2.log("divide Float structs (numerator is 0): ", gasUsed);
     }
 
     function testGasUsedStructs_sqrt() public {
@@ -71,7 +149,7 @@ contract GasReport is Test, GasHelpers {
         Float128.sqrt(A);
 
         gasUsed = stopMeasuringGas();
-        console2.log("add: ", gasUsed);
+        console2.log("sqrt: ", gasUsed);
     }
 
     function testGasUsedUints() public {
@@ -80,9 +158,6 @@ contract GasReport is Test, GasHelpers {
 
         packedFloat a = Float128.toPackedFloat(22345000000000000000000000000000000000, -26);
         packedFloat b = Float128.toPackedFloat(33678000000000000000000000000000000000, -36);
-
-        // packedFloat a = packedFloat.wrap(_a);
-        // packedFloat b = packedFloat.wrap(_b);
 
         startMeasuringGas("Gas used - uints");
         Float128.add(a, b);
@@ -116,6 +191,20 @@ contract GasReport is Test, GasHelpers {
         console2.log("mul128: ", gasUsed);
     }
 
+    function testGasUsedEncoded_mul_by_zero() public {
+        _primer();
+        uint256 gasUsed = 0;
+
+        packedFloat a = Float128.toPackedFloat(22345000000000000000000000000000000000, -26);
+        packedFloat b = Float128.toPackedFloat(0, -16384);
+
+        startMeasuringGas("Gas used - mul128");
+        Float128.mul(a, b);
+
+        gasUsed = stopMeasuringGas();
+        console2.log("mul128 (multiply by 0): ", gasUsed);
+    }
+
     function testGasUsedEncoded_div() public {
         _primer();
         uint256 gasUsed = 0;
@@ -128,6 +217,20 @@ contract GasReport is Test, GasHelpers {
 
         gasUsed = stopMeasuringGas();
         console2.log("div128: ", gasUsed);
+    }
+
+    function testGasUsedEncoded_div_numerator_zero() public {
+        _primer();
+        uint256 gasUsed = 0;
+
+        packedFloat a = Float128.toPackedFloat(0, -16384);
+        packedFloat b = Float128.toPackedFloat(33678000000000000000000000000000000000, -36);
+
+        startMeasuringGas("Gas used - div128");
+        Float128.div(a, b);
+
+        gasUsed = stopMeasuringGas();
+        console2.log("div128 (numerator is 0): ", gasUsed);
     }
 
     function testGasUsedEncoded_sub() public {
@@ -144,6 +247,34 @@ contract GasReport is Test, GasHelpers {
         console2.log("sub: ", gasUsed);
     }
 
+    function testGasUsedEncoded_sub_matching_exponents() public {
+        _primer();
+        uint256 gasUsed = 0;
+
+        packedFloat a = Float128.toPackedFloat(22345000000000000000000000000000000000, -26);
+        packedFloat b = Float128.toPackedFloat(13678000000000000000000000000000000000, -26);
+
+        startMeasuringGas("Gas used - sub128");
+        Float128.sub(a, b);
+
+        gasUsed = stopMeasuringGas();
+        console2.log("sub (matching exponents): ", gasUsed);
+    }
+
+    function testGasUsedEncoded_sub_add() public {
+        _primer();
+        uint256 gasUsed = 0;
+
+        packedFloat a = Float128.toPackedFloat(22345000000000000000000000000000000000, -26);
+        packedFloat b = Float128.toPackedFloat(-33678000000000000000000000000000000000, -36);
+
+        startMeasuringGas("Gas used - sub128");
+        Float128.sub(a, b);
+
+        gasUsed = stopMeasuringGas();
+        console2.log("sub (addition via subtraction): ", gasUsed);
+    }
+
     function testGasUsedEncoded_add() public {
         _primer();
         uint256 gasUsed = 0;
@@ -158,6 +289,34 @@ contract GasReport is Test, GasHelpers {
         console2.log("add: ", gasUsed);
     }
 
+    function testGasUsedEncoded_add_matching_exponents() public {
+        _primer();
+        uint256 gasUsed = 0;
+
+        packedFloat a = Float128.toPackedFloat(22345000000000000000000000000000000000, -26);
+        packedFloat b = Float128.toPackedFloat(33678000000000000000000000000000000000, -26);
+
+        startMeasuringGas("Gas used - add128");
+        Float128.add(a, b);
+
+        gasUsed = stopMeasuringGas();
+        console2.log("add (matching exponents): ", gasUsed);
+    }
+
+    function testGasUsedEncoded_add_sub() public {
+        _primer();
+        uint256 gasUsed = 0;
+
+        packedFloat a = Float128.toPackedFloat(22345000000000000000000000000000000000, -26);
+        packedFloat b = Float128.toPackedFloat(-33678000000000000000000000000000000000, -36);
+
+        startMeasuringGas("Gas used - add128");
+        Float128.add(a, b);
+
+        gasUsed = stopMeasuringGas();
+        console2.log("add (subtraction via addition): ", gasUsed);
+    }
+
     function testGasUsedEncoded_sqrt() public {
         _primer();
         uint256 gasUsed = 0;
@@ -168,6 +327,49 @@ contract GasReport is Test, GasHelpers {
         Float128.sqrt(a);
 
         gasUsed = stopMeasuringGas();
-        console2.log("add: ", gasUsed);
+        console2.log("sqrt: ", gasUsed);
+    }
+
+    function testGasUsed_toFloat() public {
+        _primer();
+        uint256 gasUsed = 0;
+        Float memory a;
+        startMeasuringGas("Gas used - convertToPackedFloat");
+        a = Float128.toFloat(223450000000000000000000000000000000, -26);
+        gasUsed = stopMeasuringGas();
+        console2.log("toFloat: ", gasUsed);
+    }
+
+    function testGasUsed_toFloat_alreadyNormalized() public {
+        _primer();
+        uint256 gasUsed = 0;
+        Float memory a;
+        startMeasuringGas("Gas used - convertToPackedFloat");
+        a = Float128.toFloat(22345000000000000000000000000000000000, -26);
+        gasUsed = stopMeasuringGas();
+        console2.log("toFloat (already Normalized): ", gasUsed);
+    }
+
+    function testGasUsed_convertToPackedFloat() public {
+        _primer();
+        uint256 gasUsed = 0;
+        Float memory a = Float128.toFloat(223450000000000000000000000000000000, -26);
+        packedFloat flo;
+        startMeasuringGas("Gas used - convertToPackedFloat");
+        flo = a.convertToPackedFloat();
+        gasUsed = stopMeasuringGas();
+        console2.log("convertToPackedFloat: ", gasUsed);
+    }
+
+    function testGasUsed_convertToUnpackedFloat() public {
+        _primer();
+        uint256 gasUsed = 0;
+        packedFloat flo;
+        Float memory a = Float128.toFloat(223450000000000000000000000000000000, -26);
+        flo = a.convertToPackedFloat();
+        startMeasuringGas("Gas used - convertToUnpackedFloat");
+        Float memory retVal = Float128.convertToUnpackedFloat(flo);
+        gasUsed = stopMeasuringGas();
+        console2.log("convertToUnpackedFloat: ", gasUsed);
     }
 }
