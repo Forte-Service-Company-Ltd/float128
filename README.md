@@ -6,7 +6,7 @@ This is a signed floating-point library optimized for Solidity.
 
 #### General floating-point concepts
 
-a floating point number is a way to represent numbers in an efficient way. It is composed by 3 elements:
+a floating point number is a way to represent numbers in an efficient way. It is composed of 3 elements:
 
 - **The mantissa**: the significant digits of the number. It is an integer that is later multiplied by the base elevated to the exponent's power.
 - **The base**: generally either 2 or 10. It determines the base of the multiplier factor.

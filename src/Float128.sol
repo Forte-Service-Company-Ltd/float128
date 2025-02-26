@@ -364,7 +364,7 @@ library Float128 {
 
     /**
      * @dev gets the square root of a signed floating point
-     * @notice only positive numbers can get its square root calculated through this function
+     * @notice only positive numbers can have their square root calculated through this function
      * @param a the numerator to get the square root of
      * @return r the result of √a
      * @notice this version of the function uses only the packedFloat type
@@ -437,7 +437,7 @@ library Float128 {
                 s:= roundedDownResult
             }
 
-            // exponent should be now halve of what it was
+            // exponent should now be half of what it was
             aExp := add(div(sub(aExp, ZERO_OFFSET), 2), ZERO_OFFSET)
             // if we have extra digits, we know it comes from the extra digit to make the exponent even
             if gt(s, MAX_38_DIGIT_NUMBER) {
@@ -668,7 +668,7 @@ library Float128 {
 
     /**
      * @dev gets the square root of a signed floating point
-     * @notice only positive numbers can get its square root calculated through this function
+     * @notice only positive numbers can have their square root calculated through this function
      * @param a the numerator to get the square root of
      * @return r the result of √a
      * @notice this version of the function uses only the Float type
@@ -740,7 +740,7 @@ library Float128 {
                 s = s >= roundedDownResult ? roundedDownResult : s;
             }
             assembly {
-                // exponent should be now halve of what it was
+                // exponent should now be half of what it was
                 aExp := sdiv(aExp, 2)
                 // if we have extra digits, we know it comes from the extra digit to make the exponent even
                 if gt(s, MAX_38_DIGIT_NUMBER) {
@@ -813,7 +813,7 @@ library Float128 {
             }
             // mantissa
             mantissa := and(float, MANTISSA_MASK)
-            /// we use complements 2 for mantissa sign
+            /// we use 2's complement for mantissa sign
             if and(float, MANTISSA_SIGN_MASK) {
                 mantissa := sub(0, mantissa)
             }

@@ -216,7 +216,7 @@ contract Float128FuzzTest is FloatUtils {
         checkResults(rMan, rExp, pyMan, pyExp);
     }
 
-    function testToFloatFuzz(int256 man, int256 exp) public {
+    function testToFloatFuzz(int256 man, int256 exp) public pure {
         (man, exp, , ) = setBounds(man, exp, 0, 0);
 
         Float memory float = man.toFloat(exp);
@@ -229,7 +229,7 @@ contract Float128FuzzTest is FloatUtils {
         assertEq(man, retVal);
     }
 
-    function testToPackedFloatFuzz(int256 man, int256 exp) public {
+    function testToPackedFloatFuzz(int256 man, int256 exp) public pure {
         (man, exp, , ) = setBounds(man, exp, 0, 0);
 
         packedFloat float = man.toPackedFloat(exp);
@@ -246,7 +246,7 @@ contract Float128FuzzTest is FloatUtils {
         assertEq(man, retVal);
     }
 
-    function testConvertToUnpackedFloatFuzz(int256 man, int256 exp) public {
+    function testConvertToUnpackedFloatFuzz(int256 man, int256 exp) public pure {
         (man, exp, , ) = setBounds(man, exp, 0, 0);
 
         packedFloat float = man.toPackedFloat(exp);
@@ -260,7 +260,7 @@ contract Float128FuzzTest is FloatUtils {
         assertEq(man, retVal);
     }
 
-    function testConvertToPackedFloatFuzz(int256 man, int256 exp) public {
+    function testConvertToPackedFloatFuzz(int256 man, int256 exp) public pure {
         (man, exp, , ) = setBounds(man, exp, 0, 0);
 
         Float memory unpacked = Float128.toFloat(man, exp);
@@ -281,7 +281,7 @@ contract Float128FuzzTest is FloatUtils {
         assertEq(man, retVal);
     }
 
-    function testConvertToNormalizeFuzz(int256 man, int256 exp) public {
+    function testConvertToNormalizeFuzz(int256 man, int256 exp) public pure {
         (man, exp, , ) = setBounds(man, exp, 0, 0);
 
 
@@ -299,7 +299,7 @@ contract Float128FuzzTest is FloatUtils {
         assertEq(man, retVal);
     }
 
-    function testFindNumbeOfDigits(uint256 man) public {
+    function testFindNumbeOfDigits(uint256 man) public pure {
         console2.log(man);
         uint256 comparison = 1;
         uint256 iter = 0;
