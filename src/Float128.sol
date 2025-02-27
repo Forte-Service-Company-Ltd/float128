@@ -458,7 +458,9 @@ library Float128 {
      */
     function add(Float memory a, Float memory b) internal pure returns (Float memory r) {
         unchecked {
-            bool isSubtraction = (uint(a.mantissa) >> 255) ^ (uint(b.mantissa) >> 255) > 0;
+            int256 aMan = a.mantissa;
+            int256 bMan = b.mantissa;
+            bool isSubtraction = (uint(aMan) >> 255) ^ (uint(bMan) >> 255) > 0;
             bool sameExponent;
             if (isSubtraction) {
                 // subtraction case
@@ -466,21 +468,21 @@ library Float128 {
                     r.exponent = a.exponent - int(MAX_DIGITS);
                     int adj = r.exponent - b.exponent;
                     if (adj < 0) {
-                        a.mantissa *= int(BASE_TO_THE_MAX_DIGITS);
-                        b.mantissa *= int(BASE ** uint(adj * -1));
+                        aMan *= int(BASE_TO_THE_MAX_DIGITS);
+                        bMan *= int(BASE ** uint(adj * -1));
                     } else {
-                        a.mantissa *= int(BASE_TO_THE_MAX_DIGITS);
-                        b.mantissa /= int(BASE ** (uint(adj)));
+                        aMan *= int(BASE_TO_THE_MAX_DIGITS);
+                        bMan /= int(BASE ** (uint(adj)));
                     }
                 } else if (a.exponent < b.exponent) {
                     r.exponent = b.exponent - int(MAX_DIGITS);
                     int adj = r.exponent - a.exponent;
                     if (adj < 0) {
-                        a.mantissa *= int(BASE ** uint(adj * -1));
-                        b.mantissa *= int(BASE_TO_THE_MAX_DIGITS);
+                        aMan *= int(BASE ** uint(adj * -1));
+                        bMan *= int(BASE_TO_THE_MAX_DIGITS);
                     } else {
-                        a.mantissa /= int(BASE ** (uint(adj)));
-                        b.mantissa *= int(BASE_TO_THE_MAX_DIGITS);
+                        aMan /= int(BASE ** (uint(adj)));
+                        bMan *= int(BASE_TO_THE_MAX_DIGITS);
                     }
                 }
             } else {
@@ -488,11 +490,11 @@ library Float128 {
                 if (a.exponent > b.exponent) {
                     r.exponent = a.exponent;
                     int adj = r.exponent - b.exponent;
-                    b.mantissa /= int(BASE ** (uint(adj)));
+                    bMan /= int(BASE ** (uint(adj)));
                 } else if (a.exponent < b.exponent) {
                     r.exponent = b.exponent;
                     int adj = r.exponent - a.exponent;
-                    a.mantissa /= int(BASE ** (uint(adj)));
+                    aMan /= int(BASE ** (uint(adj)));
                 }
             }
             // if exponents are the same, we don't need to adjust the mantissas. We just set the result's exponent
@@ -501,7 +503,7 @@ library Float128 {
                 sameExponent = true;
             }
             // now we can add/subtract
-            r.mantissa = a.mantissa + b.mantissa;
+            r.mantissa = aMan + bMan;
             if (r.mantissa == 0) r.exponent = 0 - int(ZERO_OFFSET);
             // normalization
             if (isSubtraction) {
@@ -534,7 +536,9 @@ library Float128 {
      */
     function sub(Float memory a, Float memory b) internal pure returns (Float memory r) {
         unchecked {
-            bool isSubtraction = (uint(a.mantissa) >> 255) == (uint(b.mantissa) >> 255);
+            int256 aMan = a.mantissa;
+            int256 bMan = b.mantissa;
+            bool isSubtraction = (uint(aMan) >> 255) == (uint(bMan) >> 255);
             bool sameExponent;
             if (isSubtraction) {
                 // subtraction case
@@ -542,21 +546,21 @@ library Float128 {
                     r.exponent = a.exponent - int(MAX_DIGITS);
                     int adj = r.exponent - b.exponent;
                     if (adj < 0) {
-                        a.mantissa *= int(BASE_TO_THE_MAX_DIGITS);
-                        b.mantissa *= int(BASE ** uint(adj * -1));
+                        aMan *= int(BASE_TO_THE_MAX_DIGITS);
+                        bMan *= int(BASE ** uint(adj * -1));
                     } else {
-                        a.mantissa *= int(BASE_TO_THE_MAX_DIGITS);
-                        b.mantissa /= int(BASE ** (uint(adj)));
+                        aMan *= int(BASE_TO_THE_MAX_DIGITS);
+                        bMan /= int(BASE ** (uint(adj)));
                     }
                 } else if (a.exponent < b.exponent) {
                     r.exponent = b.exponent - int(MAX_DIGITS);
                     int adj = r.exponent - a.exponent;
                     if (adj < 0) {
-                        a.mantissa *= int(BASE ** uint(adj * -1));
-                        b.mantissa *= int(BASE_TO_THE_MAX_DIGITS);
+                        aMan *= int(BASE ** uint(adj * -1));
+                        bMan *= int(BASE_TO_THE_MAX_DIGITS);
                     } else {
-                        a.mantissa /= int(BASE ** (uint(adj)));
-                        b.mantissa *= int(BASE_TO_THE_MAX_DIGITS);
+                        aMan /= int(BASE ** (uint(adj)));
+                        bMan *= int(BASE_TO_THE_MAX_DIGITS);
                     }
                 }
             } else {
@@ -564,11 +568,11 @@ library Float128 {
                 if (a.exponent > b.exponent) {
                     r.exponent = a.exponent;
                     int adj = r.exponent - b.exponent;
-                    b.mantissa /= int(BASE ** (uint(adj)));
+                    bMan /= int(BASE ** (uint(adj)));
                 } else if (a.exponent < b.exponent) {
                     r.exponent = b.exponent;
                     int adj = r.exponent - a.exponent;
-                    a.mantissa /= int(BASE ** (uint(adj)));
+                    aMan /= int(BASE ** (uint(adj)));
                 }
             }
             // if exponents are the same, we don't need to adjust the mantissas. We just set the result's exponent
@@ -577,7 +581,7 @@ library Float128 {
                 sameExponent = true;
             }
             // now we can add/subtract
-            r.mantissa = a.mantissa - b.mantissa;
+            r.mantissa = aMan - bMan;
             if (r.mantissa == 0) r.exponent = 0 - int(ZERO_OFFSET);
             // normalization
             if (isSubtraction) {
