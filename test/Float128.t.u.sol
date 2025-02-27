@@ -8,7 +8,7 @@ import "test/FloatUtils.sol";
 contract Float128UnitTest is FloatUtils {
     using Float128 for int256;
 
-    function testToFloatLessThan38() public {
+    function testToFloatLessThan38() public pure {
         int256 man = 1;
         int256 exp = 1;
 
@@ -20,7 +20,7 @@ contract Float128UnitTest is FloatUtils {
         assertEq(man, retVal);
     } 
 
-    function testToFloatExactly38() public {
+    function testToFloatExactly38() public pure {
         int256 man = 12341234123412341234123412341234123412;
         int256 exp = 1000;
 
@@ -32,7 +32,7 @@ contract Float128UnitTest is FloatUtils {
         assertEq(man, retVal);
     } 
 
-    function testToFloatMoreThan38() public {
+    function testToFloatMoreThan38() public pure {
         int256 man = 5789604461865809771178549250434395392663499233282028201972879200395656481996;
         int256 exp = 1000;
 
@@ -46,7 +46,7 @@ contract Float128UnitTest is FloatUtils {
         assertEq(5789604461865809771178549250434395392600000000000000000000000000000000000000, retVal);
     } 
 
-    function testToPackedFloatLessThan38() public {
+    function testToPackedFloatLessThan38() public pure {
         int256 man = 1234123412341234123412341234123412341;
         int256 exp = 1000;
 
@@ -58,7 +58,7 @@ contract Float128UnitTest is FloatUtils {
         assertEq(999, retVal.exponent);
     }
 
-    function testToPackedFloatExactly38() public {
+    function testToPackedFloatExactly38() public pure {
         int256 man = 12341234123412341234123412341234123412;
         int256 exp = 1000;
 
@@ -68,7 +68,7 @@ contract Float128UnitTest is FloatUtils {
         assertEq(12341234123412341234123412341234123412, retVal.mantissa);
     }
 
-    function testToPackedFloatMoreThan38() public {
+    function testToPackedFloatMoreThan38() public pure {
         int256 man = 5789604461865809771178549250434395392663499233282028201972879200395656481996;
         int256 exp = 1000;
 
@@ -80,7 +80,7 @@ contract Float128UnitTest is FloatUtils {
         assertEq(1038, retVal.exponent);
     }
 
-    function testConvertToUnpackedFloatExactly38() public {
+    function testConvertToUnpackedFloatExactly38() public pure {
         int256 man = 12341234123412341234123412341234123412;
         int256 exp = 1000;
 
@@ -90,7 +90,7 @@ contract Float128UnitTest is FloatUtils {
         assertEq(12341234123412341234123412341234123412, unpacked.mantissa);
     }
 
-    function testConvertToUnpackedFloatLessThan38() public {
+    function testConvertToUnpackedFloatLessThan38() public pure {
         int256 man = 123412341234123412341234123412341234;
         int256 exp = 1000;
 
@@ -100,7 +100,7 @@ contract Float128UnitTest is FloatUtils {
         assertEq(998, unpacked.exponent);
     }
 
-    function testConvertToUnpackedFloatMoreThan38() public {
+    function testConvertToUnpackedFloatMoreThan38() public pure {
         int256 man = 5789604461865809771178549250434395392663499233282028201972879200395656481996;
         int256 exp = 1000;
 
@@ -110,7 +110,7 @@ contract Float128UnitTest is FloatUtils {
         assertEq(1038, unpacked.exponent);
     }
 
-    function testConvertToPackedFloatPlusDecodeExactly38() public {
+    function testConvertToPackedFloatPlusDecodeExactly38() public pure {
         int256 man = 12341234123412341234123412341234123412;
         int256 exp = 1000;
 
@@ -125,7 +125,7 @@ contract Float128UnitTest is FloatUtils {
         assertEq(1000, retVal.exponent);
     }
 
-    function testConvertToPackedFloatPlusDecodeLessThan38() public {
+    function testConvertToPackedFloatPlusDecodeLessThan38() public pure {
         int256 man = 12341234123412341234123412341234;
         int256 exp = 1000;
 
@@ -140,7 +140,7 @@ contract Float128UnitTest is FloatUtils {
         assertEq(994, retVal.exponent);
     }
 
-    function testConvertToPackedFloatPlusDecodeMoreThan38() public {
+    function testConvertToPackedFloatPlusDecodeMoreThan38() public pure {
         int256 man = 5789604461865809771178549250434395392663499233282028201972879200395656481996;
         int256 exp = 1000;
 
@@ -155,7 +155,7 @@ contract Float128UnitTest is FloatUtils {
         assertEq(1038, retVal.exponent);
     }
 
-    function testNormalizeExactly38() public {
+    function testNormalizeExactly38() public pure {
         int256 man = 12341234123412341234123412341234123412;
         int256 exp = 1000;
 
@@ -168,7 +168,7 @@ contract Float128UnitTest is FloatUtils {
         assertEq(1000, retVal.exponent);
     }
 
-    function testNormalizeLessThan38() public {
+    function testNormalizeLessThan38() public pure {
         int256 man = 12341234123412341234123412341;
         int256 exp = 1000;
 
@@ -181,7 +181,7 @@ contract Float128UnitTest is FloatUtils {
         assertEq(991, retVal.exponent);
     }
 
-    function testNormalizeMoreThan38() public {
+    function testNormalizeMoreThan38() public pure {
         int256 man = 5789604461865809771178549250434395392663499233282028201972879200395656481996;
         int256 exp = 1000;
         Float memory initial;
