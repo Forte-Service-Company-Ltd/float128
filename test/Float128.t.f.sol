@@ -216,6 +216,146 @@ contract Float128FuzzTest is FloatUtils {
         checkResults(rMan, rExp, pyMan, pyExp);
     }
 
+    function testLTFloatFuzz(int aMan, int aExp, int bMan, int bExp) public pure {
+        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
+        Float memory a = Float128.toFloat(aMan, aExp);
+        Float memory b = Float128.toFloat(bMan, bExp);
+        bool retVal = Float128.lt(a, b);
+        bool comparison = false;
+        if(a.exponent < b.exponent) {
+            comparison = true;
+        } else if(b.exponent < a.exponent) {
+            comparison = false;
+        } else {
+            comparison = a.mantissa < b.mantissa;
+        }
+        assertEq(retVal, comparison);
+    }
+
+    function testLEFloatFuzz(int aMan, int aExp, int bMan, int bExp) public pure {
+        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
+        Float memory a = Float128.toFloat(aMan, aExp);
+        Float memory b = Float128.toFloat(bMan, bExp);
+        bool retVal = Float128.le(a, b);
+        bool comparison = false;
+        if(a.exponent < b.exponent) {
+            comparison = true;
+        } else if(b.exponent < a.exponent) {
+            comparison = false;
+        } else {
+            comparison = a.mantissa <= b.mantissa;
+        }
+        assertEq(retVal, comparison);
+    }
+
+    function testGTFloatFuzz(int aMan, int aExp, int bMan, int bExp) public pure {
+        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
+        Float memory a = Float128.toFloat(aMan, aExp);
+        Float memory b = Float128.toFloat(bMan, bExp);
+        bool retVal = Float128.gt(a, b);
+        bool comparison = false;
+        if(a.exponent > b.exponent) {
+            comparison = true;
+        } else if(b.exponent > a.exponent) {
+            comparison = false;
+        } else {
+            comparison = a.mantissa > b.mantissa;
+        }
+        assertEq(retVal, comparison);
+    }
+
+    function testGEFloatFuzz(int aMan, int aExp, int bMan, int bExp) public pure {
+        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
+        Float memory a = Float128.toFloat(aMan, aExp);
+        Float memory b = Float128.toFloat(bMan, bExp);
+        bool retVal = Float128.ge(a, b);
+        bool comparison = false;
+        if(a.exponent > b.exponent) {
+            comparison = true;
+        } else if(b.exponent > a.exponent) {
+            comparison = false;
+        } else {
+            comparison = a.mantissa >= b.mantissa;
+        }
+        assertEq(retVal, comparison);
+    }
+
+    function testLTpackedFloatFuzz(int aMan, int aExp, int bMan, int bExp) public pure {
+        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
+        Float memory a = Float128.toFloat(aMan, aExp);
+        Float memory b = Float128.toFloat(bMan, bExp);
+        packedFloat pA = Float128.convertToPackedFloat(a);
+        packedFloat pB = Float128.convertToPackedFloat(b);
+        bool retVal = Float128.lt(pA, pB);
+        bool comparison = false;
+
+        if(a.exponent < b.exponent) {
+            comparison = true;
+        } else if(b.exponent < a.exponent) {
+            comparison = false;
+        } else {
+            comparison = a.mantissa < b.mantissa;
+        }
+        assertEq(retVal, comparison);
+    }
+
+    function testLEpackedFloatFuzz(int aMan, int aExp, int bMan, int bExp) public pure {
+        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
+        Float memory a = Float128.toFloat(aMan, aExp);
+        Float memory b = Float128.toFloat(bMan, bExp);
+        packedFloat pA = Float128.convertToPackedFloat(a);
+        packedFloat pB = Float128.convertToPackedFloat(b);
+        bool retVal = Float128.le(pA, pB);
+        bool comparison = false;
+
+        if(a.exponent < b.exponent) {
+            comparison = true;
+        } else if(b.exponent < a.exponent) {
+            comparison = false;
+        } else {
+            comparison = a.mantissa <= b.mantissa;
+        }
+        assertEq(retVal, comparison);
+    }
+
+    function testGTpackedFloatFuzz(int aMan, int aExp, int bMan, int bExp) public pure {
+        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
+        Float memory a = Float128.toFloat(aMan, aExp);
+        Float memory b = Float128.toFloat(bMan, bExp);
+        packedFloat pA = Float128.convertToPackedFloat(a);
+        packedFloat pB = Float128.convertToPackedFloat(b);
+        bool retVal = Float128.gt(pA, pB);
+        bool comparison = false;
+
+        if(a.exponent > b.exponent) {
+            comparison = true;
+        } else if(b.exponent > a.exponent) {
+            comparison = false;
+        } else {
+            comparison = a.mantissa > b.mantissa;
+        }
+        assertEq(retVal, comparison);
+    }
+
+    function testGEpackedFloatFuzz(int aMan, int aExp, int bMan, int bExp) public pure {
+        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
+        Float memory a = Float128.toFloat(aMan, aExp);
+        Float memory b = Float128.toFloat(bMan, bExp);
+        packedFloat pA = Float128.convertToPackedFloat(a);
+        packedFloat pB = Float128.convertToPackedFloat(b);
+        bool retVal = Float128.ge(pA, pB);
+        bool comparison = false;
+
+        if(a.exponent > b.exponent) {
+            comparison = true;
+        } else if(b.exponent > a.exponent) {
+            comparison = false;
+        } else {
+            comparison = a.mantissa >= b.mantissa;
+        }
+        assertEq(retVal, comparison);
+    }
+
     function testToFloatFuzz(int256 man, int256 exp) public pure {
         (man, exp, , ) = setBounds(man, exp, 0, 0);
 
