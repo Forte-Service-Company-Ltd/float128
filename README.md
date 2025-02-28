@@ -159,6 +159,10 @@ Here are the current Gas Results:
 | Division | 278 |
 | Division (numerator is zero) | 278 |
 | Square Root | 1277 |
+| less than | 188 |
+| less than or equal to | 202 |
+| greater than | 199 |
+| greater than or equal to | 202 |
 
 #### Gas Report - functions using packedFloats
 
@@ -176,6 +180,10 @@ Here are the current Gas Results:
 | Division (numerator is zero) | 102 |
 | Square Root | 1217 |
 | Log10 | 399 |
+| less than | 263 |
+| less than or equal to | 263 |
+| greater than | 263 |
+| greater than or equal to | 263 |
 
 #### Gas Report - Builder + Conversion functions
 

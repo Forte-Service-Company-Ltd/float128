@@ -152,6 +152,58 @@ contract GasReport is Test, GasHelpers {
         console2.log("sqrt: ", gasUsed);
     }
 
+    function testGasUsedStructs_lt() public {
+        _primer();
+        uint256 gasUsed = 0;
+
+        Float memory A = Float({exponent: -36, mantissa: int(22345000000000000000000000000000000000)});
+        Float memory B = Float({exponent: -36, mantissa: int(33678000000000000000000000000000000000)});
+        startMeasuringGas("Gas used - structs");
+        Float128.lt(A, B);
+
+        gasUsed = stopMeasuringGas();
+        console2.log("lt Float structs: ", gasUsed);
+    }
+
+    function testGasUsedStructs_le() public {
+        _primer();
+        uint256 gasUsed = 0;
+
+        Float memory A = Float({exponent: -36, mantissa: int(22345000000000000000000000000000000000)});
+        Float memory B = Float({exponent: -36, mantissa: int(33678000000000000000000000000000000000)});
+        startMeasuringGas("Gas used - structs");
+        Float128.le(A, B);
+
+        gasUsed = stopMeasuringGas();
+        console2.log("le Float structs: ", gasUsed);
+    }
+
+    function testGasUsedStructs_gt() public {
+        _primer();
+        uint256 gasUsed = 0;
+
+        Float memory A = Float({exponent: -36, mantissa: int(22345000000000000000000000000000000000)});
+        Float memory B = Float({exponent: -36, mantissa: int(33678000000000000000000000000000000000)});
+        startMeasuringGas("Gas used - structs");
+        Float128.gt(A, B);
+
+        gasUsed = stopMeasuringGas();
+        console2.log("gt Float structs: ", gasUsed);
+    }
+
+    function testGasUsedStructs_ge() public {
+        _primer();
+        uint256 gasUsed = 0;
+
+        Float memory A = Float({exponent: -36, mantissa: int(22345000000000000000000000000000000000)});
+        Float memory B = Float({exponent: -36, mantissa: int(33678000000000000000000000000000000000)});
+        startMeasuringGas("Gas used - structs");
+        Float128.ge(A, B);
+
+        gasUsed = stopMeasuringGas();
+        console2.log("ge Float structs: ", gasUsed);
+    }
+
     function testGasUsedUints() public {
         _primer();
         uint256 gasUsed = 0;
@@ -328,6 +380,62 @@ contract GasReport is Test, GasHelpers {
 
         gasUsed = stopMeasuringGas();
         console2.log("sqrt: ", gasUsed);
+    }
+
+    function testGasUsedEncoded_lt() public {
+        _primer();
+        uint256 gasUsed = 0;
+
+        packedFloat a = Float128.toPackedFloat(22345000000000000000000000000000000000, -26);
+        packedFloat b = Float128.toPackedFloat(33678000000000000000000000000000000000, -36);
+
+        startMeasuringGas("Gas used - lt");
+        Float128.lt(a, b);
+
+        gasUsed = stopMeasuringGas();
+        console2.log("lt: ", gasUsed);
+    }
+
+    function testGasUsedEncoded_le() public {
+        _primer();
+        uint256 gasUsed = 0;
+
+        packedFloat a = Float128.toPackedFloat(22345000000000000000000000000000000000, -26);
+        packedFloat b = Float128.toPackedFloat(33678000000000000000000000000000000000, -36);
+
+        startMeasuringGas("Gas used - le");
+        Float128.le(a, b);
+
+        gasUsed = stopMeasuringGas();
+        console2.log("le: ", gasUsed);
+    }
+
+    function testGasUsedEncoded_gt() public {
+        _primer();
+        uint256 gasUsed = 0;
+
+        packedFloat a = Float128.toPackedFloat(22345000000000000000000000000000000000, -26);
+        packedFloat b = Float128.toPackedFloat(33678000000000000000000000000000000000, -36);
+
+        startMeasuringGas("Gas used - gt");
+        Float128.gt(a, b);
+
+        gasUsed = stopMeasuringGas();
+        console2.log("gt: ", gasUsed);
+    }
+
+    function testGasUsedEncoded_ge() public {
+        _primer();
+        uint256 gasUsed = 0;
+
+        packedFloat a = Float128.toPackedFloat(22345000000000000000000000000000000000, -26);
+        packedFloat b = Float128.toPackedFloat(33678000000000000000000000000000000000, -36);
+
+        startMeasuringGas("Gas used - ge");
+        Float128.ge(a, b);
+
+        gasUsed = stopMeasuringGas();
+        console2.log("ge: ", gasUsed);
     }
 
     function testGasUsed_toFloat() public {

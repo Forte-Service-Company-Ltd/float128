@@ -450,6 +450,242 @@ library Float128 {
     }
 
     /**
+     * @dev performs a less than comparison
+     * @param a the first term
+     * @param b the second term
+     * @return retVal the result of a < b
+     * @notice this version of the function uses only the packedFloat type
+     */
+    function lt(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
+        assembly {
+            let aExp := and(a, EXPONENT_MASK)
+            let bExp := and(b, EXPONENT_MASK)
+            let aMan := and(a, MANTISSA_MASK)
+            let bMan := and(b, MANTISSA_MASK)
+            let zeroFound := false
+
+            if and(eq(aMan, 0), eq(bMan, 0)) {
+                zeroFound := true
+            }
+            if and(eq(aMan, 0), iszero(zeroFound)) {
+                zeroFound := true
+                if iszero(and(b, MANTISSA_SIGN_MASK)) {
+                    retVal := true
+                }
+            }
+            if and(eq(bMan, 0), iszero(zeroFound)) {
+                zeroFound := true
+                if and(a, MANTISSA_SIGN_MASK) {
+                    retVal := true
+                }
+            }
+            if iszero(zeroFound) {
+                if lt(aExp, bExp) {
+                    retVal := true
+                }
+                if eq(aExp, bExp) {
+                    let aNeg := false
+                    let bNeg := false 
+                    if and(a, MANTISSA_SIGN_MASK) {
+                        aNeg := true
+                    }
+                    if and(b, MANTISSA_SIGN_MASK) {
+                        bNeg := true
+                    }
+                    if and(aNeg, bNeg) {
+                        retVal := gt(aMan, bMan)
+                    }
+                    if iszero(or(aNeg, bNeg)) {
+                        retVal := lt(aMan, bMan)
+                    }  
+                    if xor(aNeg, bNeg) {
+                        retVal := aNeg
+                    }
+                }
+            }
+        }
+    } 
+
+    /**
+     * @dev performs a less than or equals to comparison
+     * @param a the first term
+     * @param b the second term
+     * @return retVal the result of a <= b
+     * @notice this version of the function uses only the packedFloat type
+     */
+    function le(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
+        assembly {
+            let aExp := and(a, EXPONENT_MASK)
+            let bExp := and(b, EXPONENT_MASK)
+            let aMan := and(a, MANTISSA_MASK)
+            let bMan := and(b, MANTISSA_MASK)
+            let zeroFound := false
+
+            if and(eq(aMan, 0), eq(bMan, 0)) {
+                zeroFound := true
+                retVal := true
+            }
+            if and(eq(aMan, 0), iszero(zeroFound)) {
+                zeroFound := true
+                if iszero(and(b, MANTISSA_SIGN_MASK)) {
+                    retVal := true
+                }
+            }
+            if and(eq(bMan, 0), iszero(zeroFound)) {
+                zeroFound := true
+                if and(a, MANTISSA_SIGN_MASK) {
+                    retVal := true
+                }
+            }
+            if iszero(zeroFound) {
+                if lt(aExp, bExp) {
+                    retVal := true
+                }
+                if eq(aExp, bExp) {
+                    let aNeg := false
+                    let bNeg := false 
+                    if and(a, MANTISSA_SIGN_MASK) {
+                        aNeg := true
+                    }
+                    if and(b, MANTISSA_SIGN_MASK) {
+                        bNeg := true
+                    }
+                    if and(aNeg, bNeg) {
+                        retVal := or(gt(aMan, bMan), eq(aMan, bMan))
+                    }
+                    if iszero(or(aNeg, bNeg)) {
+                        retVal := or(lt(aMan, bMan), eq(aMan, bMan))
+                    }  
+                    if xor(aNeg, bNeg) {
+                        retVal := aNeg
+                    }
+                }
+            }
+        }
+    } 
+
+    /**
+     * @dev performs a greater than comparison
+     * @param a the first term
+     * @param b the second term
+     * @return retVal the result of a > b
+     * @notice this version of the function uses only the packedFloat type
+     */
+    function gt(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
+        assembly {
+            let aExp := and(a, EXPONENT_MASK)
+            let bExp := and(b, EXPONENT_MASK)
+            let aMan := and(a, MANTISSA_MASK)
+            let bMan := and(b, MANTISSA_MASK)
+            let zeroFound := false
+
+            if and(eq(aMan, 0), eq(bMan, 0)) {
+                zeroFound := true
+            }
+            if and(eq(aMan, 0), iszero(zeroFound)) {
+                zeroFound := true
+                if and(b, MANTISSA_SIGN_MASK) {
+                    retVal := true
+                }
+            }
+            if and(eq(bMan, 0), iszero(zeroFound)) {
+                zeroFound := true
+                if iszero(and(a, MANTISSA_SIGN_MASK)) {
+                    retVal := true
+                }
+            }
+            if iszero(zeroFound) {
+                if lt(bExp, aExp) {
+                    retVal := true
+                }
+                if lt(aExp, bExp) {
+                    retVal := false
+                }
+                if eq(aExp, bExp) {
+                    let aNeg := false
+                    let bNeg := false 
+                    if and(a, MANTISSA_SIGN_MASK) {
+                        aNeg := true
+                    }
+                    if and(b, MANTISSA_SIGN_MASK) {
+                        bNeg := true
+                    }
+                    if and(aNeg, bNeg) {
+                        retVal := gt(bMan, aMan)
+                    }
+                    if iszero(or(aNeg, bNeg)) {
+                        retVal := lt(bMan, aMan)
+                    }  
+                    if xor(aNeg, bNeg) {
+                        retVal := bNeg
+                    }
+                }
+            }
+        }
+    } 
+
+    /**
+     * @dev performs a greater than or equal to comparison
+     * @param a the first term
+     * @param b the second term
+     * @return retVal the result of a >= b
+     * @notice this version of the function uses only the packedFloat type
+     */
+    function ge(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
+        assembly {
+            let aExp := and(a, EXPONENT_MASK)
+            let bExp := and(b, EXPONENT_MASK)
+            let aMan := and(a, MANTISSA_MASK)
+            let bMan := and(b, MANTISSA_MASK)
+            let zeroFound := false
+
+            if and(eq(aMan, 0), eq(bMan, 0)) {
+                zeroFound := true
+                retVal := true
+            }
+            if and(eq(aMan, 0), iszero(zeroFound)) {
+                zeroFound := true
+                if and(b, MANTISSA_SIGN_MASK) {
+                    retVal := true
+                }
+            }
+            if and(eq(bMan, 0), iszero(zeroFound)) {
+                zeroFound := true
+                if iszero(and(a, MANTISSA_SIGN_MASK)) {
+                    retVal := true
+                }
+            }
+            if iszero(zeroFound) {
+                if lt(bExp, aExp) {
+                    retVal := true
+                }
+                if lt(aExp, bExp) {
+                    retVal := false
+                }
+                if eq(aExp, bExp) {
+                    let aNeg := false
+                    let bNeg := false 
+                    if and(a, MANTISSA_SIGN_MASK) {
+                        aNeg := true
+                    }
+                    if and(b, MANTISSA_SIGN_MASK) {
+                        bNeg := true
+                    }
+                    if and(aNeg, bNeg) {
+                        retVal := or(gt(bMan, aMan), eq(aMan, bMan))
+                    }
+                    if iszero(or(aNeg, bNeg)) {
+                        retVal := or(lt(bMan, aMan), eq(aMan, bMan))
+                    }  
+                    if xor(aNeg, bNeg) {
+                        retVal := bNeg
+                    }
+                }
+            }
+        }
+    } 
+
+    /**
      * @dev adds 2 signed floating point numbers
      * @param a the first addend
      * @param b the second addend
@@ -755,6 +991,111 @@ library Float128 {
                 mstore(add(0x20, r), aExp)
             }
         } else r.exponent = 0 - int(ZERO_OFFSET);
+    }
+
+    /**
+     * @dev performs a less than comparison
+     * @param a the first term
+     * @param b the second term
+     * @return the result of a < b
+     * @notice this version of the function uses only the Float type
+     */
+    function lt(Float memory a, Float memory b) internal pure returns (bool) {
+        if(a.mantissa == 0 || b.mantissa == 0) {
+            if(a.mantissa == 0 && b.mantissa == 0) {
+                return false;
+            } else if(a.mantissa == 0) {
+                return b.mantissa > 0;
+            } else {
+                return a.mantissa < 0;
+            }
+        }
+        if(a.exponent < b.exponent) {
+            return true;
+        } else if(b.exponent < a.exponent) {
+            return false;
+        } else {
+            return a.mantissa < b.mantissa;
+        }
+    
+    } 
+
+    /**
+     * @dev performs a less than or equal to comparison
+     * @param a the first term
+     * @param b the second term
+     * @return the result of a <= b
+     * @notice this version of the function uses only the Float type
+     */
+    function le(Float memory a, Float memory b) internal pure returns (bool) {
+        if(a.mantissa == 0 || b.mantissa == 0) {
+            if(a.mantissa == 0 && b.mantissa == 0) {
+                return true;
+            } else if(a.mantissa == 0) {
+                return b.mantissa > 0;
+            } else {
+                return a.mantissa < 0;
+            }
+        }
+        if(a.exponent < b.exponent) {
+            return true;
+        } else if(b.exponent < a.exponent) {
+            return false;
+        } else {
+            return a.mantissa <= b.mantissa;
+        }
+    }
+
+    /**
+     * @dev performs a greater than comparison
+     * @param a the first term
+     * @param b the second term
+     * @return the result of a > b
+     * @notice this version of the function uses only the Float type
+     */
+    function gt(Float memory a, Float memory b) internal pure returns (bool) {
+        if(a.mantissa == 0 || b.mantissa == 0) {
+            if(a.mantissa == 0 && b.mantissa == 0) {
+                return false;
+            } else if(a.mantissa == 0) {
+                return b.mantissa < 0;
+            } else {
+                return a.mantissa > 0;
+            }
+        }
+        if(a.exponent > b.exponent) {
+            return true;
+        } else if(b.exponent > a.exponent) {
+            return false;
+        } else {
+            return a.mantissa > b.mantissa;
+        }
+    }
+
+    /**
+     * @dev performs a greater than or equal to comparison
+     * @param a the first term
+     * @param b the second term
+     * @return the result of a >= b
+     * @notice this version of the function uses only the Float type
+     */
+    function ge(Float memory a, Float memory b) internal pure returns (bool) {
+        if(a.mantissa == 0 || b.mantissa == 0) {
+            if(a.mantissa == 0 && b.mantissa == 0) {
+                return true;
+            } else if(a.mantissa == 0) {
+                return b.mantissa < 0;
+            } else {
+                return a.mantissa > 0;
+            }
+        }
+        if(a.exponent > b.exponent) {
+            return true;
+        } else if(b.exponent > a.exponent) {
+            return false;
+        } else {
+            return a.mantissa >= b.mantissa;
+        }
     }
 
     /**
