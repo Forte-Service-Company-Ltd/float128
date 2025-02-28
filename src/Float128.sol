@@ -462,29 +462,45 @@ library Float128 {
             let bExp := and(b, EXPONENT_MASK)
             let aMan := and(a, MANTISSA_MASK)
             let bMan := and(b, MANTISSA_MASK)
-            if lt(aExp, bExp) {
-                retVal := true
+            let zeroFound := false
+
+            if and(eq(aMan, 0), eq(bMan, 0)) {
+                zeroFound := true
             }
-            if lt(bExp, aExp) {
-                retVal := false
+            if and(eq(aMan, 0), iszero(zeroFound)) {
+                zeroFound := true
+                if iszero(and(b, MANTISSA_SIGN_MASK)) {
+                    retVal := true
+                }
             }
-            if eq(aExp, bExp) {
-                let aNeg := false
-                let bNeg := false 
+            if and(eq(bMan, 0), iszero(zeroFound)) {
+                zeroFound := true
                 if and(a, MANTISSA_SIGN_MASK) {
-                    aNeg := true
+                    retVal := true
                 }
-                if and(b, MANTISSA_SIGN_MASK) {
-                    bNeg := true
+            }
+            if iszero(zeroFound) {
+                if lt(aExp, bExp) {
+                    retVal := true
                 }
-                if and(aNeg, bNeg) {
-                    retVal := gt(aMan, bMan)
-                }
-                if iszero(or(aNeg, bNeg)) {
-                    retVal := lt(aMan, bMan)
-                }  
-                if xor(aNeg, bNeg) {
-                    retVal := aNeg
+                if eq(aExp, bExp) {
+                    let aNeg := false
+                    let bNeg := false 
+                    if and(a, MANTISSA_SIGN_MASK) {
+                        aNeg := true
+                    }
+                    if and(b, MANTISSA_SIGN_MASK) {
+                        bNeg := true
+                    }
+                    if and(aNeg, bNeg) {
+                        retVal := gt(aMan, bMan)
+                    }
+                    if iszero(or(aNeg, bNeg)) {
+                        retVal := lt(aMan, bMan)
+                    }  
+                    if xor(aNeg, bNeg) {
+                        retVal := aNeg
+                    }
                 }
             }
         }
@@ -503,29 +519,46 @@ library Float128 {
             let bExp := and(b, EXPONENT_MASK)
             let aMan := and(a, MANTISSA_MASK)
             let bMan := and(b, MANTISSA_MASK)
-            if lt(aExp, bExp) {
+            let zeroFound := false
+
+            if and(eq(aMan, 0), eq(bMan, 0)) {
+                zeroFound := true
                 retVal := true
             }
-            if lt(bExp, aExp) {
-                retVal := false
+            if and(eq(aMan, 0), iszero(zeroFound)) {
+                zeroFound := true
+                if iszero(and(b, MANTISSA_SIGN_MASK)) {
+                    retVal := true
+                }
             }
-            if eq(aExp, bExp) {
-                let aNeg := false
-                let bNeg := false 
+            if and(eq(bMan, 0), iszero(zeroFound)) {
+                zeroFound := true
                 if and(a, MANTISSA_SIGN_MASK) {
-                    aNeg := true
+                    retVal := true
                 }
-                if and(b, MANTISSA_SIGN_MASK) {
-                    bNeg := true
+            }
+            if iszero(zeroFound) {
+                if lt(aExp, bExp) {
+                    retVal := true
                 }
-                if and(aNeg, bNeg) {
-                    retVal := or(gt(aMan, bMan), eq(aMan, bMan))
-                }
-                if iszero(or(aNeg, bNeg)) {
-                    retVal := or(lt(aMan, bMan), eq(aMan, bMan))
-                }  
-                if xor(aNeg, bNeg) {
-                    retVal := aNeg
+                if eq(aExp, bExp) {
+                    let aNeg := false
+                    let bNeg := false 
+                    if and(a, MANTISSA_SIGN_MASK) {
+                        aNeg := true
+                    }
+                    if and(b, MANTISSA_SIGN_MASK) {
+                        bNeg := true
+                    }
+                    if and(aNeg, bNeg) {
+                        retVal := or(gt(aMan, bMan), eq(aMan, bMan))
+                    }
+                    if iszero(or(aNeg, bNeg)) {
+                        retVal := or(lt(aMan, bMan), eq(aMan, bMan))
+                    }  
+                    if xor(aNeg, bNeg) {
+                        retVal := aNeg
+                    }
                 }
             }
         }
@@ -544,29 +577,48 @@ library Float128 {
             let bExp := and(b, EXPONENT_MASK)
             let aMan := and(a, MANTISSA_MASK)
             let bMan := and(b, MANTISSA_MASK)
-            if lt(bExp, aExp) {
-                retVal := true
+            let zeroFound := false
+
+            if and(eq(aMan, 0), eq(bMan, 0)) {
+                zeroFound := true
             }
-            if lt(aExp, bExp) {
-                retVal := false
-            }
-            if eq(aExp, bExp) {
-                let aNeg := false
-                let bNeg := false 
-                if and(a, MANTISSA_SIGN_MASK) {
-                    aNeg := true
-                }
+            if and(eq(aMan, 0), iszero(zeroFound)) {
+                zeroFound := true
                 if and(b, MANTISSA_SIGN_MASK) {
-                    bNeg := true
+                    retVal := true
                 }
-                if and(aNeg, bNeg) {
-                    retVal := gt(bMan, aMan)
+            }
+            if and(eq(bMan, 0), iszero(zeroFound)) {
+                zeroFound := true
+                if iszero(and(a, MANTISSA_SIGN_MASK)) {
+                    retVal := true
                 }
-                if iszero(or(aNeg, bNeg)) {
-                    retVal := lt(bMan, aMan)
-                }  
-                if xor(aNeg, bNeg) {
-                    retVal := bNeg
+            }
+            if iszero(zeroFound) {
+                if lt(bExp, aExp) {
+                    retVal := true
+                }
+                if lt(aExp, bExp) {
+                    retVal := false
+                }
+                if eq(aExp, bExp) {
+                    let aNeg := false
+                    let bNeg := false 
+                    if and(a, MANTISSA_SIGN_MASK) {
+                        aNeg := true
+                    }
+                    if and(b, MANTISSA_SIGN_MASK) {
+                        bNeg := true
+                    }
+                    if and(aNeg, bNeg) {
+                        retVal := gt(bMan, aMan)
+                    }
+                    if iszero(or(aNeg, bNeg)) {
+                        retVal := lt(bMan, aMan)
+                    }  
+                    if xor(aNeg, bNeg) {
+                        retVal := bNeg
+                    }
                 }
             }
         }
@@ -585,29 +637,49 @@ library Float128 {
             let bExp := and(b, EXPONENT_MASK)
             let aMan := and(a, MANTISSA_MASK)
             let bMan := and(b, MANTISSA_MASK)
-            if lt(bExp, aExp) {
+            let zeroFound := false
+
+            if and(eq(aMan, 0), eq(bMan, 0)) {
+                zeroFound := true
                 retVal := true
             }
-            if lt(aExp, bExp) {
-                retVal := false
-            }
-            if eq(aExp, bExp) {
-                let aNeg := false
-                let bNeg := false 
-                if and(a, MANTISSA_SIGN_MASK) {
-                    aNeg := true
-                }
+            if and(eq(aMan, 0), iszero(zeroFound)) {
+                zeroFound := true
                 if and(b, MANTISSA_SIGN_MASK) {
-                    bNeg := true
+                    retVal := true
                 }
-                if and(aNeg, bNeg) {
-                    retVal := or(gt(bMan, aMan), eq(aMan, bMan))
+            }
+            if and(eq(bMan, 0), iszero(zeroFound)) {
+                zeroFound := true
+                if iszero(and(a, MANTISSA_SIGN_MASK)) {
+                    retVal := true
                 }
-                if iszero(or(aNeg, bNeg)) {
-                    retVal := or(lt(bMan, aMan), eq(aMan, bMan))
-                }  
-                if xor(aNeg, bNeg) {
-                    retVal := bNeg
+            }
+            if iszero(zeroFound) {
+                if lt(bExp, aExp) {
+                    retVal := true
+                }
+                if lt(aExp, bExp) {
+                    retVal := false
+                }
+                if eq(aExp, bExp) {
+                    let aNeg := false
+                    let bNeg := false 
+                    if and(a, MANTISSA_SIGN_MASK) {
+                        aNeg := true
+                    }
+                    if and(b, MANTISSA_SIGN_MASK) {
+                        bNeg := true
+                    }
+                    if and(aNeg, bNeg) {
+                        retVal := or(gt(bMan, aMan), eq(aMan, bMan))
+                    }
+                    if iszero(or(aNeg, bNeg)) {
+                        retVal := or(lt(bMan, aMan), eq(aMan, bMan))
+                    }  
+                    if xor(aNeg, bNeg) {
+                        retVal := bNeg
+                    }
                 }
             }
         }
@@ -929,6 +1001,15 @@ library Float128 {
      * @notice this version of the function uses only the Float type
      */
     function lt(Float memory a, Float memory b) internal pure returns (bool) {
+        if(a.mantissa == 0 || b.mantissa == 0) {
+            if(a.mantissa == 0 && b.mantissa == 0) {
+                return false;
+            } else if(a.mantissa == 0) {
+                return b.mantissa > 0;
+            } else {
+                return a.mantissa < 0;
+            }
+        }
         if(a.exponent < b.exponent) {
             return true;
         } else if(b.exponent < a.exponent) {
@@ -936,6 +1017,7 @@ library Float128 {
         } else {
             return a.mantissa < b.mantissa;
         }
+    
     } 
 
     /**
@@ -946,6 +1028,15 @@ library Float128 {
      * @notice this version of the function uses only the Float type
      */
     function le(Float memory a, Float memory b) internal pure returns (bool) {
+        if(a.mantissa == 0 || b.mantissa == 0) {
+            if(a.mantissa == 0 && b.mantissa == 0) {
+                return true;
+            } else if(a.mantissa == 0) {
+                return b.mantissa > 0;
+            } else {
+                return a.mantissa < 0;
+            }
+        }
         if(a.exponent < b.exponent) {
             return true;
         } else if(b.exponent < a.exponent) {
@@ -963,6 +1054,15 @@ library Float128 {
      * @notice this version of the function uses only the Float type
      */
     function gt(Float memory a, Float memory b) internal pure returns (bool) {
+        if(a.mantissa == 0 || b.mantissa == 0) {
+            if(a.mantissa == 0 && b.mantissa == 0) {
+                return false;
+            } else if(a.mantissa == 0) {
+                return b.mantissa < 0;
+            } else {
+                return a.mantissa > 0;
+            }
+        }
         if(a.exponent > b.exponent) {
             return true;
         } else if(b.exponent > a.exponent) {
@@ -980,6 +1080,15 @@ library Float128 {
      * @notice this version of the function uses only the Float type
      */
     function ge(Float memory a, Float memory b) internal pure returns (bool) {
+        if(a.mantissa == 0 || b.mantissa == 0) {
+            if(a.mantissa == 0 && b.mantissa == 0) {
+                return true;
+            } else if(a.mantissa == 0) {
+                return b.mantissa < 0;
+            } else {
+                return a.mantissa > 0;
+            }
+        }
         if(a.exponent > b.exponent) {
             return true;
         } else if(b.exponent > a.exponent) {

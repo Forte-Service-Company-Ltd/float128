@@ -222,12 +222,27 @@ contract Float128FuzzTest is FloatUtils {
         Float memory b = Float128.toFloat(bMan, bExp);
         bool retVal = Float128.lt(a, b);
         bool comparison = false;
-        if(a.exponent < b.exponent) {
-            comparison = true;
-        } else if(b.exponent < a.exponent) {
-            comparison = false;
+
+        if(a.mantissa == 0 || b.mantissa == 0) {
+            if(a.mantissa == 0 && b.mantissa == 0) {
+                comparison = false;
+            } else if(a.mantissa == 0) {
+                if(b.mantissa > 0) {
+                    comparison = true;
+                }
+            } else {
+                if(a.mantissa < 0) {
+                    comparison = true;
+                } 
+            }
         } else {
-            comparison = a.mantissa < b.mantissa;
+            if(a.exponent < b.exponent) {
+                comparison = true;
+            } else if(b.exponent < a.exponent) {
+                comparison = false;
+            } else {
+                comparison = a.mantissa < b.mantissa;
+            }
         }
         assertEq(retVal, comparison);
     }
@@ -238,12 +253,27 @@ contract Float128FuzzTest is FloatUtils {
         Float memory b = Float128.toFloat(bMan, bExp);
         bool retVal = Float128.le(a, b);
         bool comparison = false;
-        if(a.exponent < b.exponent) {
-            comparison = true;
-        } else if(b.exponent < a.exponent) {
-            comparison = false;
+
+        if(a.mantissa == 0 || b.mantissa == 0) {
+            if(a.mantissa == 0 && b.mantissa == 0) {
+                comparison = true;
+            } else if(a.mantissa == 0) {
+                if(b.mantissa > 0) {
+                    comparison = true;
+                }
+            } else {
+                if(a.mantissa < 0) {
+                    comparison = true;
+                } 
+            }
         } else {
-            comparison = a.mantissa <= b.mantissa;
+            if(a.exponent < b.exponent) {
+                comparison = true;
+            } else if(b.exponent < a.exponent) {
+                comparison = false;
+            } else {
+                comparison = a.mantissa <= b.mantissa;
+            }
         }
         assertEq(retVal, comparison);
     }
@@ -254,12 +284,27 @@ contract Float128FuzzTest is FloatUtils {
         Float memory b = Float128.toFloat(bMan, bExp);
         bool retVal = Float128.gt(a, b);
         bool comparison = false;
-        if(a.exponent > b.exponent) {
-            comparison = true;
-        } else if(b.exponent > a.exponent) {
-            comparison = false;
+
+        if(a.mantissa == 0 || b.mantissa == 0) {
+            if(a.mantissa == 0 && b.mantissa == 0) {
+                comparison = false;
+            } else if(a.mantissa == 0) {
+                if(b.mantissa < 0) {
+                    comparison = true;
+                }
+            } else {
+                if(a.mantissa > 0) {
+                    comparison = true;
+                } 
+            }
         } else {
-            comparison = a.mantissa > b.mantissa;
+            if(a.exponent > b.exponent) {
+                comparison = true;
+            } else if(b.exponent > a.exponent) {
+                comparison = false;
+            } else {
+                comparison = a.mantissa > b.mantissa;
+            }
         }
         assertEq(retVal, comparison);
     }
@@ -270,88 +315,184 @@ contract Float128FuzzTest is FloatUtils {
         Float memory b = Float128.toFloat(bMan, bExp);
         bool retVal = Float128.ge(a, b);
         bool comparison = false;
-        if(a.exponent > b.exponent) {
-            comparison = true;
-        } else if(b.exponent > a.exponent) {
-            comparison = false;
+
+        if(a.mantissa == 0 || b.mantissa == 0) {
+            if(a.mantissa == 0 && b.mantissa == 0) {
+                comparison = true;
+            } else if(a.mantissa == 0) {
+                if(b.mantissa < 0) {
+                    comparison = true;
+                }
+            } else {
+                if(a.mantissa > 0) {
+                    comparison = true;
+                } 
+            }
         } else {
-            comparison = a.mantissa >= b.mantissa;
+            if(a.exponent > b.exponent) {
+                comparison = true;
+            } else if(b.exponent > a.exponent) {
+                comparison = false;
+            } else {
+                comparison = a.mantissa >= b.mantissa;
+            }
         }
         assertEq(retVal, comparison);
     }
 
     function testLTpackedFloatFuzz(int aMan, int aExp, int bMan, int bExp) public pure {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
-        Float memory a = Float128.toFloat(aMan, aExp);
-        Float memory b = Float128.toFloat(bMan, bExp);
-        packedFloat pA = Float128.convertToPackedFloat(a);
-        packedFloat pB = Float128.convertToPackedFloat(b);
+
+        packedFloat pA = Float128.toPackedFloat(aMan, aExp);
+        packedFloat pB = Float128.toPackedFloat(bMan, bExp);
         bool retVal = Float128.lt(pA, pB);
         bool comparison = false;
 
-        if(a.exponent < b.exponent) {
-            comparison = true;
-        } else if(b.exponent < a.exponent) {
-            comparison = false;
+        // Creating the float struct to normalize the mantissas and exponents before doing the comparison
+        Float memory floA = Float128.toFloat(aMan, aExp);
+        Float memory floB = Float128.toFloat(bMan, bExp);
+
+        if(floA.mantissa == 0 || floB.mantissa == 0) {
+            if(floA.mantissa == 0 && floB.mantissa == 0) {
+                comparison = false;
+            } else if(floA.mantissa == 0) {
+                if(floB.mantissa > 0) {
+                    comparison = true;
+                } else {
+                    comparison = false;
+                }
+            } else {
+                if(floA.mantissa > 0) {
+                    comparison = false;
+                } else {
+                    comparison = true;
+                }
+            }
         } else {
-            comparison = a.mantissa < b.mantissa;
+            if(floA.exponent < floB.exponent) {
+                comparison = true;
+            } else if(floB.exponent < floA.exponent) {
+                comparison = false;
+            } else {
+                comparison = floA.mantissa < floB.mantissa;
+            }
         }
         assertEq(retVal, comparison);
     }
 
     function testLEpackedFloatFuzz(int aMan, int aExp, int bMan, int bExp) public pure {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
-        Float memory a = Float128.toFloat(aMan, aExp);
-        Float memory b = Float128.toFloat(bMan, bExp);
-        packedFloat pA = Float128.convertToPackedFloat(a);
-        packedFloat pB = Float128.convertToPackedFloat(b);
+        packedFloat pA = Float128.toPackedFloat(aMan, aExp);
+        packedFloat pB = Float128.toPackedFloat(bMan, bExp);
         bool retVal = Float128.le(pA, pB);
         bool comparison = false;
 
-        if(a.exponent < b.exponent) {
-            comparison = true;
-        } else if(b.exponent < a.exponent) {
-            comparison = false;
+        // Creating the float struct to normalize the mantissas and exponents before doing the comparison
+        Float memory floA = Float128.toFloat(aMan, aExp);
+        Float memory floB = Float128.toFloat(bMan, bExp);
+
+       if(floA.mantissa == 0 || floB.mantissa == 0) {
+            if(floA.mantissa == 0 && floB.mantissa == 0) {
+                comparison = true;
+            } else if(floA.mantissa == 0) {
+                if(floB.mantissa > 0) {
+                    comparison = true;
+                } else {
+                    comparison = false;
+                }
+            } else {
+                if(floA.mantissa > 0) {
+                    comparison = false;
+                } else {
+                    comparison = true;
+                }
+            }
         } else {
-            comparison = a.mantissa <= b.mantissa;
+            if(floA.exponent < floB.exponent) {
+                comparison = true;
+            } else if(floB.exponent < floA.exponent) {
+                comparison = false;
+            } else {
+                comparison = floA.mantissa <= floB.mantissa;
+            }
         }
         assertEq(retVal, comparison);
     }
 
     function testGTpackedFloatFuzz(int aMan, int aExp, int bMan, int bExp) public pure {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
-        Float memory a = Float128.toFloat(aMan, aExp);
-        Float memory b = Float128.toFloat(bMan, bExp);
-        packedFloat pA = Float128.convertToPackedFloat(a);
-        packedFloat pB = Float128.convertToPackedFloat(b);
+        packedFloat pA = Float128.toPackedFloat(aMan, aExp);
+        packedFloat pB = Float128.toPackedFloat(bMan, bExp);
         bool retVal = Float128.gt(pA, pB);
         bool comparison = false;
 
-        if(a.exponent > b.exponent) {
-            comparison = true;
-        } else if(b.exponent > a.exponent) {
-            comparison = false;
+        // Creating the float struct to normalize the mantissas and exponents before doing the comparison
+        Float memory floA = Float128.toFloat(aMan, aExp);
+        Float memory floB = Float128.toFloat(bMan, bExp);
+
+       if(floA.mantissa == 0 || floB.mantissa == 0) {
+            if(floA.mantissa == 0 && floB.mantissa == 0) {
+                comparison = false;
+            } else if(floA.mantissa == 0) {
+                if(floB.mantissa < 0) {
+                    comparison = true;
+                } else {
+                    comparison = false;
+                }
+            } else {
+                if(floA.mantissa < 0) {
+                    comparison = false;
+                } else {
+                    comparison = true;
+                }
+            }
         } else {
-            comparison = a.mantissa > b.mantissa;
+            if(floA.exponent > floB.exponent) {
+                comparison = true;
+            } else if(floB.exponent > floA.exponent) {
+                comparison = false;
+            } else {
+                comparison = floA.mantissa > floB.mantissa;
+            }
         }
         assertEq(retVal, comparison);
     }
 
     function testGEpackedFloatFuzz(int aMan, int aExp, int bMan, int bExp) public pure {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
-        Float memory a = Float128.toFloat(aMan, aExp);
-        Float memory b = Float128.toFloat(bMan, bExp);
-        packedFloat pA = Float128.convertToPackedFloat(a);
-        packedFloat pB = Float128.convertToPackedFloat(b);
+        packedFloat pA = Float128.toPackedFloat(aMan, aExp);
+        packedFloat pB = Float128.toPackedFloat(bMan, bExp);
         bool retVal = Float128.ge(pA, pB);
         bool comparison = false;
 
-        if(a.exponent > b.exponent) {
-            comparison = true;
-        } else if(b.exponent > a.exponent) {
-            comparison = false;
+        // Creating the float struct to normalize the mantissas and exponents before doing the comparison
+        Float memory floA = Float128.toFloat(aMan, aExp);
+        Float memory floB = Float128.toFloat(bMan, bExp);
+
+       if(floA.mantissa == 0 || floB.mantissa == 0) {
+            if(floA.mantissa == 0 && floB.mantissa == 0) {
+                comparison = true;
+            } else if(floA.mantissa == 0) {
+                if(floB.mantissa < 0) {
+                    comparison = true;
+                } else {
+                    comparison = false;
+                }
+            } else {
+                if(floA.mantissa < 0) {
+                    comparison = false;
+                } else {
+                    comparison = true;
+                }
+            }
         } else {
-            comparison = a.mantissa >= b.mantissa;
+            if(floA.exponent > floB.exponent) {
+                comparison = true;
+            } else if(floB.exponent > floA.exponent) {
+                comparison = false;
+            } else {
+                comparison = floA.mantissa >= floB.mantissa;
+            }
         }
         assertEq(retVal, comparison);
     }
