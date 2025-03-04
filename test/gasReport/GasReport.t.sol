@@ -80,6 +80,10 @@ contract GasReport is Test, GasHelpers, FloatUtils {
                 A.mantissa *= -1;
             }
 
+            if (B.mantissa > 0) {
+                B.mantissa *= -1;
+            }
+
             startMeasuringGas("Float - Add by Sub");
             Float128.add(A, B);
 
@@ -149,6 +153,10 @@ contract GasReport is Test, GasHelpers, FloatUtils {
             if (A.mantissa < 0) {
                 B.mantissa = A.mantissa;
                 A.mantissa *= -1;
+            }
+
+            if (B.mantissa > 0) {
+                B.mantissa *= -1;
             }
 
             startMeasuringGas("Float - Sub by Add");
@@ -338,6 +346,10 @@ contract GasReport is Test, GasHelpers, FloatUtils {
                 aMan *= -1;
             }
 
+            if (bMan > 0) {
+                bMan *= -1;
+            }
+
             a = Float128.toPackedFloat(aMan, aExp);
             b = Float128.toPackedFloat(bMan, bExp);
 
@@ -414,6 +426,10 @@ contract GasReport is Test, GasHelpers, FloatUtils {
             if (aMan < 0) {
                 bMan = aMan;
                 aMan *= -1;
+            }
+
+            if (bMan > 0) {
+                bMan *= -1;
             }
 
             a = Float128.toPackedFloat(aMan, aExp);
