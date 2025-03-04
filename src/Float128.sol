@@ -337,7 +337,7 @@ library Float128 {
                 revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
             }
             // if a is zero then the result will be zero
-            if gt(a, 0) {
+            if gt(and(a, MANTISSA_MASK), 0) {
                 let aMan := and(a, MANTISSA_MASK)
                 let aExp := shr(EXPONENT_BIT, and(a, EXPONENT_MASK))
                 let bMan := and(b, MANTISSA_MASK)
