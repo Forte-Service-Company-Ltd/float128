@@ -515,31 +515,31 @@ library Float128 {
      */
     function le(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
         assembly {
-            let aExp := and(a, EXPONENT_MASK)
-            let bExp := and(b, EXPONENT_MASK)
-            let aMan := and(a, MANTISSA_MASK)
-            let bMan := and(b, MANTISSA_MASK)
             let equals := eq(a, b)
-
             if equals {
                 retVal := true
             } 
             if iszero(equals){
+                let aNeg := gt(and(a, MANTISSA_SIGN_MASK), 0)
+                let bNeg := gt(and(b, MANTISSA_SIGN_MASK), 0) 
                 let isAZero := iszero(a)
                 let isBZero := iszero(b)
                 let zeroFound := or(isAZero, isBZero)
                 if zeroFound {
-                    if or(and(isAZero, iszero(and(b, MANTISSA_SIGN_MASK))), and(isBZero, and(a, MANTISSA_SIGN_MASK))){
+                    if or(and(isAZero, iszero(bNeg)), and(isBZero, aNeg)){
                         retVal := true
                     }
                 }
                 if iszero(zeroFound) {
+                    let aExp := and(a, EXPONENT_MASK)
+                    let bExp := and(b, EXPONENT_MASK)
+                    let aMan := and(a, MANTISSA_MASK)
+                    let bMan := and(b, MANTISSA_MASK)
                     if lt(aExp, bExp) {
                         retVal := true
                     }
                     if eq(aExp, bExp) {
-                        let aNeg := and(a, MANTISSA_SIGN_MASK)
-                        let bNeg := and(b, MANTISSA_SIGN_MASK) 
+                        
                         if and(aNeg, bNeg) {
                             retVal := gt(aMan, bMan)
                         }

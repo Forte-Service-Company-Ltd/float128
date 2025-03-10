@@ -384,30 +384,15 @@ contract Float128FuzzTest is FloatUtils {
         Float memory floA = Float128.toFloat(aMan, aExp);
         Float memory floB = Float128.toFloat(bMan, bExp);
 
-       if(floA.mantissa == 0 || floB.mantissa == 0) {
-            if(floA.mantissa == 0 && floB.mantissa == 0) {
+        if(floA.mantissa == floB.mantissa && floA.exponent == floB.exponent ){
+            comparison = true;
+        }
+       else if(floA.mantissa == 0 || floB.mantissa == 0) {
+            if((floA.mantissa == 0 && floB.mantissa > 0) || (floB.mantissa == 0 && floA.mantissa < 0)) 
                 comparison = true;
-            } else if(floA.mantissa == 0) {
-                if(floB.mantissa > 0) {
-                    comparison = true;
-                } else {
-                    comparison = false;
-                }
-            } else {
-                if(floA.mantissa > 0) {
-                    comparison = false;
-                } else {
-                    comparison = true;
-                }
-            }
         } else {
-            if(floA.exponent < floB.exponent) {
+            if(floA.exponent < floB.exponent || (floA.exponent == floB.exponent && floA.mantissa < floB.mantissa) ) 
                 comparison = true;
-            } else if(floB.exponent < floA.exponent) {
-                comparison = false;
-            } else {
-                comparison = floA.mantissa <= floB.mantissa;
-            }
         }
         assertEq(retVal, comparison);
     }
