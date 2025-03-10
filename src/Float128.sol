@@ -519,45 +519,36 @@ library Float128 {
             let bExp := and(b, EXPONENT_MASK)
             let aMan := and(a, MANTISSA_MASK)
             let bMan := and(b, MANTISSA_MASK)
-            let zeroFound := false
+            let equals := eq(a, b)
 
-            if and(eq(aMan, 0), eq(bMan, 0)) {
-                zeroFound := true
+            if equals {
                 retVal := true
-            }
-            if and(eq(aMan, 0), iszero(zeroFound)) {
-                zeroFound := true
-                if iszero(and(b, MANTISSA_SIGN_MASK)) {
-                    retVal := true
-                }
-            }
-            if and(eq(bMan, 0), iszero(zeroFound)) {
-                zeroFound := true
-                if and(a, MANTISSA_SIGN_MASK) {
-                    retVal := true
-                }
-            }
-            if iszero(zeroFound) {
-                if lt(aExp, bExp) {
-                    retVal := true
-                }
-                if eq(aExp, bExp) {
-                    let aNeg := false
-                    let bNeg := false 
-                    if and(a, MANTISSA_SIGN_MASK) {
-                        aNeg := true
+            } 
+            if iszero(equals){
+                let isAZero := iszero(a)
+                let isBZero := iszero(b)
+                let zeroFound := or(isAZero, isBZero)
+                if zeroFound {
+                    if or(and(isAZero, iszero(and(b, MANTISSA_SIGN_MASK))), and(isBZero, and(a, MANTISSA_SIGN_MASK))){
+                        retVal := true
                     }
-                    if and(b, MANTISSA_SIGN_MASK) {
-                        bNeg := true
+                }
+                if iszero(zeroFound) {
+                    if lt(aExp, bExp) {
+                        retVal := true
                     }
-                    if and(aNeg, bNeg) {
-                        retVal := or(gt(aMan, bMan), eq(aMan, bMan))
-                    }
-                    if iszero(or(aNeg, bNeg)) {
-                        retVal := or(lt(aMan, bMan), eq(aMan, bMan))
-                    }  
-                    if xor(aNeg, bNeg) {
-                        retVal := aNeg
+                    if eq(aExp, bExp) {
+                        let aNeg := and(a, MANTISSA_SIGN_MASK)
+                        let bNeg := and(b, MANTISSA_SIGN_MASK) 
+                        if and(aNeg, bNeg) {
+                            retVal := gt(aMan, bMan)
+                        }
+                        if iszero(or(aNeg, bNeg)) {
+                            retVal := lt(aMan, bMan)
+                        }  
+                        if xor(aNeg, bNeg) {
+                            retVal := aNeg
+                        }
                     }
                 }
             }
@@ -684,6 +675,17 @@ library Float128 {
             }
         }
     } 
+
+    /**
+     * @dev performs an equality comparison
+     * @param a the first term
+     * @param b the second term
+     * @return retVal the result of a == b
+     * @notice this version of the function uses only the packedFloat type
+     */
+    function eq(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
+        retVal = packedFloat.unwrap(a) == packedFloat.unwrap(b);
+    }
 
     /**
      * @dev adds 2 signed floating point numbers
