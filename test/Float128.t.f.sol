@@ -373,43 +373,19 @@ contract Float128FuzzTest is FloatUtils {
         assertEq(retVal, comparison);
     }
 
-    function testLEpackedFloatFuzz(int aMan, int aExp, int bMan, int bExp) public pure {
+    function testLEpackedFloatFuzz(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
         packedFloat pA = Float128.toPackedFloat(aMan, aExp);
         packedFloat pB = Float128.toPackedFloat(bMan, bExp);
         bool retVal = Float128.le(pA, pB);
-        bool comparison = false;
+        console2.log("retVal", retVal);
 
         // Creating the float struct to normalize the mantissas and exponents before doing the comparison
-        Float memory floA = Float128.toFloat(aMan, aExp);
-        Float memory floB = Float128.toFloat(bMan, bExp);
-
-       if(floA.mantissa == 0 || floB.mantissa == 0) {
-            if(floA.mantissa == 0 && floB.mantissa == 0) {
-                comparison = true;
-            } else if(floA.mantissa == 0) {
-                if(floB.mantissa > 0) {
-                    comparison = true;
-                } else {
-                    comparison = false;
-                }
-            } else {
-                if(floA.mantissa > 0) {
-                    comparison = false;
-                } else {
-                    comparison = true;
-                }
-            }
-        } else {
-            if(floA.exponent < floB.exponent) {
-                comparison = true;
-            } else if(floB.exponent < floA.exponent) {
-                comparison = false;
-            } else {
-                comparison = floA.mantissa <= floB.mantissa;
-            }
-        }
-        assertEq(retVal, comparison);
+        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "le");
+        bytes memory res = vm.ffi(inputs);
+        (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
+        bool pyRes = pyMan > 0;
+        assertEq(retVal, pyRes);
     }
 
     function testGTpackedFloatFuzz(int aMan, int aExp, int bMan, int bExp) public pure {

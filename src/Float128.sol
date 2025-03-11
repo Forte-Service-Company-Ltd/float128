@@ -128,36 +128,38 @@ library Float128 {
             }
         }
         // normalization
-        if (isSubtraction) {
-            // subtraction case can have a number of digits anywhere from 1 to 76
-            // we might get a normalized result, so we only normalize if necessary
-            if (addition > MAX_38_DIGIT_NUMBER || addition < MIN_38_DIGIT_NUMBER) {
-                uint digitsMantissa = findNumberOfDigits(addition);
+        if(packedFloat.unwrap(r) > 0){
+            if (isSubtraction) {
+                // subtraction case can have a number of digits anywhere from 1 to 76
+                // we might get a normalized result, so we only normalize if necessary
+                if (addition > MAX_38_DIGIT_NUMBER || addition < MIN_38_DIGIT_NUMBER) {
+                    uint digitsMantissa = findNumberOfDigits(addition);
+                    assembly {
+                        let mantissaReducer := sub(digitsMantissa, MAX_DIGITS)
+                        let negativeReducer := and(TWO_COMPLEMENT_SIGN_MASK, mantissaReducer)
+                        if negativeReducer {
+                            addition := mul(addition, exp(BASE, sub(0, mantissaReducer)))
+                            r := sub(r, shl(EXPONENT_BIT, sub(0, mantissaReducer)))
+                        }
+                        if iszero(negativeReducer) {
+                            addition := div(addition, exp(BASE, mantissaReducer))
+                            r := add(r, shl(EXPONENT_BIT, mantissaReducer))
+                        }
+                    }
+                }
+            } else {
+                // addition case is simpler since it can only have 2 possibilities: same digits as its addends,
+                // or + 1 digits due to an "overflow"
                 assembly {
-                    let mantissaReducer := sub(digitsMantissa, MAX_DIGITS)
-                    let negativeReducer := and(TWO_COMPLEMENT_SIGN_MASK, mantissaReducer)
-                    if negativeReducer {
-                        addition := mul(addition, exp(BASE, sub(0, mantissaReducer)))
-                        r := sub(r, shl(EXPONENT_BIT, sub(0, mantissaReducer)))
-                    }
-                    if iszero(negativeReducer) {
-                        addition := div(addition, exp(BASE, mantissaReducer))
-                        r := add(r, shl(EXPONENT_BIT, mantissaReducer))
+                    if gt(addition, MAX_38_DIGIT_NUMBER) {
+                        addition := div(addition, BASE)
+                        r := add(r, shl(EXPONENT_BIT, 1))
                     }
                 }
             }
-        } else {
-            // addition case is simpler since it can only have 2 possibilities: same digits as its addends,
-            // or + 1 digits due to an "overflow"
             assembly {
-                if gt(addition, MAX_38_DIGIT_NUMBER) {
-                    addition := div(addition, BASE)
-                    r := add(r, shl(EXPONENT_BIT, 1))
-                }
+                r := or(r, addition)
             }
-        }
-        assembly {
-            r := or(r, addition)
         }
     }
 
@@ -248,36 +250,38 @@ library Float128 {
             }
         }
         // normalization
-        if (isSubtraction) {
-            // subtraction case can have a number of digits anywhere from 1 to 76
-            // we might get a normalized result, so we only normalize if necessary
-            if (addition > MAX_38_DIGIT_NUMBER || addition < MIN_38_DIGIT_NUMBER) {
-                uint digitsMantissa = findNumberOfDigits(addition);
+        if(packedFloat.unwrap(r) > 0){
+            if (isSubtraction) {
+                // subtraction case can have a number of digits anywhere from 1 to 76
+                // we might get a normalized result, so we only normalize if necessary
+                if (addition > MAX_38_DIGIT_NUMBER || addition < MIN_38_DIGIT_NUMBER) {
+                    uint digitsMantissa = findNumberOfDigits(addition);
+                    assembly {
+                        let mantissaReducer := sub(digitsMantissa, MAX_DIGITS)
+                        let negativeReducer := and(TWO_COMPLEMENT_SIGN_MASK, mantissaReducer)
+                        if negativeReducer {
+                            addition := mul(addition, exp(BASE, sub(0, mantissaReducer)))
+                            r := sub(r, shl(EXPONENT_BIT, sub(0, mantissaReducer)))
+                        }
+                        if iszero(negativeReducer) {
+                            addition := div(addition, exp(BASE, mantissaReducer))
+                            r := add(r, shl(EXPONENT_BIT, mantissaReducer))
+                        }
+                    }
+                }
+            } else {
+                // addition case is simpler since it can only have 2 possibilities: same digits as its addends,
+                // or + 1 digits due to an "overflow"
                 assembly {
-                    let mantissaReducer := sub(digitsMantissa, MAX_DIGITS)
-                    let negativeReducer := and(TWO_COMPLEMENT_SIGN_MASK, mantissaReducer)
-                    if negativeReducer {
-                        addition := mul(addition, exp(BASE, sub(0, mantissaReducer)))
-                        r := sub(r, shl(EXPONENT_BIT, sub(0, mantissaReducer)))
-                    }
-                    if iszero(negativeReducer) {
-                        addition := div(addition, exp(BASE, mantissaReducer))
-                        r := add(r, shl(EXPONENT_BIT, mantissaReducer))
+                    if gt(addition, MAX_38_DIGIT_NUMBER) {
+                        addition := div(addition, BASE)
+                        r := add(r, shl(EXPONENT_BIT, 1))
                     }
                 }
             }
-        } else {
-            // addition case is simpler since it can only have 2 possibilities: same digits as its addends,
-            // or + 1 digits due to an "overflow"
             assembly {
-                if gt(addition, MAX_38_DIGIT_NUMBER) {
-                    addition := div(addition, BASE)
-                    r := add(r, shl(EXPONENT_BIT, 1))
-                }
+                r := or(r, addition)
             }
-        }
-        assembly {
-            r := or(r, addition)
         }
     }
 
@@ -515,49 +519,44 @@ library Float128 {
      */
     function le(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
         assembly {
-            let aExp := and(a, EXPONENT_MASK)
-            let bExp := and(b, EXPONENT_MASK)
-            let aMan := and(a, MANTISSA_MASK)
-            let bMan := and(b, MANTISSA_MASK)
-            let zeroFound := false
-
-            if and(eq(aMan, 0), eq(bMan, 0)) {
-                zeroFound := true
+            let equals := eq(a, b)
+            if equals {
                 retVal := true
-            }
-            if and(eq(aMan, 0), iszero(zeroFound)) {
-                zeroFound := true
-                if iszero(and(b, MANTISSA_SIGN_MASK)) {
-                    retVal := true
-                }
-            }
-            if and(eq(bMan, 0), iszero(zeroFound)) {
-                zeroFound := true
-                if and(a, MANTISSA_SIGN_MASK) {
-                    retVal := true
-                }
-            }
-            if iszero(zeroFound) {
-                if lt(aExp, bExp) {
-                    retVal := true
-                }
-                if eq(aExp, bExp) {
-                    let aNeg := false
-                    let bNeg := false 
-                    if and(a, MANTISSA_SIGN_MASK) {
-                        aNeg := true
+            } 
+            if iszero(equals){
+                let aNeg := gt(and(a, MANTISSA_SIGN_MASK), 0)
+                let bNeg := gt(and(b, MANTISSA_SIGN_MASK), 0) 
+                let isAZero := iszero(a)
+                let isBZero := iszero(b)
+                let zeroFound := or(isAZero, isBZero)
+                if zeroFound {
+                    if or(and(isAZero, iszero(bNeg)), and(isBZero, aNeg)){
+                        retVal := true
                     }
-                    if and(b, MANTISSA_SIGN_MASK) {
-                        bNeg := true
-                    }
-                    if and(aNeg, bNeg) {
-                        retVal := or(gt(aMan, bMan), eq(aMan, bMan))
-                    }
-                    if iszero(or(aNeg, bNeg)) {
-                        retVal := or(lt(aMan, bMan), eq(aMan, bMan))
-                    }  
+                }
+                if iszero(zeroFound) {
+                    let aExp := and(a, EXPONENT_MASK)
+                    let bExp := and(b, EXPONENT_MASK)
+                    let aMan := and(a, MANTISSA_MASK)
+                    let bMan := and(b, MANTISSA_MASK)
                     if xor(aNeg, bNeg) {
-                        retVal := aNeg
+                            retVal := aNeg
+                    }
+                    if and(iszero(aNeg), iszero(bNeg)){
+                        if eq(aExp, bExp) {
+                            retVal := lt(aMan, bMan)
+                        }
+                        if lt(aExp, bExp) {
+                            retVal := true
+                        }
+                    }
+                    if and(aNeg, bNeg){
+                        if eq(aExp, bExp) {
+                            retVal := gt(aMan, bMan)
+                        }
+                        if gt(aExp, bExp) {
+                            retVal := true
+                        }
                     }
                 }
             }
@@ -684,6 +683,17 @@ library Float128 {
             }
         }
     } 
+
+    /**
+     * @dev performs an equality comparison
+     * @param a the first term
+     * @param b the second term
+     * @return retVal the result of a == b
+     * @notice this version of the function uses only the packedFloat type
+     */
+    function eq(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
+        retVal = packedFloat.unwrap(a) == packedFloat.unwrap(b);
+    }
 
     /**
      * @dev adds 2 signed floating point numbers
