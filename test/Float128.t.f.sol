@@ -7,6 +7,7 @@ import "test/FloatUtils.sol";
 
 contract Float128FuzzTest is FloatUtils {
     using Float128 for int256;
+    using Float128 for packedFloat;
 
     function checkResults(int rMan, int rExp, int pyMan, int pyExp) internal pure {
         checkResults(rMan, rExp, pyMan, pyExp, false);
@@ -37,20 +38,6 @@ contract Float128FuzzTest is FloatUtils {
         }
         if (pyMan != 0) assertEq(pyExp, rExp);
     }
-    function testStruct_mul(int aMan, int aExp, int bMan, int bExp) public {
-        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
-
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "mul");
-        bytes memory res = vm.ffi(inputs);
-        (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
-
-        Float memory result = Float128.mul(aMan.toFloat(aExp), bMan.toFloat(bExp));
-
-        int rMan = result.mantissa;
-        int rExp = result.exponent;
-
-        checkResults(rMan, rExp, pyMan, pyExp);
-    }
 
     function testEncoded_mul(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
@@ -66,28 +53,6 @@ contract Float128FuzzTest is FloatUtils {
         (int rMan, int rExp) = Float128.decode(result);
 
         checkResults(rMan, rExp, pyMan, pyExp);
-    }
-
-    /// forge-config: default.allow_internal_expect_revert = true
-    function testStruct_div(int aMan, int aExp, int bMan, int bExp) public {
-        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
-
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan == 0 ? int(1) : bMan, bExp, "div");
-        bytes memory res = vm.ffi(inputs);
-        (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
-
-        Float memory aFloat = aMan.toFloat(aExp);
-        Float memory bFloat = bMan.toFloat(bExp);
-        if (bMan == 0) {
-            vm.expectRevert("float128: division by zero");
-        }
-        Float memory result = Float128.div(aFloat, bFloat);
-        if (bMan != 0) {
-            int rMan = result.mantissa;
-            int rExp = result.exponent;
-
-            checkResults(rMan, rExp, pyMan, pyExp);
-        }
     }
 
     /// forge-config: default.allow_internal_expect_revert = true
@@ -127,20 +92,6 @@ contract Float128FuzzTest is FloatUtils {
         checkResults(rMan, rExp, pyMan, pyExp, true);
     }
 
-    function testStruct_add(int aMan, int aExp, int bMan, int bExp) public {
-        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
-
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "add");
-        bytes memory res = vm.ffi(inputs);
-        (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
-
-        Float memory result = Float128.add(aMan.toFloat(aExp), bMan.toFloat(bExp));
-        int rMan = result.mantissa;
-        int rExp = result.exponent;
-
-        checkResults(rMan, rExp, pyMan, pyExp, true);
-    }
-
     function testEncoded_sub(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
 
@@ -153,21 +104,6 @@ contract Float128FuzzTest is FloatUtils {
 
         packedFloat result = Float128.sub(a, b);
         (int rMan, int rExp) = Float128.decode(result);
-
-        checkResults(rMan, rExp, pyMan, pyExp, true);
-    }
-
-    function testStruct_sub(int aMan, int aExp, int bMan, int bExp) public {
-        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
-
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "sub");
-        bytes memory res = vm.ffi(inputs);
-        (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
-
-        Float memory result = Float128.sub(aMan.toFloat(aExp), bMan.toFloat(bExp));
-        int rMan = result.mantissa;
-        int rExp = result.exponent;
-        if (pyMan != 0) assertEq(findNumberOfDigits(uint(rMan < 0 ? rMan * -1 : rMan)), 38, "Solidity result is not normalized");
 
         checkResults(rMan, rExp, pyMan, pyExp, true);
     }
@@ -191,188 +127,6 @@ contract Float128FuzzTest is FloatUtils {
         }
     }
 
-    /// forge-config: default.allow_internal_expect_revert = true
-    function testStruct_sqrt(int aMan, int aExp) public {
-        (aMan, aExp, , ) = setBounds(aMan, aExp, 0, 0);
-
-        string[] memory inputs = _buildFFIMul128(aMan < 0 ? aMan * -1 : aMan, aExp, 0, 0, "sqrt");
-        bytes memory res = vm.ffi(inputs);
-        (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
-
-        if (aMan < 0) {
-            vm.expectRevert("float128: squareroot of negative");
-        }
-        Float memory result = Float128.sqrt(aMan.toFloat(aExp));
-        int rMan = result.mantissa;
-        int rExp = result.exponent;
-
-        checkResults(rMan, rExp, pyMan, pyExp);
-    }
-
-    function testLTFloatFuzz(int aMan, int aExp, int bMan, int bExp) public pure {
-        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
-        Float memory a = Float128.toFloat(aMan, aExp);
-        Float memory b = Float128.toFloat(bMan, bExp);
-        bool retVal = Float128.lt(a, b);
-        bool comparison = false;
-
-        if(a.mantissa == 0 || b.mantissa == 0) {
-            if(a.mantissa == 0 && b.mantissa == 0) {
-                comparison = false;
-            } else if(a.mantissa == 0) {
-                if(b.mantissa > 0) {
-                    comparison = true;
-                }
-            } else {
-                if(a.mantissa < 0) {
-                    comparison = true;
-                } 
-            }
-        } else {
-            if(a.exponent < b.exponent) {
-                comparison = true;
-            } else if(b.exponent < a.exponent) {
-                comparison = false;
-            } else {
-                comparison = a.mantissa < b.mantissa;
-            }
-        }
-        assertEq(retVal, comparison);
-    }
-
-    function testLEFloatFuzz(int aMan, int aExp, int bMan, int bExp) public pure {
-        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
-        Float memory a = Float128.toFloat(aMan, aExp);
-        Float memory b = Float128.toFloat(bMan, bExp);
-        bool retVal = Float128.le(a, b);
-        bool comparison = false;
-
-        if(a.mantissa == 0 || b.mantissa == 0) {
-            if(a.mantissa == 0 && b.mantissa == 0) {
-                comparison = true;
-            } else if(a.mantissa == 0) {
-                if(b.mantissa > 0) {
-                    comparison = true;
-                }
-            } else {
-                if(a.mantissa < 0) {
-                    comparison = true;
-                } 
-            }
-        } else {
-            if(a.exponent < b.exponent) {
-                comparison = true;
-            } else if(b.exponent < a.exponent) {
-                comparison = false;
-            } else {
-                comparison = a.mantissa <= b.mantissa;
-            }
-        }
-        assertEq(retVal, comparison);
-    }
-
-    function testGTFloatFuzz(int aMan, int aExp, int bMan, int bExp) public pure {
-        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
-        Float memory a = Float128.toFloat(aMan, aExp);
-        Float memory b = Float128.toFloat(bMan, bExp);
-        bool retVal = Float128.gt(a, b);
-        bool comparison = false;
-
-        if(a.mantissa == 0 || b.mantissa == 0) {
-            if(a.mantissa == 0 && b.mantissa == 0) {
-                comparison = false;
-            } else if(a.mantissa == 0) {
-                if(b.mantissa < 0) {
-                    comparison = true;
-                }
-            } else {
-                if(a.mantissa > 0) {
-                    comparison = true;
-                } 
-            }
-        } else {
-            if(a.exponent > b.exponent) {
-                comparison = true;
-            } else if(b.exponent > a.exponent) {
-                comparison = false;
-            } else {
-                comparison = a.mantissa > b.mantissa;
-            }
-        }
-        assertEq(retVal, comparison);
-    }
-
-    function testGEFloatFuzz(int aMan, int aExp, int bMan, int bExp) public pure {
-        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
-        Float memory a = Float128.toFloat(aMan, aExp);
-        Float memory b = Float128.toFloat(bMan, bExp);
-        bool retVal = Float128.ge(a, b);
-        bool comparison = false;
-
-        if(a.mantissa == 0 || b.mantissa == 0) {
-            if(a.mantissa == 0 && b.mantissa == 0) {
-                comparison = true;
-            } else if(a.mantissa == 0) {
-                if(b.mantissa < 0) {
-                    comparison = true;
-                }
-            } else {
-                if(a.mantissa > 0) {
-                    comparison = true;
-                } 
-            }
-        } else {
-            if(a.exponent > b.exponent) {
-                comparison = true;
-            } else if(b.exponent > a.exponent) {
-                comparison = false;
-            } else {
-                comparison = a.mantissa >= b.mantissa;
-            }
-        }
-        assertEq(retVal, comparison);
-    }
-
-    function testLTpackedFloatFuzz(int aMan, int aExp, int bMan, int bExp) public pure {
-        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
-
-        packedFloat pA = Float128.toPackedFloat(aMan, aExp);
-        packedFloat pB = Float128.toPackedFloat(bMan, bExp);
-        bool retVal = Float128.lt(pA, pB);
-        bool comparison = false;
-
-        // Creating the float struct to normalize the mantissas and exponents before doing the comparison
-        Float memory floA = Float128.toFloat(aMan, aExp);
-        Float memory floB = Float128.toFloat(bMan, bExp);
-
-        if(floA.mantissa == 0 || floB.mantissa == 0) {
-            if(floA.mantissa == 0 && floB.mantissa == 0) {
-                comparison = false;
-            } else if(floA.mantissa == 0) {
-                if(floB.mantissa > 0) {
-                    comparison = true;
-                } else {
-                    comparison = false;
-                }
-            } else {
-                if(floA.mantissa > 0) {
-                    comparison = false;
-                } else {
-                    comparison = true;
-                }
-            }
-        } else {
-            if(floA.exponent < floB.exponent) {
-                comparison = true;
-            } else if(floB.exponent < floA.exponent) {
-                comparison = false;
-            } else {
-                comparison = floA.mantissa < floB.mantissa;
-            }
-        }
-        assertEq(retVal, comparison);
-    }
-
     function testLEpackedFloatFuzz(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
         packedFloat pA = Float128.toPackedFloat(aMan, aExp);
@@ -383,7 +137,7 @@ contract Float128FuzzTest is FloatUtils {
         // Creating the float struct to normalize the mantissas and exponents before doing the comparison
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "le");
         bytes memory res = vm.ffi(inputs);
-        (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
+        (int pyMan, ) = abi.decode((res), (int256, int256));
         bool pyRes = pyMan > 0;
         assertEq(retVal, pyRes);
     }
@@ -396,32 +150,32 @@ contract Float128FuzzTest is FloatUtils {
         bool comparison = false;
 
         // Creating the float struct to normalize the mantissas and exponents before doing the comparison
-        Float memory floA = Float128.toFloat(aMan, aExp);
-        Float memory floB = Float128.toFloat(bMan, bExp);
+        (int floAman, int floAexp) = pA.decode();
+        (int floBman, int floBexp) = pB.decode();
 
-       if(floA.mantissa == 0 || floB.mantissa == 0) {
-            if(floA.mantissa == 0 && floB.mantissa == 0) {
+        if (floAman == 0 || floBman == 0) {
+            if (floAman == 0 && floBman == 0) {
                 comparison = false;
-            } else if(floA.mantissa == 0) {
-                if(floB.mantissa < 0) {
+            } else if (floAman == 0) {
+                if (floBman < 0) {
                     comparison = true;
                 } else {
                     comparison = false;
                 }
             } else {
-                if(floA.mantissa < 0) {
+                if (floAman < 0) {
                     comparison = false;
                 } else {
                     comparison = true;
                 }
             }
         } else {
-            if(floA.exponent > floB.exponent) {
+            if (floAexp > floBexp) {
                 comparison = true;
-            } else if(floB.exponent > floA.exponent) {
+            } else if (floBexp > floAexp) {
                 comparison = false;
             } else {
-                comparison = floA.mantissa > floB.mantissa;
+                comparison = floAman > floBman;
             }
         }
         assertEq(retVal, comparison);
@@ -435,48 +189,35 @@ contract Float128FuzzTest is FloatUtils {
         bool comparison = false;
 
         // Creating the float struct to normalize the mantissas and exponents before doing the comparison
-        Float memory floA = Float128.toFloat(aMan, aExp);
-        Float memory floB = Float128.toFloat(bMan, bExp);
+        (int floAman, int floAexp) = pA.decode();
+        (int floBman, int floBexp) = pB.decode();
 
-       if(floA.mantissa == 0 || floB.mantissa == 0) {
-            if(floA.mantissa == 0 && floB.mantissa == 0) {
+        if (floAman == 0 || floBman == 0) {
+            if (floAman == 0 && floBman == 0) {
                 comparison = true;
-            } else if(floA.mantissa == 0) {
-                if(floB.mantissa < 0) {
+            } else if (floAman == 0) {
+                if (floBman < 0) {
                     comparison = true;
                 } else {
                     comparison = false;
                 }
             } else {
-                if(floA.mantissa < 0) {
+                if (floAman < 0) {
                     comparison = false;
                 } else {
                     comparison = true;
                 }
             }
         } else {
-            if(floA.exponent > floB.exponent) {
+            if (floAexp > floBexp) {
                 comparison = true;
-            } else if(floB.exponent > floA.exponent) {
+            } else if (floBexp > floAexp) {
                 comparison = false;
             } else {
-                comparison = floA.mantissa >= floB.mantissa;
+                comparison = floAman >= floBman;
             }
         }
         assertEq(retVal, comparison);
-    }
-
-    function testToFloatFuzz(int256 man, int256 exp) public pure {
-        (man, exp, , ) = setBounds(man, exp, 0, 0);
-
-        Float memory float = man.toFloat(exp);
-        float.exponent = float.exponent - exp;
-
-        int256 retVal = 0;
-        if (man != 0) {
-            retVal = _reverseNormalize(float);
-        }
-        assertEq(man, retVal);
     }
 
     function testToPackedFloatFuzz(int256 man, int256 exp) public pure {
@@ -484,67 +225,12 @@ contract Float128FuzzTest is FloatUtils {
 
         packedFloat float = man.toPackedFloat(exp);
         (int manDecode, int expDecode) = Float128.decode(float);
-        Float memory comp;
-        comp.mantissa = manDecode;
-        comp.exponent = expDecode;
-        comp.exponent -= exp;
+        packedFloat comp = manDecode.toPackedFloat(expDecode - exp);
 
         int256 retVal = 0;
         if (man != 0) {
             retVal = _reverseNormalize(comp);
         }
-        assertEq(man, retVal);
-    }
-
-    function testConvertToUnpackedFloatFuzz(int256 man, int256 exp) public pure {
-        (man, exp, , ) = setBounds(man, exp, 0, 0);
-
-        packedFloat float = man.toPackedFloat(exp);
-        Float memory unpacked = Float128.convertToUnpackedFloat(float);
-        unpacked.exponent -= exp;
-
-        int256 retVal = 0;
-        if (man != 0) {
-            retVal = _reverseNormalize(unpacked);
-        }
-        assertEq(man, retVal);
-    }
-
-    function testConvertToPackedFloatFuzz(int256 man, int256 exp) public pure {
-        (man, exp, , ) = setBounds(man, exp, 0, 0);
-
-        Float memory unpacked = Float128.toFloat(man, exp);
-        packedFloat packed = Float128.convertToPackedFloat(unpacked);
-
-        (int manDecode, int expDecode) = Float128.decode(packed);
-
-        Float memory comp;
-        comp.mantissa = manDecode;
-        comp.exponent = expDecode;
-        comp.exponent -= exp;
-
-        int256 retVal = 0;
-        if (man != 0) {
-            retVal = _reverseNormalize(comp);
-        }
-
-        assertEq(man, retVal);
-    }
-
-    function testConvertToNormalizeFuzz(int256 man, int256 exp) public pure {
-        (man, exp, , ) = setBounds(man, exp, 0, 0);
-
-        Float memory initial;
-        initial.mantissa = man;
-        initial.exponent = exp;
-        Float memory comp = Float128.normalize(initial);
-        comp.exponent -= exp;
-
-        int256 retVal = 0;
-        if (man != 0) {
-            retVal = _reverseNormalize(comp);
-        }
-
         assertEq(man, retVal);
     }
 

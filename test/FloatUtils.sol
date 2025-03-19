@@ -5,6 +5,8 @@ import "forge-std/Test.sol";
 import "src/Float128.sol";
 
 contract FloatUtils is Test {
+    using Float128 for packedFloat;
+
     function _buildFFIMul128(int aMan, int aExp, int bMan, int bExp, string memory operation) internal pure returns (string[] memory) {
         string[] memory inputs = new string[](7);
         inputs[0] = "python3";
@@ -17,10 +19,11 @@ contract FloatUtils is Test {
         return inputs;
     }
 
-    function _reverseNormalize(Float memory float) internal pure returns (int256 mantissa) {
-        int256 normalizedExponent = float.exponent;
+    function _reverseNormalize(packedFloat float) internal pure returns (int256 mantissa) {
+        int normalizedExponent;
+        (mantissa, normalizedExponent) = float.decode();
         bool negative = false;
-        if (float.exponent < 0) {
+        if (normalizedExponent < 0) {
             normalizedExponent = normalizedExponent * -1;
             negative = true;
         }
@@ -28,7 +31,6 @@ contract FloatUtils is Test {
         for (int i = 0; i < normalizedExponent; i++) {
             expo = expo * 10;
         }
-        mantissa = float.mantissa;
         if (negative) {
             mantissa = mantissa / expo;
         } else {

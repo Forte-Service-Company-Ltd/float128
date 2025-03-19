@@ -12,14 +12,9 @@ pragma solidity 0.8.24;
 
 type packedFloat is uint256;
 
-struct Float {
-    int mantissa;
-    int exponent;
-}
-
 library Float128 {
     /*****************************************************************************************************************
-     *      Packed Float Bitmap:                                                                                   *
+     *      Packed Float Bitmap:                                                                                     *
      *      255 ... UNUSED ... 144, 143 ... EXPONENT ... 129, MANTISSA_SIGN (128), 127 .. MANTISSA ... 0             *
      *      The exponent is signed using the offset zero to 16383. max values: -16384 and +16383.                    *
      ****************************************************************************************************************/
@@ -128,7 +123,7 @@ library Float128 {
             }
         }
         // normalization
-        if(packedFloat.unwrap(r) > 0){
+        if (packedFloat.unwrap(r) > 0) {
             if (isSubtraction) {
                 // subtraction case can have a number of digits anywhere from 1 to 76
                 // we might get a normalized result, so we only normalize if necessary
@@ -250,7 +245,7 @@ library Float128 {
             }
         }
         // normalization
-        if(packedFloat.unwrap(r) > 0){
+        if (packedFloat.unwrap(r) > 0) {
             if (isSubtraction) {
                 // subtraction case can have a number of digits anywhere from 1 to 76
                 // we might get a normalized result, so we only normalize if necessary
@@ -489,7 +484,7 @@ library Float128 {
                 }
                 if eq(aExp, bExp) {
                     let aNeg := false
-                    let bNeg := false 
+                    let bNeg := false
                     if and(a, MANTISSA_SIGN_MASK) {
                         aNeg := true
                     }
@@ -501,14 +496,14 @@ library Float128 {
                     }
                     if iszero(or(aNeg, bNeg)) {
                         retVal := lt(aMan, bMan)
-                    }  
+                    }
                     if xor(aNeg, bNeg) {
                         retVal := aNeg
                     }
                 }
             }
         }
-    } 
+    }
 
     /**
      * @dev performs a less than or equals to comparison
@@ -522,15 +517,15 @@ library Float128 {
             let equals := eq(a, b)
             if equals {
                 retVal := true
-            } 
-            if iszero(equals){
+            }
+            if iszero(equals) {
                 let aNeg := gt(and(a, MANTISSA_SIGN_MASK), 0)
-                let bNeg := gt(and(b, MANTISSA_SIGN_MASK), 0) 
+                let bNeg := gt(and(b, MANTISSA_SIGN_MASK), 0)
                 let isAZero := iszero(a)
                 let isBZero := iszero(b)
                 let zeroFound := or(isAZero, isBZero)
                 if zeroFound {
-                    if or(and(isAZero, iszero(bNeg)), and(isBZero, aNeg)){
+                    if or(and(isAZero, iszero(bNeg)), and(isBZero, aNeg)) {
                         retVal := true
                     }
                 }
@@ -540,9 +535,9 @@ library Float128 {
                     let aMan := and(a, MANTISSA_MASK)
                     let bMan := and(b, MANTISSA_MASK)
                     if xor(aNeg, bNeg) {
-                            retVal := aNeg
+                        retVal := aNeg
                     }
-                    if and(iszero(aNeg), iszero(bNeg)){
+                    if and(iszero(aNeg), iszero(bNeg)) {
                         if eq(aExp, bExp) {
                             retVal := lt(aMan, bMan)
                         }
@@ -550,7 +545,7 @@ library Float128 {
                             retVal := true
                         }
                     }
-                    if and(aNeg, bNeg){
+                    if and(aNeg, bNeg) {
                         if eq(aExp, bExp) {
                             retVal := gt(aMan, bMan)
                         }
@@ -561,7 +556,7 @@ library Float128 {
                 }
             }
         }
-    } 
+    }
 
     /**
      * @dev performs a greater than comparison
@@ -602,7 +597,7 @@ library Float128 {
                 }
                 if eq(aExp, bExp) {
                     let aNeg := false
-                    let bNeg := false 
+                    let bNeg := false
                     if and(a, MANTISSA_SIGN_MASK) {
                         aNeg := true
                     }
@@ -614,14 +609,14 @@ library Float128 {
                     }
                     if iszero(or(aNeg, bNeg)) {
                         retVal := lt(bMan, aMan)
-                    }  
+                    }
                     if xor(aNeg, bNeg) {
                         retVal := bNeg
                     }
                 }
             }
         }
-    } 
+    }
 
     /**
      * @dev performs a greater than or equal to comparison
@@ -663,7 +658,7 @@ library Float128 {
                 }
                 if eq(aExp, bExp) {
                     let aNeg := false
-                    let bNeg := false 
+                    let bNeg := false
                     if and(a, MANTISSA_SIGN_MASK) {
                         aNeg := true
                     }
@@ -675,14 +670,14 @@ library Float128 {
                     }
                     if iszero(or(aNeg, bNeg)) {
                         retVal := or(lt(bMan, aMan), eq(aMan, bMan))
-                    }  
+                    }
                     if xor(aNeg, bNeg) {
                         retVal := bNeg
                     }
                 }
             }
         }
-    } 
+    }
 
     /**
      * @dev performs an equality comparison
@@ -693,419 +688,6 @@ library Float128 {
      */
     function eq(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
         retVal = packedFloat.unwrap(a) == packedFloat.unwrap(b);
-    }
-
-    /**
-     * @dev adds 2 signed floating point numbers
-     * @param a the first addend
-     * @param b the second addend
-     * @return r the result of a + b
-     * @notice this version of the function uses only the Float type
-     */
-    function add(Float memory a, Float memory b) internal pure returns (Float memory r) {
-        unchecked {
-            int256 aMan = a.mantissa;
-            int256 bMan = b.mantissa;
-            bool isSubtraction = (uint(aMan) >> 255) ^ (uint(bMan) >> 255) > 0;
-            bool sameExponent;
-            if (isSubtraction) {
-                // subtraction case
-                if (a.exponent > b.exponent) {
-                    r.exponent = a.exponent - int(MAX_DIGITS);
-                    int adj = r.exponent - b.exponent;
-                    if (adj < 0) {
-                        aMan *= int(BASE_TO_THE_MAX_DIGITS);
-                        bMan *= int(BASE ** uint(adj * -1));
-                    } else {
-                        aMan *= int(BASE_TO_THE_MAX_DIGITS);
-                        bMan /= int(BASE ** (uint(adj)));
-                    }
-                } else if (a.exponent < b.exponent) {
-                    r.exponent = b.exponent - int(MAX_DIGITS);
-                    int adj = r.exponent - a.exponent;
-                    if (adj < 0) {
-                        aMan *= int(BASE ** uint(adj * -1));
-                        bMan *= int(BASE_TO_THE_MAX_DIGITS);
-                    } else {
-                        aMan /= int(BASE ** (uint(adj)));
-                        bMan *= int(BASE_TO_THE_MAX_DIGITS);
-                    }
-                }
-            } else {
-                // addition case
-                if (a.exponent > b.exponent) {
-                    r.exponent = a.exponent;
-                    int adj = r.exponent - b.exponent;
-                    bMan /= int(BASE ** (uint(adj)));
-                } else if (a.exponent < b.exponent) {
-                    r.exponent = b.exponent;
-                    int adj = r.exponent - a.exponent;
-                    aMan /= int(BASE ** (uint(adj)));
-                }
-            }
-            // if exponents are the same, we don't need to adjust the mantissas. We just set the result's exponent
-            if (a.exponent == b.exponent) {
-                r.exponent = a.exponent;
-                sameExponent = true;
-            }
-            // now we can add/subtract
-            r.mantissa = aMan + bMan;
-            if (r.mantissa == 0) r.exponent = 0 - int(ZERO_OFFSET);
-            // normalization
-            if (isSubtraction) {
-                if (r.mantissa > int(MAX_38_DIGIT_NUMBER) || r.mantissa < int(MIN_38_DIGIT_NUMBER)) {
-                    uint digitsMantissa = findNumberOfDigits(r.mantissa < 0 ? uint(r.mantissa * -1) : uint(r.mantissa));
-                    int mantissaReducer = int(digitsMantissa - MAX_DIGITS);
-                    if (mantissaReducer < 0) {
-                        r.mantissa *= int(BASE ** uint(mantissaReducer * -1));
-                        r.exponent += mantissaReducer;
-                    } else {
-                        r.mantissa /= int(BASE ** uint(mantissaReducer));
-                        r.exponent += mantissaReducer;
-                    }
-                }
-            } else {
-                if (r.mantissa > int(MAX_38_DIGIT_NUMBER) || r.mantissa * -1 > int(MAX_38_DIGIT_NUMBER)) {
-                    r.mantissa /= int(BASE);
-                    ++r.exponent;
-                }
-            }
-        }
-    }
-
-    /**
-     * @dev gets the difference between 2 signed floating point numbers
-     * @param a the minuend
-     * @param b the subtrahend
-     * @return r the result of a - b
-     * @notice this version of the function uses only the Float type
-     */
-    function sub(Float memory a, Float memory b) internal pure returns (Float memory r) {
-        unchecked {
-            int256 aMan = a.mantissa;
-            int256 bMan = b.mantissa;
-            bool isSubtraction = (uint(aMan) >> 255) == (uint(bMan) >> 255);
-            bool sameExponent;
-            if (isSubtraction) {
-                // subtraction case
-                if (a.exponent > b.exponent) {
-                    r.exponent = a.exponent - int(MAX_DIGITS);
-                    int adj = r.exponent - b.exponent;
-                    if (adj < 0) {
-                        aMan *= int(BASE_TO_THE_MAX_DIGITS);
-                        bMan *= int(BASE ** uint(adj * -1));
-                    } else {
-                        aMan *= int(BASE_TO_THE_MAX_DIGITS);
-                        bMan /= int(BASE ** (uint(adj)));
-                    }
-                } else if (a.exponent < b.exponent) {
-                    r.exponent = b.exponent - int(MAX_DIGITS);
-                    int adj = r.exponent - a.exponent;
-                    if (adj < 0) {
-                        aMan *= int(BASE ** uint(adj * -1));
-                        bMan *= int(BASE_TO_THE_MAX_DIGITS);
-                    } else {
-                        aMan /= int(BASE ** (uint(adj)));
-                        bMan *= int(BASE_TO_THE_MAX_DIGITS);
-                    }
-                }
-            } else {
-                // addition case
-                if (a.exponent > b.exponent) {
-                    r.exponent = a.exponent;
-                    int adj = r.exponent - b.exponent;
-                    bMan /= int(BASE ** (uint(adj)));
-                } else if (a.exponent < b.exponent) {
-                    r.exponent = b.exponent;
-                    int adj = r.exponent - a.exponent;
-                    aMan /= int(BASE ** (uint(adj)));
-                }
-            }
-            // if exponents are the same, we don't need to adjust the mantissas. We just set the result's exponent
-            if (a.exponent == b.exponent) {
-                r.exponent = a.exponent;
-                sameExponent = true;
-            }
-            // now we can add/subtract
-            r.mantissa = aMan - bMan;
-            if (r.mantissa == 0) r.exponent = 0 - int(ZERO_OFFSET);
-            // normalization
-            if (isSubtraction) {
-                if (r.mantissa > int(MAX_38_DIGIT_NUMBER) || r.mantissa < int(MIN_38_DIGIT_NUMBER)) {
-                    uint digitsMantissa = findNumberOfDigits(r.mantissa < 0 ? uint(r.mantissa * -1) : uint(r.mantissa));
-                    int mantissaReducer = int(digitsMantissa - MAX_DIGITS);
-                    if (mantissaReducer < 0) {
-                        r.mantissa *= int(BASE ** uint(mantissaReducer * -1));
-                        r.exponent += mantissaReducer;
-                    } else {
-                        r.mantissa /= int(BASE ** uint(mantissaReducer));
-                        r.exponent += mantissaReducer;
-                    }
-                }
-            } else {
-                if (r.mantissa > int(MAX_38_DIGIT_NUMBER) || r.mantissa * -1 > int(MAX_38_DIGIT_NUMBER)) {
-                    r.mantissa /= int(BASE);
-                    ++r.exponent;
-                }
-            }
-        }
-    }
-
-    /**
-     * @dev gets the multiplication of 2 signed floating point numbers
-     * @param a the first factor
-     * @param b the second factor
-     * @return r the result of a * b
-     * @notice this version of the function uses only the Float type
-     */
-    function mul(Float memory a, Float memory b) internal pure returns (Float memory r) {
-        assembly {
-            let rMan := mul(mload(a), mload(b))
-            let rExp := add(mload(add(a, 0x20)), mload(add(b, 0x20)))
-            // multiplication between 2 numbers with k digits can result in a number between 2*k - 1 and 2*k digits
-            // we check first if rMan is a 2k-digit number
-            let is76digit := or(sgt(rMan, MAX_75_DIGIT_NUMBER), slt(rMan, sub(0, MAX_75_DIGIT_NUMBER)))
-            if is76digit {
-                rMan := sdiv(rMan, BASE_TO_THE_MAX_DIGITS)
-                rExp := add(rExp, MAX_DIGITS)
-            }
-            // if not, we then know that it is a 2k-1-digit number
-            if iszero(is76digit) {
-                rMan := sdiv(rMan, BASE_TO_THE_MAX_DIGITS_MINUS_1)
-                rExp := add(rExp, MAX_DIGITS_MINUS_1)
-            }
-            mstore(r, rMan)
-            mstore(add(0x20, r), rExp)
-        }
-    }
-
-    /**
-     * @dev gets the division of 2 signed floating point numbers
-     * @param a the numerator
-     * @param b the denominator
-     * @return r the result of a / b
-     * @notice this version of the function uses only the Float type
-     */
-    function div(Float memory a, Float memory b) internal pure returns (Float memory r) {
-        int256 mantissa = b.mantissa;
-        assembly {
-            if eq(mantissa, 0) {
-                let ptr := mload(0x40) // Get free memory pointer
-                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
-                mstore(add(ptr, 0x04), 0x20) // String offset
-                mstore(add(ptr, 0x24), 26) // Revert reason length
-                mstore(add(ptr, 0x44), "float128: division by zero")
-                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
-            }
-
-            // we add 38 more digits of precision
-            let aMan := mul(mload(a), BASE_TO_THE_MAX_DIGITS)
-            let rMan := sdiv(aMan, mload(b))
-            let rExp := sub(sub(mload(add(a, 0x20)), MAX_DIGITS), mload(add(b, 0x20)))
-            // a division between a k-digit number and a j-digit number will result in a number between (k - j)
-            // and (k - j + 1) digits. Since we are dividing a 76-digit number by a 38-digit number, we know
-            // that the result could have either 39 or 38 digitis.
-            let is39digit := or(sgt(rMan, MAX_38_DIGIT_NUMBER), slt(rMan, sub(0, MAX_38_DIGIT_NUMBER)))
-            if is39digit {
-                // we need to truncate the last digit
-                rExp := add(rExp, 1)
-                rMan := sdiv(rMan, BASE)
-            }
-            mstore(r, rMan)
-            mstore(add(0x20, r), rExp)
-        }
-    }
-
-    /**
-     * @dev gets the square root of a signed floating point
-     * @notice only positive numbers can have their square root calculated through this function
-     * @param a the numerator to get the square root of
-     * @return r the result of √a
-     * @notice this version of the function uses only the Float type
-     */
-    function sqrt(Float memory a) internal pure returns (Float memory r) {
-        if (a.mantissa != 0) {
-            uint s;
-            int aExp = a.exponent;
-            uint x;
-            int256 mantissa = a.mantissa;
-            assembly {
-                if and(mantissa, MANTISSA_SIGN_MASK) {
-                    let ptr := mload(0x40) // Get free memory pointer
-                    mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
-                    mstore(add(ptr, 0x04), 0x20) // String offset
-                    mstore(add(ptr, 0x24), 32) // Revert reason length
-                    mstore(add(ptr, 0x44), "float128: squareroot of negative")
-                    revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
-                }
-
-                // we need the exponent to be even so we can calculate the square root correctly
-                if iszero(mod(aExp, 2)) {
-                    x := mul(and(mload(a), MANTISSA_MASK), BASE_TO_THE_MAX_DIGITS)
-                    aExp := sub(aExp, MAX_DIGITS)
-                }
-                if mod(aExp, 2) {
-                    x := mul(and(mload(a), MANTISSA_MASK), BASE_TO_THE_MAX_DIGITS_PLUS_1)
-                    aExp := sub(aExp, MAX_DIGITS_PLUS_1)
-                }
-                s := 1
-
-                let xAux := x
-
-                let cmp := or(gt(xAux, 0x100000000000000000000000000000000), eq(xAux, 0x100000000000000000000000000000000))
-                xAux := sar(mul(cmp, 128), xAux)
-                s := shl(mul(cmp, 64), s)
-
-                cmp := or(gt(xAux, 0x10000000000000000), eq(xAux, 0x10000000000000000))
-                xAux := sar(mul(cmp, 64), xAux)
-                s := shl(mul(cmp, 32), s)
-
-                cmp := or(gt(xAux, 0x100000000), eq(xAux, 0x100000000))
-                xAux := sar(mul(cmp, 32), xAux)
-                s := shl(mul(cmp, 16), s)
-
-                cmp := or(gt(xAux, 0x10000), eq(xAux, 0x10000))
-                xAux := sar(mul(cmp, 16), xAux)
-                s := shl(mul(cmp, 8), s)
-
-                cmp := or(gt(xAux, 0x100), eq(xAux, 0x100))
-                xAux := sar(mul(cmp, 8), xAux)
-                s := shl(mul(cmp, 4), s)
-
-                cmp := or(gt(xAux, 0x10), eq(xAux, 0x10))
-                xAux := sar(mul(cmp, 4), xAux)
-                s := shl(mul(cmp, 2), s)
-
-                s := shl(mul(or(gt(xAux, 0x8), eq(xAux, 0x8)), 2), s)
-            }
-            unchecked {
-                s = (s + x / s) >> 1;
-                s = (s + x / s) >> 1;
-                s = (s + x / s) >> 1;
-                s = (s + x / s) >> 1;
-                s = (s + x / s) >> 1;
-                s = (s + x / s) >> 1;
-                s = (s + x / s) >> 1;
-                uint256 roundedDownResult = x / s;
-                s = s >= roundedDownResult ? roundedDownResult : s;
-            }
-            assembly {
-                // exponent should now be half of what it was
-                aExp := sdiv(aExp, 2)
-                // if we have extra digits, we know it comes from the extra digit to make the exponent even
-                if gt(s, MAX_38_DIGIT_NUMBER) {
-                    aExp := add(aExp, 1)
-                    s := div(s, BASE)
-                }
-                mstore(r, s)
-                mstore(add(0x20, r), aExp)
-            }
-        } else r.exponent = 0 - int(ZERO_OFFSET);
-    }
-
-    /**
-     * @dev performs a less than comparison
-     * @param a the first term
-     * @param b the second term
-     * @return the result of a < b
-     * @notice this version of the function uses only the Float type
-     */
-    function lt(Float memory a, Float memory b) internal pure returns (bool) {
-        if(a.mantissa == 0 || b.mantissa == 0) {
-            if(a.mantissa == 0 && b.mantissa == 0) {
-                return false;
-            } else if(a.mantissa == 0) {
-                return b.mantissa > 0;
-            } else {
-                return a.mantissa < 0;
-            }
-        }
-        if(a.exponent < b.exponent) {
-            return true;
-        } else if(b.exponent < a.exponent) {
-            return false;
-        } else {
-            return a.mantissa < b.mantissa;
-        }
-    
-    } 
-
-    /**
-     * @dev performs a less than or equal to comparison
-     * @param a the first term
-     * @param b the second term
-     * @return the result of a <= b
-     * @notice this version of the function uses only the Float type
-     */
-    function le(Float memory a, Float memory b) internal pure returns (bool) {
-        if(a.mantissa == 0 || b.mantissa == 0) {
-            if(a.mantissa == 0 && b.mantissa == 0) {
-                return true;
-            } else if(a.mantissa == 0) {
-                return b.mantissa > 0;
-            } else {
-                return a.mantissa < 0;
-            }
-        }
-        if(a.exponent < b.exponent) {
-            return true;
-        } else if(b.exponent < a.exponent) {
-            return false;
-        } else {
-            return a.mantissa <= b.mantissa;
-        }
-    }
-
-    /**
-     * @dev performs a greater than comparison
-     * @param a the first term
-     * @param b the second term
-     * @return the result of a > b
-     * @notice this version of the function uses only the Float type
-     */
-    function gt(Float memory a, Float memory b) internal pure returns (bool) {
-        if(a.mantissa == 0 || b.mantissa == 0) {
-            if(a.mantissa == 0 && b.mantissa == 0) {
-                return false;
-            } else if(a.mantissa == 0) {
-                return b.mantissa < 0;
-            } else {
-                return a.mantissa > 0;
-            }
-        }
-        if(a.exponent > b.exponent) {
-            return true;
-        } else if(b.exponent > a.exponent) {
-            return false;
-        } else {
-            return a.mantissa > b.mantissa;
-        }
-    }
-
-    /**
-     * @dev performs a greater than or equal to comparison
-     * @param a the first term
-     * @param b the second term
-     * @return the result of a >= b
-     * @notice this version of the function uses only the Float type
-     */
-    function ge(Float memory a, Float memory b) internal pure returns (bool) {
-        if(a.mantissa == 0 || b.mantissa == 0) {
-            if(a.mantissa == 0 && b.mantissa == 0) {
-                return true;
-            } else if(a.mantissa == 0) {
-                return b.mantissa < 0;
-            } else {
-                return a.mantissa > 0;
-            }
-        }
-        if(a.exponent > b.exponent) {
-            return true;
-        } else if(b.exponent > a.exponent) {
-            return false;
-        } else {
-            return a.mantissa >= b.mantissa;
-        }
     }
 
     /**
@@ -1173,80 +755,6 @@ library Float128 {
                 mantissa := sub(0, mantissa)
             }
         }
-    }
-
-    /**
-     * @dev shifts the exponent enough times to have a mantissa with exactly 38 digits
-     * @notice this is a VITAL STEP to ensure the highest precision of the calculations
-     * @param x the Float number to normalize
-     * @return float the normalized version of x
-     */
-    function normalize(Float memory x) internal pure returns (Float memory float) {
-        uint digitsMantissa;
-        uint mantissaMultiplier;
-        bool isMantissaNegative;
-
-        if (x.mantissa == 0) {
-            float.exponent = -128;
-            float.mantissa = 0;
-        } else {
-            assembly {
-                isMantissaNegative := and(mload(x), TWO_COMPLEMENT_SIGN_MASK)
-                if isMantissaNegative {
-                    mstore(x, sub(0, mload(x)))
-                }
-            }
-            if (uint(x.mantissa) > MAX_38_DIGIT_NUMBER || uint(x.mantissa) < MIN_38_DIGIT_NUMBER) {
-                digitsMantissa = findNumberOfDigits(uint(x.mantissa));
-                assembly {
-                    mantissaMultiplier := sub(digitsMantissa, MAX_DIGITS)
-                    mstore(add(x, 0x20), add(mload(add(x, 0x20)), mantissaMultiplier))
-                    let negativeMultiplier := and(MANTISSA_SIGN_MASK, mantissaMultiplier)
-                    if negativeMultiplier {
-                        mstore(x, mul(mload(x), exp(BASE, sub(0, mantissaMultiplier))))
-                    }
-                    if iszero(negativeMultiplier) {
-                        mstore(x, div(mload(x), exp(BASE, mantissaMultiplier)))
-                    }
-                }
-            }
-            assembly {
-                if isMantissaNegative {
-                    mstore(x, sub(0, mload(x)))
-                }
-            }
-            float = x;
-        }
-    }
-
-    /**
-     * @dev packs a pair of signed integer values describing a floating-point number into a Float struct.
-     * Examples: 1234.567 can be expressed as: 123456 x 10**(-3), or 1234560 x 10**(-4), or 12345600 x 10**(-5), etc.
-     * @notice the mantissa can hold a maximum of 38 digits. Any number with more digits will lose precision.
-     * @param _mantissa the integer that holds the mantissa digits (38 digits max)
-     * @param _exponent the exponent of the floating point number (between -16384 and +16383)
-     * @return float the normalized version of the floating-point number packed in a Float struct.
-     */
-    function toFloat(int _mantissa, int _exponent) internal pure returns (Float memory float) {
-        float = normalize(Float({mantissa: _mantissa, exponent: _exponent}));
-    }
-
-    /**
-     * @dev from Float to packedFloat
-     * @param _float the Float number to encode into a packedFloat
-     * @return float the packed version of Float
-     */
-    function convertToPackedFloat(Float memory _float) internal pure returns (packedFloat float) {
-        float = toPackedFloat(_float.mantissa, _float.exponent);
-    }
-
-    /**
-     * @dev from packedFloat to Float
-     * @param _float the encoded floating-point number to unpack into a Float
-     * @return float the unpacked version of packedFloat
-     */
-    function convertToUnpackedFloat(packedFloat _float) internal pure returns (Float memory float) {
-        (float.mantissa, float.exponent) = decode(_float);
     }
 
     /**
