@@ -207,7 +207,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
         _primer();
         _resetGasUsed();
 
-        packedFloat b = Float128.toPackedFloat(0, -16384);
+        packedFloat b = Float128.toPackedFloat(0, -8192);
 
         for (uint i = 0; i < runs; ++i) {
             (int aMan, int aExp, , ) = setBounds(vm.randomInt(), vm.randomInt(), vm.randomInt(), vm.randomInt());
@@ -256,7 +256,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
         _primer();
         _resetGasUsed();
 
-        packedFloat a = Float128.toPackedFloat(0, -16384);
+        packedFloat a = Float128.toPackedFloat(0, -8192);
 
         for (uint i = 0; i < runs; ++i) {
             (, , int bMan, int bExp) = setBounds(vm.randomInt(), vm.randomInt(), vm.randomInt(), vm.randomInt());
