@@ -245,16 +245,15 @@ library Float128 {
                 // subtraction case can have a number of digits anywhere from 1 to 76
                 // we might get a normalized result, so we only normalize if necessary
                 if (
-                    !(addition <= MAX_M_DIGIT_NUMBER &&
-                        addition >= MIN_M_DIGIT_NUMBER &&
-                        (int(rExp) - int(ZERO_OFFSET)) <= MAXIMUM_EXPONENT)
+                    !((addition <= MAX_M_DIGIT_NUMBER && addition >= MIN_M_DIGIT_NUMBER) ||
+                        (addition <= MAX_L_DIGIT_NUMBER && addition >= MIN_L_DIGIT_NUMBER))
                 ) {
                     uint digitsMantissa = findNumberOfDigits(addition);
                     console2.log("digitsMantissa", digitsMantissa);
                     console2.log("rExp", rExp);
                     assembly {
                         let mantissaReducer := sub(digitsMantissa, MAX_DIGITS_M)
-                        let isResultL := slt(MAXIMUM_EXPONENT, sub(rExp, mantissaReducer))
+                        let isResultL := slt(MAXIMUM_EXPONENT, sub(sub(rExp, ZERO_OFFSET), mantissaReducer))
                         if isResultL {
                             mantissaReducer := sub(mantissaReducer, DIGIT_DIFF_L_M)
                             r := or(r, MANTISSA_L_FLAG_MASK)
@@ -268,6 +267,11 @@ library Float128 {
                             addition := div(addition, exp(BASE, mantissaReducer))
                             r := add(r, shl(EXPONENT_BIT, mantissaReducer))
                         }
+                    }
+                } else if (addition >= MIN_L_DIGIT_NUMBER && rExp < (ZERO_OFFSET - uint(MAXIMUM_EXPONENT * -1) - DIGIT_DIFF_L_M)) {
+                    assembly {
+                        addition := sdiv(addition, BASE_TO_THE_DIGIT_DIFF)
+                        r := add(r, shl(EXPONENT_BIT, DIGIT_DIFF_L_M))
                     }
                 }
             } else {
