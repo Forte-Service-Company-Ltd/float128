@@ -108,23 +108,6 @@ library Float128 {
                     r := sub(aExp, shl(EXPONENT_BIT, MAX_DIGITS_M))
                     sameExponent := 1
                 }
-                // now we convert to 2's complement to carry out the operation
-                if and(b, MANTISSA_SIGN_MASK) {
-                    bMan := sub(0, bMan)
-                }
-                if and(a, MANTISSA_SIGN_MASK) {
-                    aMan := sub(0, aMan)
-                }
-                // now we can add/subtract
-                addition := add(aMan, bMan)
-                // encoding the unnormalized result
-                if and(TWO_COMPLEMENT_SIGN_MASK, addition) {
-                    r := or(r, MANTISSA_SIGN_MASK) // assign the negative sign
-                    addition := sub(0, addition) // convert back from 2's complement
-                }
-                if iszero(addition) {
-                    r := 0
-                }
             }
             if or(aL, bL) {
                 // we make sure both of them are size L before continuing
@@ -170,23 +153,23 @@ library Float128 {
                     r := sub(aExp, shl(EXPONENT_BIT, DIGIT_DIFF_76_L))
                     sameExponent := 1
                 }
-                // now we convert to 2's complement to carry out the operation
-                if and(b, MANTISSA_SIGN_MASK) {
-                    bMan := sub(0, bMan)
-                }
-                if and(a, MANTISSA_SIGN_MASK) {
-                    aMan := sub(0, aMan)
-                }
-                // now we can add/subtract
-                addition := add(aMan, bMan)
-                // encoding the unnormalized result
-                if and(TWO_COMPLEMENT_SIGN_MASK, addition) {
-                    r := or(r, MANTISSA_SIGN_MASK) // assign the negative sign
-                    addition := sub(0, addition) // convert back from 2's complement
-                }
-                if iszero(addition) {
-                    r := 0
-                }
+            }
+            // now we convert to 2's complement to carry out the operation
+            if and(b, MANTISSA_SIGN_MASK) {
+                bMan := sub(0, bMan)
+            }
+            if and(a, MANTISSA_SIGN_MASK) {
+                aMan := sub(0, aMan)
+            }
+            // now we can add/subtract
+            addition := add(aMan, bMan)
+            // encoding the unnormalized result
+            if and(TWO_COMPLEMENT_SIGN_MASK, addition) {
+                r := or(r, MANTISSA_SIGN_MASK) // assign the negative sign
+                addition := sub(0, addition) // convert back from 2's complement
+            }
+            if iszero(addition) {
+                r := 0
             }
         }
         // normalization

@@ -93,11 +93,6 @@ contract Float128FuzzTest is FloatUtils {
     function testEncoded_add(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
 
-        // aMan = 99999999999999999999999999999999999997;
-        // aExp = -18;
-        // bMan = 95070675437891237089726635978684740296;
-        // bExp = -51;
-
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "add");
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
