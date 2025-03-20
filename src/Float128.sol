@@ -850,9 +850,8 @@ library Float128 {
             }
             // we normalize only if necessary
             if (
-                uint(mantissa) > MAX_L_DIGIT_NUMBER ||
-                (uint(mantissa) < MIN_L_DIGIT_NUMBER && uint(mantissa) > MAX_M_DIGIT_NUMBER) ||
-                uint(mantissa) < MIN_M_DIGIT_NUMBER
+                !((mantissa <= int(MAX_M_DIGIT_NUMBER) && mantissa >= int(MIN_M_DIGIT_NUMBER)) ||
+                    (mantissa <= int(MAX_L_DIGIT_NUMBER) && mantissa >= int(MIN_L_DIGIT_NUMBER)))
             ) {
                 digitsMantissa = findNumberOfDigits(uint(mantissa));
                 assembly {
@@ -870,6 +869,11 @@ library Float128 {
                     if iszero(negativeMultiplier) {
                         mantissa := div(mantissa, exp(BASE, mantissaMultiplier))
                     }
+                }
+            } else if ((mantissa <= int(MAX_M_DIGIT_NUMBER) && mantissa >= int(MIN_M_DIGIT_NUMBER)) && exponent > MAXIMUM_EXPONENT) {
+                assembly {
+                    mantissa := mul(mantissa, BASE_TO_THE_DIGIT_DIFF)
+                    float := add(add(float, shl(EXPONENT_BIT, DIGIT_DIFF_L_M)), MANTISSA_L_FLAG_MASK)
                 }
             }
             // final encoding
