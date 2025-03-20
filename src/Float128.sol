@@ -67,6 +67,7 @@ library Float128 {
         uint bMan;
         uint aExp;
         uint bExp;
+        bool isL;
         console2.log("a", packedFloat.unwrap(a));
         console2.log("b", packedFloat.unwrap(b));
         assembly {
@@ -147,6 +148,7 @@ library Float128 {
                 }
             }
             if or(aL, bL) {
+                isL := 1
                 isSubtraction := xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK))
                 // we extract the exponent and mantissas for both
                 aExp := and(a, EXPONENT_MASK)
@@ -231,6 +233,7 @@ library Float128 {
                 }
             }
         }
+        console2.log("isL", isL);
         console2.log("_adj", _adj);
         console2.log("a", aMan, aExp >> EXPONENT_BIT);
         console2.log("b", bMan, bExp >> EXPONENT_BIT);
