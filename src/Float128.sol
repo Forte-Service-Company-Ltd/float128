@@ -62,6 +62,7 @@ library Float128 {
         uint addition;
         bool isSubtraction;
         bool sameExponent;
+        uint _adj;
         uint aMan;
         uint bMan;
         uint aExp;
@@ -177,6 +178,7 @@ library Float128 {
                             bMan := sdiv(bMan, exp(BASE, adj))
                             aMan := mul(aMan, BASE_TO_THE_DIFF_76_L)
                         }
+                        _adj := adj
                     }
                     if gt(bExp, aExp) {
                         r := sub(bExp, shl(EXPONENT_BIT, DIGIT_DIFF_76_L))
@@ -229,6 +231,7 @@ library Float128 {
                 }
             }
         }
+        console2.log("_adj", _adj);
         console2.log("a", aMan, aExp >> EXPONENT_BIT);
         console2.log("b", bMan, bExp >> EXPONENT_BIT);
         console2.log("isSubtraction", isSubtraction);
@@ -873,7 +876,8 @@ library Float128 {
             } else if ((mantissa <= int(MAX_M_DIGIT_NUMBER) && mantissa >= int(MIN_M_DIGIT_NUMBER)) && exponent > MAXIMUM_EXPONENT) {
                 assembly {
                     mantissa := mul(mantissa, BASE_TO_THE_DIGIT_DIFF)
-                    float := add(add(float, shl(EXPONENT_BIT, DIGIT_DIFF_L_M)), MANTISSA_L_FLAG_MASK)
+                    exponent := sub(exponent, DIGIT_DIFF_L_M)
+                    float := add(float, MANTISSA_L_FLAG_MASK)
                 }
             }
             // final encoding
