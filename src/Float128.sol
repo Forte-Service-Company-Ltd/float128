@@ -70,6 +70,8 @@ library Float128 {
         bool isL;
         console2.log("a", packedFloat.unwrap(a));
         console2.log("b", packedFloat.unwrap(b));
+        if (packedFloat.unwrap(a) == 0) return b;
+        if (packedFloat.unwrap(b) == 0) return a;
         assembly {
             let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
             let bL := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
@@ -259,7 +261,7 @@ library Float128 {
                     console2.log("rExp", rExp);
                     assembly {
                         let mantissaReducer := sub(digitsMantissa, MAX_DIGITS_M)
-                        let isResultL := slt(MAXIMUM_EXPONENT, sub(sub(rExp, ZERO_OFFSET), mantissaReducer))
+                        let isResultL := slt(MAXIMUM_EXPONENT, add(sub(rExp, ZERO_OFFSET), mantissaReducer))
                         if isResultL {
                             mantissaReducer := sub(mantissaReducer, DIGIT_DIFF_L_M)
                             r := or(r, MANTISSA_L_FLAG_MASK)
@@ -862,7 +864,7 @@ library Float128 {
                 digitsMantissa = findNumberOfDigits(uint(mantissa));
                 assembly {
                     mantissaMultiplier := sub(digitsMantissa, MAX_DIGITS_M)
-                    let isResultL := slt(MAXIMUM_EXPONENT, sub(exponent, mantissaMultiplier))
+                    let isResultL := slt(MAXIMUM_EXPONENT, add(exponent, mantissaMultiplier))
                     if isResultL {
                         mantissaMultiplier := sub(mantissaMultiplier, DIGIT_DIFF_L_M)
                         float := or(float, MANTISSA_L_FLAG_MASK)
