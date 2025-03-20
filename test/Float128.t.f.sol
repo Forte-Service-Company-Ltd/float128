@@ -10,17 +10,26 @@ contract Float128FuzzTest is FloatUtils {
     using Float128 for packedFloat;
 
     function checkResults(int rMan, int rExp, int pyMan, int pyExp) internal pure {
-        checkResults(rMan, rExp, pyMan, pyExp, false);
+        checkResults(packedFloat.wrap(0), rMan, rExp, pyMan, pyExp, false);
     }
 
     function checkResults(int rMan, int rExp, int pyMan, int pyExp, bool couldBeOffBy1) internal pure {
+        checkResults(packedFloat.wrap(0), rMan, rExp, pyMan, pyExp, couldBeOffBy1);
+    }
+
+    function checkResults(packedFloat r, int rMan, int rExp, int pyMan, int pyExp, bool couldBeOffBy1) internal pure {
+        console2.log("solResult", packedFloat.unwrap(r));
         console2.log("rMan", rMan);
         console2.log("rExp", rExp);
         console2.log("pyMan", pyMan);
         console2.log("pyExp", pyExp);
+        bool isLarge = packedFloat.unwrap(r) & Float128.MANTISSA_L_FLAG_MASK > 0;
+        console2.log("isLarge", isLarge);
         // we always check that the result is normalized since this is vital for the library. Only exception is when the result is zero
         uint nDigits = findNumberOfDigits(uint(rMan < 0 ? rMan * -1 : rMan));
-        if (pyMan != 0) assertTrue((nDigits == 38) || nDigits == 72, "Solidity result is not normalized");
+        console2.log("nDigits", nDigits);
+        if (pyMan != 0) assertTrue(((nDigits == 38) || (nDigits == 72)), "Solidity result is not normalized");
+        if (packedFloat.unwrap(r) != 0) nDigits == 38 ? assertFalse(isLarge) : assertTrue(isLarge);
         // we fix the python result due to the imprecision of python's log10. We cut precision where needed
         if (pyExp != rExp) {
             if (pyExp > rExp) {
@@ -84,6 +93,11 @@ contract Float128FuzzTest is FloatUtils {
     function testEncoded_add(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
 
+        // aMan = 99999999999999999999999999999999999997;
+        // aExp = -18;
+        // bMan = 95070675437891237089726635978684740296;
+        // bExp = -51;
+
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "add");
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
@@ -94,7 +108,7 @@ contract Float128FuzzTest is FloatUtils {
         packedFloat result = Float128.add(a, b);
         (int rMan, int rExp) = Float128.decode(result);
 
-        checkResults(rMan, rExp, pyMan, pyExp, true);
+        checkResults(result, rMan, rExp, pyMan, pyExp, true);
     }
 
     function testEncoded_sub(int aMan, int aExp, int bMan, int bExp) public {
