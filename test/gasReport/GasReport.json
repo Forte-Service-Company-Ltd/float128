@@ -59,23 +59,23 @@
   "Packed": {
     "add": {
       "matchingexponents": {
-        "min": 468,
-        "avg": 621,
-        "max": 1189
+        "min": 533,
+        "avg": 693,
+        "max": 1256
       },
       "addsub": {
-        "min": 1101,
-        "avg": 1166,
-        "max": 1183
+        "min": 487,
+        "avg": 1228,
+        "max": 1248
       },
-      "min": 468,
-      "avg": 879,
-      "max": 1189
+      "min": 533,
+      "avg": 946,
+      "max": 1256
     },
     "sub": {
       "matchingexponents": {
         "min": 465,
-        "avg": 623,
+        "avg": 628,
         "max": 1188
       },
       "subadd": {
@@ -83,8 +83,8 @@
         "avg": 558,
         "max": 594
       },
-      "min": 500,
-      "avg": 870,
+      "min": 465,
+      "avg": 873,
       "max": 1188
     },
     "mul": {

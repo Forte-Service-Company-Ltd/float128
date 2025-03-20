@@ -34,10 +34,13 @@ library Float128 {
     uint constant MAX_DIGITS_L = 72;
     uint constant MAX_DIGITS_L_MINUS_1 = 71;
     uint constant MAX_DIGITS_L_PLUS_1 = 73;
+    uint constant DIGIT_DIFF_L_M = 34;
+    uint constant DIGIT_DIFF_76_L = 4;
     uint constant MAX_M_DIGIT_NUMBER = 99999999999999999999999999999999999999;
     uint constant MIN_M_DIGIT_NUMBER = 10000000000000000000000000000000000000;
     uint constant MAX_L_DIGIT_NUMBER = 999999999999999999999999999999999999999999999999999999999999999999999999;
     uint constant MIN_L_DIGIT_NUMBER = 100000000000000000000000000000000000000000000000000000000000000000000000;
+    uint constant BASE_TO_THE_DIGIT_DIFF = 10000000000000000000000000000000000;
     uint constant BASE_TO_THE_MAX_DIGITS_M_MINUS_1 = 10000000000000000000000000000000000000;
     uint constant BASE_TO_THE_MAX_DIGITS_M = 100000000000000000000000000000000000000;
     uint constant BASE_TO_THE_MAX_DIGITS_M_PLUS_1 = 1000000000000000000000000000000000000000;
@@ -55,80 +58,147 @@ library Float128 {
         uint addition;
         bool isSubtraction;
         bool sameExponent;
+
         assembly {
-            isSubtraction := xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK))
-            // we extract the exponent and mantissas for both
-            let aExp := and(a, EXPONENT_MASK)
-            let bExp := and(b, EXPONENT_MASK)
-            let aMan := and(a, MANTISSA_MASK)
-            let bMan := and(b, MANTISSA_MASK)
-            // we adjust the significant digits and set the exponent of the result
-            // subtraction case
-            if isSubtraction {
-                // we add 38 digits of precision in the case of subtraction
-                if gt(aExp, bExp) {
-                    r := sub(aExp, shl(EXPONENT_BIT, MAX_DIGITS_M))
-                    let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, bExp))
-                    let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
-                    if neg {
-                        bMan := mul(bMan, exp(BASE, sub(0, adj)))
-                        aMan := mul(aMan, BASE_TO_THE_MAX_DIGITS_M)
+            let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
+            let bL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
+            if iszero(or(aL, bL)) {
+                isSubtraction := xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK))
+                // we extract the exponent and mantissas for both
+                let aExp := and(a, EXPONENT_MASK)
+                let bExp := and(b, EXPONENT_MASK)
+                let aMan := and(a, MANTISSA_MASK)
+                let bMan := and(b, MANTISSA_MASK)
+                // we adjust the significant digits and set the exponent of the result
+                // subtraction case
+                if isSubtraction {
+                    // we add 38 digits of precision in the case of subtraction
+                    if gt(aExp, bExp) {
+                        r := sub(aExp, shl(EXPONENT_BIT, MAX_DIGITS_M))
+                        let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, bExp))
+                        let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
+                        if neg {
+                            bMan := mul(bMan, exp(BASE, sub(0, adj)))
+                            aMan := mul(aMan, BASE_TO_THE_MAX_DIGITS_M)
+                        }
+                        if iszero(neg) {
+                            bMan := sdiv(bMan, exp(BASE, adj))
+                            aMan := mul(aMan, BASE_TO_THE_MAX_DIGITS_M)
+                        }
                     }
-                    if iszero(neg) {
+                    if gt(bExp, aExp) {
+                        r := sub(bExp, shl(EXPONENT_BIT, MAX_DIGITS_M))
+                        let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, aExp))
+                        let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
+                        if neg {
+                            aMan := mul(aMan, exp(BASE, sub(0, adj)))
+                            bMan := mul(bMan, BASE_TO_THE_MAX_DIGITS_M)
+                        }
+                        if iszero(neg) {
+                            aMan := sdiv(aMan, exp(BASE, adj))
+                            bMan := mul(bMan, BASE_TO_THE_MAX_DIGITS_M)
+                        }
+                    }
+                }
+                // addition case
+                if iszero(isSubtraction) {
+                    if gt(aExp, bExp) {
+                        r := aExp
+                        let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, bExp))
                         bMan := sdiv(bMan, exp(BASE, adj))
-                        aMan := mul(aMan, BASE_TO_THE_MAX_DIGITS_M)
                     }
-                }
-                if gt(bExp, aExp) {
-                    r := sub(bExp, shl(EXPONENT_BIT, MAX_DIGITS_M))
-                    let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, aExp))
-                    let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
-                    if neg {
-                        aMan := mul(aMan, exp(BASE, sub(0, adj)))
-                        bMan := mul(bMan, BASE_TO_THE_MAX_DIGITS_M)
-                    }
-                    if iszero(neg) {
+                    if gt(bExp, aExp) {
+                        r := bExp
+                        let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, aExp))
                         aMan := sdiv(aMan, exp(BASE, adj))
-                        bMan := mul(bMan, BASE_TO_THE_MAX_DIGITS_M)
                     }
                 }
-            }
-            // addition case
-            if iszero(isSubtraction) {
-                if gt(aExp, bExp) {
+                // if exponents are the same, we don't need to adjust the mantissas. We just set the result's exponent
+                if eq(aExp, bExp) {
                     r := aExp
-                    let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, bExp))
-                    bMan := sdiv(bMan, exp(BASE, adj))
+                    sameExponent := 1
                 }
-                if gt(bExp, aExp) {
-                    r := bExp
-                    let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, aExp))
-                    aMan := sdiv(aMan, exp(BASE, adj))
+                // now we convert to 2's complement to carry out the operation
+                if and(b, MANTISSA_SIGN_MASK) {
+                    bMan := sub(0, bMan)
+                }
+                if and(a, MANTISSA_SIGN_MASK) {
+                    aMan := sub(0, aMan)
+                }
+                // now we can add/subtract
+                addition := add(aMan, bMan)
+                // encoding the unnormalized result
+                if and(TWO_COMPLEMENT_SIGN_MASK, addition) {
+                    r := or(r, MANTISSA_SIGN_MASK) // assign the negative sign
+                    addition := sub(0, addition) // convert back from 2's complement
+                }
+                if iszero(addition) {
+                    r := 0
                 }
             }
-            // if exponents are the same, we don't need to adjust the mantissas. We just set the result's exponent
-            if eq(aExp, bExp) {
-                r := aExp
-                sameExponent := 1
-            }
-            // now we convert to 2's complement to carry out the operation
-            if and(b, MANTISSA_SIGN_MASK) {
-                bMan := sub(0, bMan)
-            }
-            if and(a, MANTISSA_SIGN_MASK) {
-                aMan := sub(0, aMan)
-            }
-            // now we can add/subtract
-            addition := add(aMan, bMan)
-            // encoding the unnormalized result
-            if and(TWO_COMPLEMENT_SIGN_MASK, addition) {
-                r := or(r, MANTISSA_SIGN_MASK) // assign the negative sign
-                addition := sub(0, addition) // convert back from 2's complement
-            }
-            if iszero(addition) {
-                r := 0
+            if or(aL, bL) {
+                isSubtraction := xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK))
+                // we extract the exponent and mantissas for both
+                let aExp := and(a, EXPONENT_MASK)
+                let bExp := and(b, EXPONENT_MASK)
+                let aMan := and(a, MANTISSA_MASK)
+                let bMan := and(b, MANTISSA_MASK)
+                // we adjust the significant digits and set the exponent of the result
+                // we make sure both of them are size L before continuing
+                if iszero(aL) {
+                    aMan := mul(aMan, BASE_TO_THE_DIGIT_DIFF)
+                    aExp := sub(aExp, shl(EXPONENT_BIT, DIGIT_DIFF_L_M))
+                }
+                if iszero(bL) {
+                    bMan := mul(bMan, BASE_TO_THE_DIGIT_DIFF)
+                    bExp := sub(bExp, shl(EXPONENT_BIT, DIGIT_DIFF_L_M))
+                }
+                // subtraction case
+                if isSubtraction {
+                    // we add 4 digits of precision in the case of subtraction
+                    if gt(aExp, bExp) {
+                        r := sub(aExp, shl(EXPONENT_BIT, DIGIT_DIFF_76_L))
+                        let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, bExp))
+                        let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
+                        if neg {
+                            bMan := mul(bMan, exp(BASE, sub(0, adj)))
+                            aMan := mul(aMan, BASE_TO_THE_DIGIT_DIFF)
+                        }
+                        if iszero(neg) {
+                            bMan := sdiv(bMan, exp(BASE, adj))
+                            aMan := mul(aMan, BASE_TO_THE_DIGIT_DIFF)
+                        }
+                    }
+                    if gt(bExp, aExp) {
+                        r := sub(bExp, shl(EXPONENT_BIT, DIGIT_DIFF_76_L))
+                        let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, aExp))
+                        let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
+                        if neg {
+                            aMan := mul(aMan, exp(BASE, sub(0, adj)))
+                            bMan := mul(bMan, BASE_TO_THE_DIGIT_DIFF)
+                        }
+                        if iszero(neg) {
+                            aMan := sdiv(aMan, exp(BASE, adj))
+                            bMan := mul(bMan, BASE_TO_THE_DIGIT_DIFF)
+                        }
+                    }
+                }
+                // addition case
+                if iszero(isSubtraction) {
+                    if gt(aExp, bExp) {
+                        r := aExp
+                        let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, bExp))
+                        bMan := sdiv(bMan, exp(BASE, adj))
+                    }
+                    if gt(bExp, aExp) {
+                        r := bExp
+                        let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, aExp))
+                        aMan := sdiv(aMan, exp(BASE, adj))
+                    }
+                }
             }
         }
+
         // normalization
         if (packedFloat.unwrap(r) > 0) {
             if (isSubtraction) {
