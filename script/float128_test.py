@@ -6,7 +6,9 @@ from math import log10
 
 def calculate_float(args):
     getcontext().prec = 150
-    max_digits = 38
+    max_digits_m = 38
+    max_digits_l = 72
+    max_exponent = -18
     base = 10
     aMan = Decimal(args.aMan)
     aExp = Decimal(args.aExp)
@@ -34,7 +36,10 @@ def calculate_float(args):
     log_10 = 0 if result_float == 0 else Decimal(abs(result_float)).log10()
     result_digits = int(log_10) + 1
     if (result_digits < 0): result_digits -= 1
-    result_exp = Decimal(result_digits - max_digits)
+    result_exp = Decimal(result_digits - max_digits_m)
+    # print("result_exp", result_exp)
+    if(result_exp > max_exponent):
+        result_exp -= max_digits_l - max_digits_m
     result_man = int(result_float*10**(-result_exp))
 
     return result_man, int(result_exp)

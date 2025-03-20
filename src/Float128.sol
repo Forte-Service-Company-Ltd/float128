@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
+import "forge-std/console2.sol";
+
 /**
  * @title Floating point Library base 10 with 38 digits signed
  * @dev the library uses 2 exclusive types which means they can carry out operations only with their own type. They can
@@ -44,8 +46,10 @@ library Float128 {
     uint constant BASE_TO_THE_MAX_DIGITS_M_MINUS_1 = 10000000000000000000000000000000000000;
     uint constant BASE_TO_THE_MAX_DIGITS_M = 100000000000000000000000000000000000000;
     uint constant BASE_TO_THE_MAX_DIGITS_M_PLUS_1 = 1000000000000000000000000000000000000000;
+    uint constant BASE_TO_THE_DIFF_76_L = 10000;
     uint constant MAX_75_DIGIT_NUMBER = 999999999999999999999999999999999999999999999999999999999999999999999999999;
     uint constant MAX_76_DIGIT_NUMBER = 9999999999999999999999999999999999999999999999999999999999999999999999999999;
+    int constant MAXIMUM_EXPONENT = -18; // guarantees all results will have at least 18 decimals. Constrainst the exponents
 
     /**
      * @dev adds 2 signed floating point numbers
@@ -58,17 +62,22 @@ library Float128 {
         uint addition;
         bool isSubtraction;
         bool sameExponent;
-
+        uint aMan;
+        uint bMan;
+        uint aExp;
+        uint bExp;
+        console2.log("a", packedFloat.unwrap(a));
+        console2.log("b", packedFloat.unwrap(b));
         assembly {
             let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
-            let bL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
+            let bL := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
             if iszero(or(aL, bL)) {
                 isSubtraction := xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK))
                 // we extract the exponent and mantissas for both
-                let aExp := and(a, EXPONENT_MASK)
-                let bExp := and(b, EXPONENT_MASK)
-                let aMan := and(a, MANTISSA_MASK)
-                let bMan := and(b, MANTISSA_MASK)
+                aExp := and(a, EXPONENT_MASK)
+                bExp := and(b, EXPONENT_MASK)
+                aMan := and(a, MANTISSA_MASK)
+                bMan := and(b, MANTISSA_MASK)
                 // we adjust the significant digits and set the exponent of the result
                 // subtraction case
                 if isSubtraction {
@@ -139,10 +148,10 @@ library Float128 {
             if or(aL, bL) {
                 isSubtraction := xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK))
                 // we extract the exponent and mantissas for both
-                let aExp := and(a, EXPONENT_MASK)
-                let bExp := and(b, EXPONENT_MASK)
-                let aMan := and(a, MANTISSA_MASK)
-                let bMan := and(b, MANTISSA_MASK)
+                aExp := and(a, EXPONENT_MASK)
+                bExp := and(b, EXPONENT_MASK)
+                aMan := and(a, MANTISSA_MASK)
+                bMan := and(b, MANTISSA_MASK)
                 // we adjust the significant digits and set the exponent of the result
                 // we make sure both of them are size L before continuing
                 if iszero(aL) {
@@ -153,7 +162,7 @@ library Float128 {
                     bMan := mul(bMan, BASE_TO_THE_DIGIT_DIFF)
                     bExp := sub(bExp, shl(EXPONENT_BIT, DIGIT_DIFF_L_M))
                 }
-                // subtraction case
+                //subtraction case
                 if isSubtraction {
                     // we add 4 digits of precision in the case of subtraction
                     if gt(aExp, bExp) {
@@ -162,11 +171,11 @@ library Float128 {
                         let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
                         if neg {
                             bMan := mul(bMan, exp(BASE, sub(0, adj)))
-                            aMan := mul(aMan, BASE_TO_THE_DIGIT_DIFF)
+                            aMan := mul(aMan, BASE_TO_THE_DIFF_76_L)
                         }
                         if iszero(neg) {
                             bMan := sdiv(bMan, exp(BASE, adj))
-                            aMan := mul(aMan, BASE_TO_THE_DIGIT_DIFF)
+                            aMan := mul(aMan, BASE_TO_THE_DIFF_76_L)
                         }
                     }
                     if gt(bExp, aExp) {
@@ -175,11 +184,11 @@ library Float128 {
                         let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
                         if neg {
                             aMan := mul(aMan, exp(BASE, sub(0, adj)))
-                            bMan := mul(bMan, BASE_TO_THE_DIGIT_DIFF)
+                            bMan := mul(bMan, BASE_TO_THE_DIFF_76_L)
                         }
                         if iszero(neg) {
                             aMan := sdiv(aMan, exp(BASE, adj))
-                            bMan := mul(bMan, BASE_TO_THE_DIGIT_DIFF)
+                            bMan := mul(bMan, BASE_TO_THE_DIFF_76_L)
                         }
                     }
                 }
@@ -196,18 +205,60 @@ library Float128 {
                         aMan := sdiv(aMan, exp(BASE, adj))
                     }
                 }
+                // // if exponents are the same, we don't need to adjust the mantissas. We just set the result's exponent
+                if eq(aExp, bExp) {
+                    r := aExp
+                    sameExponent := 1
+                }
+                // now we convert to 2's complement to carry out the operation
+                if and(b, MANTISSA_SIGN_MASK) {
+                    bMan := sub(0, bMan)
+                }
+                if and(a, MANTISSA_SIGN_MASK) {
+                    aMan := sub(0, aMan)
+                }
+                // now we can add/subtract
+                addition := add(aMan, bMan)
+                // encoding the unnormalized result
+                if and(TWO_COMPLEMENT_SIGN_MASK, addition) {
+                    r := or(r, MANTISSA_SIGN_MASK) // assign the negative sign
+                    addition := sub(0, addition) // convert back from 2's complement
+                }
+                if iszero(addition) {
+                    r := 0
+                }
             }
         }
-
+        console2.log("a", aMan, aExp >> EXPONENT_BIT);
+        console2.log("b", bMan, bExp >> EXPONENT_BIT);
+        console2.log("isSubtraction", isSubtraction);
+        console2.log("addition", addition);
+        console2.log("sameExponent", sameExponent);
         // normalization
         if (packedFloat.unwrap(r) > 0) {
+            uint rExp;
+            console2.log("r", packedFloat.unwrap(r) >> EXPONENT_BIT);
+            assembly {
+                rExp := shr(EXPONENT_BIT, r)
+            }
             if (isSubtraction) {
                 // subtraction case can have a number of digits anywhere from 1 to 76
                 // we might get a normalized result, so we only normalize if necessary
-                if (addition > MAX_M_DIGIT_NUMBER || addition < MIN_M_DIGIT_NUMBER) {
+                if (
+                    !(addition <= MAX_M_DIGIT_NUMBER &&
+                        addition >= MIN_M_DIGIT_NUMBER &&
+                        (int(rExp) - int(ZERO_OFFSET)) <= MAXIMUM_EXPONENT)
+                ) {
                     uint digitsMantissa = findNumberOfDigits(addition);
+                    console2.log("digitsMantissa", digitsMantissa);
+                    console2.log("rExp", rExp);
                     assembly {
                         let mantissaReducer := sub(digitsMantissa, MAX_DIGITS_M)
+                        let isResultL := slt(MAXIMUM_EXPONENT, sub(rExp, mantissaReducer))
+                        if isResultL {
+                            mantissaReducer := sub(mantissaReducer, DIGIT_DIFF_L_M)
+                            r := or(r, MANTISSA_L_FLAG_MASK)
+                        }
                         let negativeReducer := and(TWO_COMPLEMENT_SIGN_MASK, mantissaReducer)
                         if negativeReducer {
                             addition := mul(addition, exp(BASE, sub(0, mantissaReducer)))
@@ -223,9 +274,15 @@ library Float128 {
                 // addition case is simpler since it can only have 2 possibilities: same digits as its addends,
                 // or + 1 digits due to an "overflow"
                 assembly {
-                    if gt(addition, MAX_M_DIGIT_NUMBER) {
+                    // 38 digit case
+                    if and(lt(addition, MIN_L_DIGIT_NUMBER), gt(addition, MAX_M_DIGIT_NUMBER)) {
                         addition := div(addition, BASE)
                         r := add(r, shl(EXPONENT_BIT, 1))
+                    }
+                    // 72 digit case
+                    if gt(addition, MAX_L_DIGIT_NUMBER) {
+                        addition := div(addition, BASE)
+                        r := add(add(r, shl(EXPONENT_BIT, 1)), MANTISSA_L_FLAG_MASK)
                     }
                 }
             }
@@ -788,10 +845,19 @@ library Float128 {
                 }
             }
             // we normalize only if necessary
-            if (uint(mantissa) > MAX_M_DIGIT_NUMBER || uint(mantissa) < MIN_M_DIGIT_NUMBER) {
+            if (
+                uint(mantissa) > MAX_L_DIGIT_NUMBER ||
+                (uint(mantissa) < MIN_L_DIGIT_NUMBER && uint(mantissa) > MAX_M_DIGIT_NUMBER) ||
+                uint(mantissa) < MIN_M_DIGIT_NUMBER
+            ) {
                 digitsMantissa = findNumberOfDigits(uint(mantissa));
                 assembly {
                     mantissaMultiplier := sub(digitsMantissa, MAX_DIGITS_M)
+                    let isResultL := slt(MAXIMUM_EXPONENT, sub(exponent, mantissaMultiplier))
+                    if isResultL {
+                        mantissaMultiplier := sub(mantissaMultiplier, DIGIT_DIFF_L_M)
+                        float := or(float, MANTISSA_L_FLAG_MASK)
+                    }
                     exponent := add(exponent, mantissaMultiplier)
                     let negativeMultiplier := and(TWO_COMPLEMENT_SIGN_MASK, mantissaMultiplier)
                     if negativeMultiplier {

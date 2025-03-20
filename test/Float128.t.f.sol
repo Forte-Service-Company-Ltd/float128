@@ -14,8 +14,13 @@ contract Float128FuzzTest is FloatUtils {
     }
 
     function checkResults(int rMan, int rExp, int pyMan, int pyExp, bool couldBeOffBy1) internal pure {
+        console2.log("rMan", rMan);
+        console2.log("rExp", rExp);
+        console2.log("pyMan", pyMan);
+        console2.log("pyExp", pyExp);
         // we always check that the result is normalized since this is vital for the library. Only exception is when the result is zero
-        if (pyMan != 0) assertEq(findNumberOfDigits(uint(rMan < 0 ? rMan * -1 : rMan)), 38, "Solidity result is not normalized");
+        uint nDigits = findNumberOfDigits(uint(rMan < 0 ? rMan * -1 : rMan));
+        if (pyMan != 0) assertTrue((nDigits == 38) || nDigits == 72, "Solidity result is not normalized");
         // we fix the python result due to the imprecision of python's log10. We cut precision where needed
         if (pyExp != rExp) {
             if (pyExp > rExp) {
