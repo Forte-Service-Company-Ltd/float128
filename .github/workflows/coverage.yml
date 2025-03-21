@@ -61,12 +61,12 @@ jobs:
       - name: Build the repository
         shell: bash
         run: |
-          forge clean && forge build --optimize
+          forge clean && forge build --optimize --via-ir
 
       - name: Run tests with coverage option
         shell: bash
         run: |
-          forge coverage --ffi --report lcov --no-match-path "*invariant*" --fuzz-runs 1
+          forge coverage --ffi --via-ir --report lcov --no-match-path "*invariant*" --fuzz-runs 1
 
       - name: Filter the coverage reports and reformat them
         shell: bash
