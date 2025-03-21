@@ -579,6 +579,7 @@ library Float128 {
      * @notice this version of the function uses only the packedFloat type
      */
     function div(packedFloat a, packedFloat b, bool rL) internal pure returns (packedFloat r) {
+        // console2.log(packedFloat.unwrap(b));
         assembly {
             if eq(and(b, MANTISSA_MASK), 0) {
                 let ptr := mload(0x40) // Get free memory pointer
@@ -657,7 +658,7 @@ library Float128 {
             if Loperation {
                 let hasExtraDigit := gt(rMan, MAX_L_DIGIT_NUMBER)
                 let maxExp := sub(sub(add(ZERO_OFFSET, MAXIMUM_EXPONENT), DIGIT_DIFF_L_M), hasExtraDigit)
-                Loperation := gt(rExp, maxExp)
+                Loperation := or(gt(rExp, maxExp), rL)
                 if and(Loperation, hasExtraDigit) {
                     // we need to truncate the last digit
                     rExp := add(rExp, 1)

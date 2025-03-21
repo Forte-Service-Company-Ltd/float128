@@ -92,6 +92,7 @@ contract Float128FuzzTest is FloatUtils {
         }
     }
 
+    /// forge-config: default.allow_internal_expect_revert = true
     function testEncoded_divL(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
 
