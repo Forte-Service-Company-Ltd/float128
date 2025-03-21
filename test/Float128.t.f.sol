@@ -79,6 +79,8 @@ contract Float128FuzzTest is FloatUtils {
 
         packedFloat a = Float128.toPackedFloat(aMan, aExp);
         packedFloat b = Float128.toPackedFloat(bMan, bExp);
+        console2.log("packedFloat a", packedFloat.unwrap(a));
+        console2.log("packedFloat b", packedFloat.unwrap(b));
         if (bMan == 0) {
             vm.expectRevert("float128: division by zero");
         }
@@ -86,7 +88,7 @@ contract Float128FuzzTest is FloatUtils {
         if (bMan != 0) {
             (int rMan, int rExp) = Float128.decode(result);
 
-            checkResults(rMan, rExp, pyMan, pyExp);
+            checkResults(result, rMan, rExp, pyMan, pyExp, false);
         }
     }
 

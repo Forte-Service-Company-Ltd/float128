@@ -555,7 +555,6 @@ library Float128 {
      * @notice this version of the function uses only the packedFloat type
      */
     function div(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
-        if (packedFloat.unwrap(a) == 0) return a;
         assembly {
             if eq(and(b, MANTISSA_MASK), 0) {
                 let ptr := mload(0x40) // Get free memory pointer
@@ -566,6 +565,7 @@ library Float128 {
                 revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
             }
         }
+        if (packedFloat.unwrap(a) == 0) return a;
         uint rMan;
         uint rExp;
         uint a0;
@@ -578,14 +578,22 @@ library Float128 {
         assembly {
             let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
             let bL := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
-            Loperation := or(aL, bL)
             // if a is zero then the result will be zero
             aMan := and(a, MANTISSA_MASK)
             aExp := shr(EXPONENT_BIT, and(a, EXPONENT_MASK))
             bMan := and(b, MANTISSA_MASK)
             bExp := shr(EXPONENT_BIT, and(b, EXPONENT_MASK))
+            Loperation := or(or(aL, bL), sgt(sub(sub(sub(aExp, ZERO_OFFSET), MAX_DIGITS_M), sub(bExp, ZERO_OFFSET)), MAXIMUM_EXPONENT))
 
             if Loperation {
+                if iszero(aL) {
+                    aMan := mul(aMan, BASE_TO_THE_DIGIT_DIFF)
+                    aExp := sub(aExp, DIGIT_DIFF_L_M)
+                }
+                if iszero(bL) {
+                    bMan := mul(bMan, BASE_TO_THE_DIGIT_DIFF)
+                    bExp := sub(bExp, DIGIT_DIFF_L_M)
+                }
                 let mm := mulmod(aMan, BASE_TO_THE_MAX_DIGITS_L, not(0))
                 a0 := mul(aMan, BASE_TO_THE_MAX_DIGITS_L)
                 a1 := sub(sub(mm, a0), lt(mm, a0))
@@ -608,10 +616,12 @@ library Float128 {
                 rExp := sub(add(aExp, ZERO_OFFSET), bExp)
             }
         }
+        console2.log("a", aMan, aExp);
+        console2.log("b", bMan, bExp);
+        console2.log("r", rMan, rExp);
+        console2.log("aUint", a0, a1);
+        console2.log("Loperation", Loperation);
         assembly {
-            // a division between a k-digit number and a j-digit number will result in a number between (k - j)
-            // and (k - j + 1) digits. Since we are dividing a 76-digit number by a 38-digit number, we know
-            // that the result could have either 39 or 38 digitis.
             if iszero(Loperation) {
                 let hasExtraDigit := gt(rMan, MAX_M_DIGIT_NUMBER)
                 if hasExtraDigit {
@@ -631,12 +641,12 @@ library Float128 {
                 }
                 if iszero(Loperation) {
                     if hasExtraDigit {
-                        rExp := add(rExp, MAX_DIGITS_M_PLUS_1)
-                        rMan := div(rMan, BASE_TO_THE_MAX_DIGITS_M_PLUS_1)
+                        rExp := add(rExp, DIGIT_DIFF_L_M_PLUS_1)
+                        rMan := div(rMan, BASE_TO_THE_DIGIT_DIFF_PLUS_1)
                     }
                     if iszero(hasExtraDigit) {
-                        rExp := add(rExp, MAX_DIGITS_M)
-                        rMan := div(rMan, BASE_TO_THE_MAX_DIGITS_M)
+                        rExp := add(rExp, DIGIT_DIFF_L_M)
+                        rMan := div(rMan, BASE_TO_THE_DIGIT_DIFF)
                     }
                 }
             }
