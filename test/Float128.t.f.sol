@@ -139,7 +139,7 @@ contract Float128FuzzTest is FloatUtils {
         if (aMan >= 0) {
             (int rMan, int rExp) = Float128.decode(result);
 
-            checkResults(rMan, rExp, pyMan, pyExp);
+            checkResults(result, rMan, rExp, pyMan, pyExp, false);
         }
     }
 

@@ -583,7 +583,12 @@ library Float128 {
             aExp := shr(EXPONENT_BIT, and(a, EXPONENT_MASK))
             bMan := and(b, MANTISSA_MASK)
             bExp := shr(EXPONENT_BIT, and(b, EXPONENT_MASK))
-            Loperation := or(or(aL, bL), sgt(sub(sub(sub(aExp, ZERO_OFFSET), MAX_DIGITS_M), sub(bExp, ZERO_OFFSET)), MAXIMUM_EXPONENT))
+            Loperation := or(
+                or(aL, bL),
+                // we add 1 to the calculation because division could result in an extra digit which will increase
+                // the value of the exponent hence potentially violating maximum exponent
+                sgt(add(sub(sub(sub(aExp, ZERO_OFFSET), MAX_DIGITS_M), sub(bExp, ZERO_OFFSET)), 1), MAXIMUM_EXPONENT)
+            )
 
             if Loperation {
                 if iszero(aL) {
@@ -616,11 +621,6 @@ library Float128 {
                 rExp := sub(add(aExp, ZERO_OFFSET), bExp)
             }
         }
-        console2.log("a", aMan, aExp);
-        console2.log("b", bMan, bExp);
-        console2.log("r", rMan, rExp);
-        console2.log("aUint", a0, a1);
-        console2.log("Loperation", Loperation);
         assembly {
             if iszero(Loperation) {
                 let hasExtraDigit := gt(rMan, MAX_M_DIGIT_NUMBER)
