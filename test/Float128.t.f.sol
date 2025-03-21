@@ -56,7 +56,7 @@ contract Float128FuzzTest is FloatUtils {
     function testEncoded_mul(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
 
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "mul");
+        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "mul", 0);
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
 
@@ -73,7 +73,7 @@ contract Float128FuzzTest is FloatUtils {
     function testEncoded_div(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
 
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan == 0 ? int(1) : bMan, bExp, "div");
+        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan == 0 ? int(1) : bMan, bExp, "div", 0);
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
 
@@ -92,10 +92,32 @@ contract Float128FuzzTest is FloatUtils {
         }
     }
 
+    function testEncoded_divL(int aMan, int aExp, int bMan, int bExp) public {
+        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
+
+        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan == 0 ? int(1) : bMan, bExp, "div", 1);
+        bytes memory res = vm.ffi(inputs);
+        (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
+
+        packedFloat a = Float128.toPackedFloat(aMan, aExp);
+        packedFloat b = Float128.toPackedFloat(bMan, bExp);
+        console2.log("packedFloat a", packedFloat.unwrap(a));
+        console2.log("packedFloat b", packedFloat.unwrap(b));
+        if (bMan == 0) {
+            vm.expectRevert("float128: division by zero");
+        }
+        packedFloat result = Float128.divL(a, b);
+        if (bMan != 0) {
+            (int rMan, int rExp) = Float128.decode(result);
+
+            checkResults(result, rMan, rExp, pyMan, pyExp, false);
+        }
+    }
+
     function testEncoded_add(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
 
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "add");
+        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "add", 0);
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
 
@@ -111,7 +133,7 @@ contract Float128FuzzTest is FloatUtils {
     function testEncoded_sub(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
 
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "sub");
+        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "sub", 0);
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
 
@@ -128,7 +150,7 @@ contract Float128FuzzTest is FloatUtils {
     function testEncoded_sqrt(int aMan, int aExp) public {
         (aMan, aExp, , ) = setBounds(aMan, aExp, 0, 0);
         aExp = bound(aExp, -74, 1); // TODO increse this when finishing sqrt
-        string[] memory inputs = _buildFFIMul128(aMan < 0 ? aMan * -1 : aMan, aExp, 0, 0, "sqrt");
+        string[] memory inputs = _buildFFIMul128(aMan < 0 ? aMan * -1 : aMan, aExp, 0, 0, "sqrt", 0);
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
         packedFloat a = Float128.toPackedFloat(aMan, aExp);
@@ -152,7 +174,7 @@ contract Float128FuzzTest is FloatUtils {
         console2.log("retVal", retVal);
 
         // Creating the float struct to normalize the mantissas and exponents before doing the comparison
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "le");
+        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "le", 0);
         bytes memory res = vm.ffi(inputs);
         (int pyMan, ) = abi.decode((res), (int256, int256));
         bool pyRes = pyMan > 0;

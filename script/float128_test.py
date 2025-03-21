@@ -15,6 +15,7 @@ def calculate_float(args):
     bMan = Decimal(args.bMan)
     bExp = Decimal(args.bExp)
     operation = args.operation
+    largeResult = args.largeResult > 0
     result_float = 0
 
     a = Decimal(aMan * base**aExp)
@@ -37,7 +38,7 @@ def calculate_float(args):
     result_digits = int(log_10) + 1
     if (result_digits < 0): result_digits -= 1
     result_exp = Decimal(result_digits - max_digits_m)
-    if(result_exp > max_exponent):
+    if(result_exp > max_exponent or largeResult):
         result_exp -= max_digits_l - max_digits_m
     result_man = int(result_float*10**(-result_exp))
 
@@ -51,6 +52,7 @@ def parse_args():
     parser.add_argument("bMan", type=int)
     parser.add_argument("bExp", type=int)
     parser.add_argument("operation", type=str)
+    parser.add_argument("largeResult", type=int)
     return parser.parse_args()
 
 

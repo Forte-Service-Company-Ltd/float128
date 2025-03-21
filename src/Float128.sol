@@ -557,6 +557,28 @@ library Float128 {
      * @notice this version of the function uses only the packedFloat type
      */
     function div(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
+        r = div(a, b, false);
+    }
+
+    /**
+     * @dev gets the division of 2 signed floating point numbers which results in a large mantissa
+     * @param a the numerator
+     * @param b the denominator
+     * @return r the result of a / b
+     * @notice this version of the function uses only the packedFloat type
+     */
+    function divL(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
+        r = div(a, b, true);
+    }
+
+    /**
+     * @dev gets the division of 2 signed floating point numbers
+     * @param a the numerator
+     * @param b the denominator
+     * @return r the result of a / b
+     * @notice this version of the function uses only the packedFloat type
+     */
+    function div(packedFloat a, packedFloat b, bool rL) internal pure returns (packedFloat r) {
         assembly {
             if eq(and(b, MANTISSA_MASK), 0) {
                 let ptr := mload(0x40) // Get free memory pointer
@@ -586,7 +608,7 @@ library Float128 {
             bMan := and(b, MANTISSA_MASK)
             bExp := shr(EXPONENT_BIT, and(b, EXPONENT_MASK))
             Loperation := or(
-                or(aL, bL),
+                or(rL, or(aL, bL)),
                 // we add 1 to the calculation because division could result in an extra digit which will increase
                 // the value of the exponent hence potentially violating maximum exponent
                 sgt(add(sub(sub(sub(aExp, ZERO_OFFSET), MAX_DIGITS_M), sub(bExp, ZERO_OFFSET)), 1), MAXIMUM_EXPONENT)
