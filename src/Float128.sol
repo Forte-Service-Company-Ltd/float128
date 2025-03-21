@@ -1180,145 +1180,153 @@ library Float128 {
         packedFloat input = toPackedFloat(mantissa, exp);
         packedFloat float_one = toPackedFloat(int(1), 0);
 
-        if(eq(input, float_one)) {
-            // This is the case in which the argument of the logarithm is 1.
-            return packedFloat.wrap(0);
-        } else if(len_mantissa > positiveExp) {
-            if(len_mantissa > 38) {
-                uint extra_digits = uint(len_mantissa - 38);
-                mantissa = mantissa / int(10**extra_digits);
-                exp = exp + int(extra_digits);
-            } else if(len_mantissa < 38) {
-                uint extra_digits = uint(38 - len_mantissa);
-                mantissa = mantissa * int(10 ** extra_digits);
-                exp = exp - int(extra_digits);
+        bool logOfOne = false;
+        if(exp < 0) {
+            if(positiveExp == (len_mantissa - 1)) {
+                if((uint(mantissa) / 10**uint(positiveExp)) == 1) {
+                    result = packedFloat.wrap(0);
+                    logOfOne = true;
+                }
             }
-
-            int q1 = (10**76) / mantissa;
-            int r1 = (10**76) % mantissa;
-            int q2 = ((10**38) * r1) / mantissa;
-            uint one_over_argument_in_long_int = uint(q1) * (10**38) + uint(q2);
-            int m10 = int(findNumberOfDigits(uint(one_over_argument_in_long_int)));
-
-            uint one_over_arguments_76 = one_over_argument_in_long_int;
-            int m76 = m10;
-            if(m76 > 76) {
-                uint extra_digits = uint(m76) - 76;
-                m76 = m76 - int(extra_digits);
-                one_over_arguments_76 = one_over_argument_in_long_int / 10**extra_digits;
-            }
-            int exp_one_over_argument = 0 - 38 - 76 - exp;
-
-            packedFloat a = sub(packedFloat.wrap(0), ln(int(one_over_arguments_76), -m76));
-            packedFloat b = sub(a, toPackedFloat((exp_one_over_argument + m10), 0));
-            result = mul(b, ln10);
         }
-        
-        if(len_mantissa <= positiveExp) {
-            int256 m10 = len_mantissa + exp;
-            exp = exp - m10;
-
-            int256 m2 = 76 - len_mantissa;
-            mantissa = mantissa * int(10**uint(m2));
-            exp = exp - m2;
-
-            int256 k;
-            int256 multiplier_k;
-
-            if(mantissa > (25 * (10**74))) {
-                if(mantissa > (50 * (10**74))) {
-                    k = 0;
-                    multiplier_k = 1;
-                } else {
-                    k = 1;
-                    multiplier_k = 2;
+        if(!logOfOne) {
+            if(len_mantissa > positiveExp) {
+                if(len_mantissa > 38) {
+                    uint extra_digits = uint(len_mantissa - 38);
+                    mantissa = mantissa / int(10**extra_digits);
+                    exp = exp + int(extra_digits);
+                } else if(len_mantissa < 38) {
+                    uint extra_digits = uint(38 - len_mantissa);
+                    mantissa = mantissa * int(10 ** extra_digits);
+                    exp = exp - int(extra_digits);
                 }
-            } else {
-                if(mantissa > (125 * 10**73)) {
-                    k = 2;
-                    multiplier_k = 4;
-                } else {
-                    k = 3;
-                    multiplier_k = 8;
+
+                int q1 = (10**76) / mantissa;
+                int r1 = (10**76) % mantissa;
+                int q2 = ((10**38) * r1) / mantissa;
+                uint one_over_argument_in_long_int = uint(q1) * (10**38) + uint(q2);
+                int m10 = int(findNumberOfDigits(uint(one_over_argument_in_long_int)));
+
+                uint one_over_arguments_76 = one_over_argument_in_long_int;
+                int m76 = m10;
+                if(m76 > 76) {
+                    uint extra_digits = uint(m76) - 76;
+                    m76 = m76 - int(extra_digits);
+                    one_over_arguments_76 = one_over_argument_in_long_int / 10**extra_digits;
                 }
+                int exp_one_over_argument = 0 - 38 - 76 - exp;
+
+                packedFloat a = sub(packedFloat.wrap(0), ln(int(one_over_arguments_76), -m76));
+                packedFloat b = sub(a, toPackedFloat((exp_one_over_argument + m10), 0));
+                result = mul(b, ln10);
             }
-            mantissa = mantissa * multiplier_k;
-            uint256 uMantissa = uint256(mantissa);
-
-            int256 q1;
-            (q1, uMantissa) = calculateQ1(uMantissa);
-
-            // We find the suitable value of q2 and the multiplier (1.014)**q2
-            // so that 0.986 <= (1.014)**q2 * updated_x <= 1 
-            // We use the following intervals:
-            // (index -> lower bound of the interval)
-            // 0 ->  9 * 10**75
-            // 1 ->  9072 * 10**72
-            // 2 ->  9199 * 10**72
-            // 3 ->  9328 * 10**72
-            // 4 ->  9459 * 10**72
-            // 5 ->  9591 * 10**72
-            // 6 ->  9725 * 10**72 
-            // 7 ->  9860 * 10**72
-            // partition_1014 = [0.9, 0.9072, 0.9199, 0.9328, 0.9459, 0.9591, 0.9725, 0.986, 1]
-
-            int256 q2;
-            (q2, uMantissa) = calculateQ2(uMantissa);
-
-            // Now digits has already been updated
-            // assert digits >= 9860 * 10**72
-            // assert digits <= 10**76
-
-            // We find the suitable value of q3 and the multiplier (1.0013)**q3
-            // so that 0.9949 <= (1.0013)**q3 * updated_x <= 1 
-            // We use the following intervals:
-            // (index -> lower bound of the interval)
-            // 0 ->  986 * 10**73
-            // 1 ->  987274190490 * 10**64
-            // 2 ->  988557646937 * 10**64
-            // 3 ->  989842771878 * 10**64
-            // 4 ->  991129567482 * 10**64
-            // 5 ->  992418035920 * 10**64
-            // 6 ->  993708179366 * 10**64 
-            // 7 ->  995 * 10**73
-            // partition_10013 = [0.986, 0.987274190490, 0.988557646937, 0.989842771878, 0.991129567482, 0.992418035920, 0.993708179366, 0.995, 1]
-
-            int256 q3;
-            (q3, uMantissa) = calculateQ3(uMantissa);
-
-            // Now digits has already been updated
-            int z_int = 10**76 - int(uMantissa);
-            int len_z_int = int(findNumberOfDigits(uint(z_int)));
-            if(z_int != 0) {
-                int diff = len_z_int - 38;
-                z_int = int(uint(z_int) / 10**uint(diff));
-            }
-
-            packedFloat z = toPackedFloat(z_int, (len_z_int - 76 - 38));
             
-            // Number of terms of the Taylor series:
-            int terms = 15;
-            result = z;
-            packedFloat z_to_j = z;
-            for(uint j = 2; j < uint(terms + 1); j++) {
-                z_to_j = mul(z_to_j, z);
-                result = add(result, div(z_to_j, toPackedFloat(int(j), int(0))));
-            } 
+            if(len_mantissa <= positiveExp) {
+                int256 m10 = len_mantissa + exp;
+                exp = exp - m10;
 
-            packedFloat lnB = toPackedFloat(13902905168991420865477877458246859530, -39);
-            packedFloat lnC = toPackedFloat(12991557316200501157605555658804528711, -40);
+                int256 m2 = 76 - len_mantissa;
+                mantissa = mantissa * int(10**uint(m2));
+                exp = exp - m2;
 
-            packedFloat firstTerm = add(result, mul(toPackedFloat(k, 0), ln2));
+                int256 k;
+                int256 multiplier_k;
 
-            packedFloat secondTerm = add(firstTerm, mul(toPackedFloat(q1, 0), ln1dot1));
+                if(mantissa > (25 * (10**74))) {
+                    if(mantissa > (50 * (10**74))) {
+                        k = 0;
+                        multiplier_k = 1;
+                    } else {
+                        k = 1;
+                        multiplier_k = 2;
+                    }
+                } else {
+                    if(mantissa > (125 * 10**73)) {
+                        k = 2;
+                        multiplier_k = 4;
+                    } else {
+                        k = 3;
+                        multiplier_k = 8;
+                    }
+                }
+                mantissa = mantissa * multiplier_k;
+                uint256 uMantissa = uint256(mantissa);
 
-            packedFloat thirdTerm = add(secondTerm, mul(toPackedFloat(q2, 0), lnB));
+                int256 q1;
+                (q1, uMantissa) = calculateQ1(uMantissa);
 
-            packedFloat fourthTerm = add(thirdTerm, mul(toPackedFloat(q3, 0), lnC));
+                // We find the suitable value of q2 and the multiplier (1.014)**q2
+                // so that 0.986 <= (1.014)**q2 * updated_x <= 1 
+                // We use the following intervals:
+                // (index -> lower bound of the interval)
+                // 0 ->  9 * 10**75
+                // 1 ->  9072 * 10**72
+                // 2 ->  9199 * 10**72
+                // 3 ->  9328 * 10**72
+                // 4 ->  9459 * 10**72
+                // 5 ->  9591 * 10**72
+                // 6 ->  9725 * 10**72 
+                // 7 ->  9860 * 10**72
+                // partition_1014 = [0.9, 0.9072, 0.9199, 0.9328, 0.9459, 0.9591, 0.9725, 0.986, 1]
 
-            packedFloat fifthTerm = sub(fourthTerm, mul(toPackedFloat(m10, 0), ln10));
+                int256 q2;
+                (q2, uMantissa) = calculateQ2(uMantissa);
 
-            result = mul(fifthTerm, toPackedFloat(-1, 0));
+                // Now digits has already been updated
+                // assert digits >= 9860 * 10**72
+                // assert digits <= 10**76
+
+                // We find the suitable value of q3 and the multiplier (1.0013)**q3
+                // so that 0.9949 <= (1.0013)**q3 * updated_x <= 1 
+                // We use the following intervals:
+                // (index -> lower bound of the interval)
+                // 0 ->  986 * 10**73
+                // 1 ->  987274190490 * 10**64
+                // 2 ->  988557646937 * 10**64
+                // 3 ->  989842771878 * 10**64
+                // 4 ->  991129567482 * 10**64
+                // 5 ->  992418035920 * 10**64
+                // 6 ->  993708179366 * 10**64 
+                // 7 ->  995 * 10**73
+                // partition_10013 = [0.986, 0.987274190490, 0.988557646937, 0.989842771878, 0.991129567482, 0.992418035920, 0.993708179366, 0.995, 1]
+
+                int256 q3;
+                (q3, uMantissa) = calculateQ3(uMantissa);
+
+                // Now digits has already been updated
+                int z_int = 10**76 - int(uMantissa);
+                int len_z_int = int(findNumberOfDigits(uint(z_int)));
+                if(z_int != 0) {
+                    int diff = len_z_int - 38;
+                    z_int = int(uint(z_int) / 10**uint(diff));
+                }
+
+                packedFloat z = toPackedFloat(z_int, (len_z_int - 76 - 38));
+                
+                // Number of terms of the Taylor series:
+                int terms = 15;
+                result = z;
+                packedFloat z_to_j = z;
+                for(uint j = 2; j < uint(terms + 1); j++) {
+                    z_to_j = mul(z_to_j, z);
+                    result = add(result, div(z_to_j, toPackedFloat(int(j), int(0))));
+                } 
+
+                packedFloat lnB = toPackedFloat(13902905168991420865477877458246859530, -39);
+                packedFloat lnC = toPackedFloat(12991557316200501157605555658804528711, -40);
+
+                packedFloat firstTerm = add(result, mul(toPackedFloat(k, 0), ln2));
+
+                packedFloat secondTerm = add(firstTerm, mul(toPackedFloat(q1, 0), ln1dot1));
+
+                packedFloat thirdTerm = add(secondTerm, mul(toPackedFloat(q2, 0), lnB));
+
+                packedFloat fourthTerm = add(thirdTerm, mul(toPackedFloat(q3, 0), lnC));
+
+                packedFloat fifthTerm = sub(fourthTerm, mul(toPackedFloat(m10, 0), ln10));
+
+                result = mul(fifthTerm, toPackedFloat(-1, 0));
+            }
         }
     }
 
