@@ -43,6 +43,7 @@ library Float128 {
     uint constant MIN_M_DIGIT_NUMBER = 10000000000000000000000000000000000000;
     uint constant MAX_L_DIGIT_NUMBER = 999999999999999999999999999999999999999999999999999999999999999999999999;
     uint constant MIN_L_DIGIT_NUMBER = 100000000000000000000000000000000000000000000000000000000000000000000000;
+    uint constant BASE_TO_THE_MAX_DIGITS_L = 1000000000000000000000000000000000000000000000000000000000000000000000000;
     uint constant BASE_TO_THE_DIGIT_DIFF = 10000000000000000000000000000000000;
     uint constant BASE_TO_THE_DIGIT_DIFF_PLUS_1 = 100000000000000000000000000000000000;
     uint constant BASE_TO_THE_MAX_DIGITS_M_MINUS_1 = 10000000000000000000000000000000000000;
@@ -453,7 +454,6 @@ library Float128 {
         bool Loperation;
         if (packedFloat.unwrap(a) == 0 || packedFloat.unwrap(b) == 0) return packedFloat.wrap(0);
         assembly {
-            // if any of the elements is zero then the result will be zero
             let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
             let bL := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
             Loperation := or(aL, bL)
@@ -483,11 +483,6 @@ library Float128 {
                 rExp := sub(add(shr(EXPONENT_BIT, aExp), shr(EXPONENT_BIT, bExp)), ZERO_OFFSET)
             }
         }
-        console2.log("Loperation", Loperation);
-        console2.log("rMan", rMan);
-        console2.log("rExp", rExp);
-        console2.log("r0", r0);
-        console2.log("r1", r1);
         if (Loperation) {
             // MIN_L_DIGIT_NUMBER is equal to BASE ** (MAX_L_DIGITS - 1).
             // We avoid losing the lsd this way, but we could get 1 extra digit
@@ -560,6 +555,7 @@ library Float128 {
      * @notice this version of the function uses only the packedFloat type
      */
     function div(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
+        if (packedFloat.unwrap(a) == 0) return a;
         assembly {
             if eq(and(b, MANTISSA_MASK), 0) {
                 let ptr := mload(0x40) // Get free memory pointer
@@ -569,28 +565,84 @@ library Float128 {
                 mstore(add(ptr, 0x44), "float128: division by zero")
                 revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
             }
+        }
+        uint rMan;
+        uint rExp;
+        uint a0;
+        uint a1;
+        uint aMan;
+        uint aExp;
+        uint bMan;
+        uint bExp;
+        bool Loperation;
+        assembly {
+            let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
+            let bL := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
+            Loperation := or(aL, bL)
             // if a is zero then the result will be zero
-            if gt(and(a, MANTISSA_MASK), 0) {
-                let aMan := and(a, MANTISSA_MASK)
-                let aExp := shr(EXPONENT_BIT, and(a, EXPONENT_MASK))
-                let bMan := and(b, MANTISSA_MASK)
-                let bExp := shr(EXPONENT_BIT, and(b, EXPONENT_MASK))
+            aMan := and(a, MANTISSA_MASK)
+            aExp := shr(EXPONENT_BIT, and(a, EXPONENT_MASK))
+            bMan := and(b, MANTISSA_MASK)
+            bExp := shr(EXPONENT_BIT, and(b, EXPONENT_MASK))
+
+            if Loperation {
+                let mm := mulmod(aMan, BASE_TO_THE_MAX_DIGITS_L, not(0))
+                a0 := mul(aMan, BASE_TO_THE_MAX_DIGITS_L)
+                a1 := sub(sub(mm, a0), lt(mm, a0))
+                aExp := sub(aExp, MAX_DIGITS_L)
+            }
+            if iszero(Loperation) {
                 // we add 38 more digits of precision
                 aMan := mul(aMan, BASE_TO_THE_MAX_DIGITS_M)
                 aExp := sub(aExp, MAX_DIGITS_M)
-                let rMan := div(aMan, bMan)
-
-                let rExp := sub(add(aExp, ZERO_OFFSET), bExp)
-                // a division between a k-digit number and a j-digit number will result in a number between (k - j)
-                // and (k - j + 1) digits. Since we are dividing a 76-digit number by a 38-digit number, we know
-                // that the result could have either 39 or 38 digitis.
-                let is39digit := gt(rMan, MAX_M_DIGIT_NUMBER)
-                if is39digit {
+            }
+        }
+        if (Loperation) {
+            rMan = Uint512.div512x256(a0, a1, bMan);
+            unchecked {
+                rExp = (aExp + ZERO_OFFSET) - bExp;
+            }
+        } else {
+            assembly {
+                rMan := div(aMan, bMan)
+                rExp := sub(add(aExp, ZERO_OFFSET), bExp)
+            }
+        }
+        assembly {
+            // a division between a k-digit number and a j-digit number will result in a number between (k - j)
+            // and (k - j + 1) digits. Since we are dividing a 76-digit number by a 38-digit number, we know
+            // that the result could have either 39 or 38 digitis.
+            if iszero(Loperation) {
+                let hasExtraDigit := gt(rMan, MAX_M_DIGIT_NUMBER)
+                if hasExtraDigit {
                     // we need to truncate the last digit
                     rExp := add(rExp, 1)
                     rMan := div(rMan, BASE)
                 }
-                r := or(xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK)), or(rMan, shl(EXPONENT_BIT, rExp)))
+            }
+            if Loperation {
+                let hasExtraDigit := gt(rMan, MAX_L_DIGIT_NUMBER)
+                let maxExp := sub(sub(add(ZERO_OFFSET, MAXIMUM_EXPONENT), DIGIT_DIFF_L_M), hasExtraDigit)
+                Loperation := gt(rExp, maxExp)
+                if and(Loperation, hasExtraDigit) {
+                    // we need to truncate the last digit
+                    rExp := add(rExp, 1)
+                    rMan := div(rMan, BASE)
+                }
+                if iszero(Loperation) {
+                    if hasExtraDigit {
+                        rExp := add(rExp, MAX_DIGITS_M_PLUS_1)
+                        rMan := div(rMan, BASE_TO_THE_MAX_DIGITS_M_PLUS_1)
+                    }
+                    if iszero(hasExtraDigit) {
+                        rExp := add(rExp, MAX_DIGITS_M)
+                        rMan := div(rMan, BASE_TO_THE_MAX_DIGITS_M)
+                    }
+                }
+            }
+            r := or(xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK)), or(rMan, shl(EXPONENT_BIT, rExp)))
+            if Loperation {
+                r := or(r, MANTISSA_L_FLAG_MASK)
             }
         }
     }
