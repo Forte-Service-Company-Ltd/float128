@@ -182,82 +182,49 @@ contract Float128FuzzTest is FloatUtils {
         assertEq(retVal, pyRes);
     }
 
-    function testGTpackedFloatFuzz(int aMan, int aExp, int bMan, int bExp) public pure {
+    function testLTpackedFloatFuzz(int aMan, int aExp, int bMan, int bExp) public {
+        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
+        packedFloat pA = Float128.toPackedFloat(aMan, aExp);
+        packedFloat pB = Float128.toPackedFloat(bMan, bExp);
+        bool retVal = Float128.lt(pA, pB);
+        console2.log("retVal", retVal);
+
+        // Creating the float struct to normalize the mantissas and exponents before doing the comparison
+        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "lt", 0);
+        bytes memory res = vm.ffi(inputs);
+        (int pyMan, ) = abi.decode((res), (int256, int256));
+        bool pyRes = pyMan > 0;
+        assertEq(retVal, pyRes);
+    }
+
+    function testGTpackedFloatFuzz(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
         packedFloat pA = Float128.toPackedFloat(aMan, aExp);
         packedFloat pB = Float128.toPackedFloat(bMan, bExp);
         bool retVal = Float128.gt(pA, pB);
-        bool comparison = false;
+        console2.log("retVal", retVal);
 
         // Creating the float struct to normalize the mantissas and exponents before doing the comparison
-        (int floAman, int floAexp) = pA.decode();
-        (int floBman, int floBexp) = pB.decode();
-
-        if (floAman == 0 || floBman == 0) {
-            if (floAman == 0 && floBman == 0) {
-                comparison = false;
-            } else if (floAman == 0) {
-                if (floBman < 0) {
-                    comparison = true;
-                } else {
-                    comparison = false;
-                }
-            } else {
-                if (floAman < 0) {
-                    comparison = false;
-                } else {
-                    comparison = true;
-                }
-            }
-        } else {
-            if (floAexp > floBexp) {
-                comparison = true;
-            } else if (floBexp > floAexp) {
-                comparison = false;
-            } else {
-                comparison = floAman > floBman;
-            }
-        }
-        assertEq(retVal, comparison);
+        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "gt", 0);
+        bytes memory res = vm.ffi(inputs);
+        (int pyMan, ) = abi.decode((res), (int256, int256));
+        bool pyRes = pyMan > 0;
+        assertEq(retVal, pyRes);
     }
 
-    function testGEpackedFloatFuzz(int aMan, int aExp, int bMan, int bExp) public pure {
+    function testGEpackedFloatFuzz(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
         packedFloat pA = Float128.toPackedFloat(aMan, aExp);
         packedFloat pB = Float128.toPackedFloat(bMan, bExp);
         bool retVal = Float128.ge(pA, pB);
-        bool comparison = false;
+        console2.log("retVal", retVal);
 
         // Creating the float struct to normalize the mantissas and exponents before doing the comparison
-        (int floAman, int floAexp) = pA.decode();
-        (int floBman, int floBexp) = pB.decode();
-
-        if (floAman == 0 || floBman == 0) {
-            if (floAman == 0 && floBman == 0) {
-                comparison = true;
-            } else if (floAman == 0) {
-                if (floBman < 0) {
-                    comparison = true;
-                } else {
-                    comparison = false;
-                }
-            } else {
-                if (floAman < 0) {
-                    comparison = false;
-                } else {
-                    comparison = true;
-                }
-            }
-        } else {
-            if (floAexp > floBexp) {
-                comparison = true;
-            } else if (floBexp > floAexp) {
-                comparison = false;
-            } else {
-                comparison = floAman >= floBman;
-            }
-        }
-        assertEq(retVal, comparison);
+        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "ge", 0);
+        bytes memory res = vm.ffi(inputs);
+        (int pyMan, ) = abi.decode((res), (int256, int256));
+        bool pyRes = pyMan > 0;
+        assertEq(retVal, pyRes);
     }
 
     function testToPackedFloatFuzz(int256 man, int256 exp) public pure {

@@ -33,6 +33,12 @@ def calculate_float(args):
         result_float = a.sqrt()
     elif(operation == "le"):
         result_float = 1 if a <= b else 0
+    elif(operation == "lt"):
+        result_float = 1 if a < b else 0
+    elif(operation == "gt"):
+        result_float = 1 if a > b else 0
+    elif(operation == "ge"):
+        result_float = 1 if a >= b else 0
     
     log_10 = 0 if result_float == 0 else Decimal(abs(result_float)).log10()
     result_digits = int(log_10) + 1

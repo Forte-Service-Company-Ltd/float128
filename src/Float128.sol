@@ -794,49 +794,50 @@ library Float128 {
      * @notice this version of the function uses only the packedFloat type
      */
     function lt(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
+        if (packedFloat.unwrap(a) == packedFloat.unwrap(b)) return false;
         assembly {
-            let aExp := and(a, EXPONENT_MASK)
-            let bExp := and(b, EXPONENT_MASK)
-            let aMan := and(a, MANTISSA_MASK)
-            let bMan := and(b, MANTISSA_MASK)
-            let zeroFound := false
-
-            if and(eq(aMan, 0), eq(bMan, 0)) {
-                zeroFound := true
-            }
-            if and(eq(aMan, 0), iszero(zeroFound)) {
-                zeroFound := true
-                if iszero(and(b, MANTISSA_SIGN_MASK)) {
-                    retVal := true
-                }
-            }
-            if and(eq(bMan, 0), iszero(zeroFound)) {
-                zeroFound := true
-                if and(a, MANTISSA_SIGN_MASK) {
+            let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
+            let bL := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
+            let aNeg := gt(and(a, MANTISSA_SIGN_MASK), 0)
+            let bNeg := gt(and(b, MANTISSA_SIGN_MASK), 0)
+            let isAZero := iszero(a)
+            let isBZero := iszero(b)
+            let zeroFound := or(isAZero, isBZero)
+            if zeroFound {
+                if or(and(isAZero, iszero(bNeg)), and(isBZero, aNeg)) {
                     retVal := true
                 }
             }
             if iszero(zeroFound) {
-                if lt(aExp, bExp) {
-                    retVal := true
+                let aExp := and(a, EXPONENT_MASK)
+                let bExp := and(b, EXPONENT_MASK)
+                let aMan := and(a, MANTISSA_MASK)
+                let bMan := and(b, MANTISSA_MASK)
+                if iszero(aL) {
+                    aMan := mul(aMan, BASE_TO_THE_DIGIT_DIFF)
+                    aExp := sub(aExp, shl(EXPONENT_BIT, DIGIT_DIFF_L_M))
                 }
-                if eq(aExp, bExp) {
-                    let aNeg := false
-                    let bNeg := false
-                    if and(a, MANTISSA_SIGN_MASK) {
-                        aNeg := true
-                    }
-                    if and(b, MANTISSA_SIGN_MASK) {
-                        bNeg := true
-                    }
-                    if and(aNeg, bNeg) {
-                        retVal := gt(aMan, bMan)
-                    }
-                    if iszero(or(aNeg, bNeg)) {
+                if iszero(bL) {
+                    bMan := mul(bMan, BASE_TO_THE_DIGIT_DIFF)
+                    bExp := sub(bExp, shl(EXPONENT_BIT, DIGIT_DIFF_L_M))
+                }
+                if xor(aNeg, bNeg) {
+                    retVal := aNeg
+                }
+                if and(iszero(aNeg), iszero(bNeg)) {
+                    if eq(aExp, bExp) {
                         retVal := lt(aMan, bMan)
                     }
-                    if xor(aNeg, bNeg) {
-                        retVal := aNeg
+                    if lt(aExp, bExp) {
+                        retVal := true
+                    }
+                }
+                if and(aNeg, bNeg) {
+                    if eq(aExp, bExp) {
+                        retVal := gt(aMan, bMan)
+                    }
+                    if gt(aExp, bExp) {
+                        retVal := true
                     }
                 }
             }
@@ -909,52 +910,50 @@ library Float128 {
      * @notice this version of the function uses only the packedFloat type
      */
     function gt(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
+        if (packedFloat.unwrap(a) == packedFloat.unwrap(b)) return false;
         assembly {
-            let aExp := and(a, EXPONENT_MASK)
-            let bExp := and(b, EXPONENT_MASK)
-            let aMan := and(a, MANTISSA_MASK)
-            let bMan := and(b, MANTISSA_MASK)
-            let zeroFound := false
-
-            if and(eq(aMan, 0), eq(bMan, 0)) {
-                zeroFound := true
-            }
-            if and(eq(aMan, 0), iszero(zeroFound)) {
-                zeroFound := true
-                if and(b, MANTISSA_SIGN_MASK) {
-                    retVal := true
-                }
-            }
-            if and(eq(bMan, 0), iszero(zeroFound)) {
-                zeroFound := true
-                if iszero(and(a, MANTISSA_SIGN_MASK)) {
+            let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
+            let bL := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
+            let aNeg := gt(and(a, MANTISSA_SIGN_MASK), 0)
+            let bNeg := gt(and(b, MANTISSA_SIGN_MASK), 0)
+            let isAZero := iszero(a)
+            let isBZero := iszero(b)
+            let zeroFound := or(isAZero, isBZero)
+            if zeroFound {
+                if or(and(isBZero, iszero(aNeg)), and(isAZero, bNeg)) {
                     retVal := true
                 }
             }
             if iszero(zeroFound) {
-                if lt(bExp, aExp) {
-                    retVal := true
+                let aExp := and(a, EXPONENT_MASK)
+                let bExp := and(b, EXPONENT_MASK)
+                let aMan := and(a, MANTISSA_MASK)
+                let bMan := and(b, MANTISSA_MASK)
+                if iszero(aL) {
+                    aMan := mul(aMan, BASE_TO_THE_DIGIT_DIFF)
+                    aExp := sub(aExp, shl(EXPONENT_BIT, DIGIT_DIFF_L_M))
                 }
-                if lt(aExp, bExp) {
-                    retVal := false
+                if iszero(bL) {
+                    bMan := mul(bMan, BASE_TO_THE_DIGIT_DIFF)
+                    bExp := sub(bExp, shl(EXPONENT_BIT, DIGIT_DIFF_L_M))
                 }
-                if eq(aExp, bExp) {
-                    let aNeg := false
-                    let bNeg := false
-                    if and(a, MANTISSA_SIGN_MASK) {
-                        aNeg := true
-                    }
-                    if and(b, MANTISSA_SIGN_MASK) {
-                        bNeg := true
-                    }
-                    if and(aNeg, bNeg) {
-                        retVal := gt(bMan, aMan)
-                    }
-                    if iszero(or(aNeg, bNeg)) {
+                if xor(aNeg, bNeg) {
+                    retVal := bNeg
+                }
+                if and(iszero(aNeg), iszero(bNeg)) {
+                    if eq(aExp, bExp) {
                         retVal := lt(bMan, aMan)
                     }
-                    if xor(aNeg, bNeg) {
-                        retVal := bNeg
+                    if lt(bExp, aExp) {
+                        retVal := true
+                    }
+                }
+                if and(aNeg, bNeg) {
+                    if eq(aExp, bExp) {
+                        retVal := lt(aMan, bMan)
+                    }
+                    if lt(aExp, bExp) {
+                        retVal := true
                     }
                 }
             }
@@ -969,53 +968,50 @@ library Float128 {
      * @notice this version of the function uses only the packedFloat type
      */
     function ge(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
+        if (packedFloat.unwrap(a) == packedFloat.unwrap(b)) return true;
         assembly {
-            let aExp := and(a, EXPONENT_MASK)
-            let bExp := and(b, EXPONENT_MASK)
-            let aMan := and(a, MANTISSA_MASK)
-            let bMan := and(b, MANTISSA_MASK)
-            let zeroFound := false
-
-            if and(eq(aMan, 0), eq(bMan, 0)) {
-                zeroFound := true
-                retVal := true
-            }
-            if and(eq(aMan, 0), iszero(zeroFound)) {
-                zeroFound := true
-                if and(b, MANTISSA_SIGN_MASK) {
-                    retVal := true
-                }
-            }
-            if and(eq(bMan, 0), iszero(zeroFound)) {
-                zeroFound := true
-                if iszero(and(a, MANTISSA_SIGN_MASK)) {
+            let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
+            let bL := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
+            let aNeg := gt(and(a, MANTISSA_SIGN_MASK), 0)
+            let bNeg := gt(and(b, MANTISSA_SIGN_MASK), 0)
+            let isAZero := iszero(a)
+            let isBZero := iszero(b)
+            let zeroFound := or(isAZero, isBZero)
+            if zeroFound {
+                if or(and(isBZero, iszero(aNeg)), and(isAZero, bNeg)) {
                     retVal := true
                 }
             }
             if iszero(zeroFound) {
-                if lt(bExp, aExp) {
-                    retVal := true
+                let aExp := and(a, EXPONENT_MASK)
+                let bExp := and(b, EXPONENT_MASK)
+                let aMan := and(a, MANTISSA_MASK)
+                let bMan := and(b, MANTISSA_MASK)
+                if iszero(aL) {
+                    aMan := mul(aMan, BASE_TO_THE_DIGIT_DIFF)
+                    aExp := sub(aExp, shl(EXPONENT_BIT, DIGIT_DIFF_L_M))
                 }
-                if lt(aExp, bExp) {
-                    retVal := false
+                if iszero(bL) {
+                    bMan := mul(bMan, BASE_TO_THE_DIGIT_DIFF)
+                    bExp := sub(bExp, shl(EXPONENT_BIT, DIGIT_DIFF_L_M))
                 }
-                if eq(aExp, bExp) {
-                    let aNeg := false
-                    let bNeg := false
-                    if and(a, MANTISSA_SIGN_MASK) {
-                        aNeg := true
+                if xor(aNeg, bNeg) {
+                    retVal := bNeg
+                }
+                if and(iszero(aNeg), iszero(bNeg)) {
+                    if eq(aExp, bExp) {
+                        retVal := lt(bMan, aMan)
                     }
-                    if and(b, MANTISSA_SIGN_MASK) {
-                        bNeg := true
+                    if lt(bExp, aExp) {
+                        retVal := true
                     }
-                    if and(aNeg, bNeg) {
-                        retVal := or(gt(bMan, aMan), eq(aMan, bMan))
+                }
+                if and(aNeg, bNeg) {
+                    if eq(aExp, bExp) {
+                        retVal := lt(aMan, bMan)
                     }
-                    if iszero(or(aNeg, bNeg)) {
-                        retVal := or(lt(bMan, aMan), eq(aMan, bMan))
-                    }
-                    if xor(aNeg, bNeg) {
-                        retVal := bNeg
+                    if lt(aExp, bExp) {
+                        retVal := true
                     }
                 }
             }
