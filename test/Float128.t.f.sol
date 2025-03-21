@@ -294,14 +294,29 @@ contract Float128FuzzTest is FloatUtils {
         }
     }
 
-    function testLNPREC() public view {
-        // int mantissa = 10000000000001;
-        // int exponent = -13;
-        int mantissa = 471738548555985204842829168083810940950366912454141453216936305944405297084;
-        int exponent = -76;
-        packedFloat retVal = Float128.ln_prec(mantissa, exponent);
+    function testLN() public pure {
+        // Test Case 1:
+        int mantissa = 339046758471559584917568900955540863464438633576559162723246173766731092;
+        int exponent = -84;
+        int expectedResultMantissa = -28712638366447213800267852694553857212;
+        int expectedResultExp = -36;
+
+        // Test Case 2:
+        // int mantissa = 419133353677143729020445529447665547757094903875495880378394873359780286;
+        // int exponent = -72;
+        // int expectedResultMantissa = -86956614316348604164580027803497950664;
+        // int expectedResultExp = -38;
+        
+        // Test Case 3:
+        // int mantissa = 471738548555985204842829168083810940950366912454141453216936305944405297084;
+        // int exponent = -76;
+        // int expectedResultMantissa = -30539154624132792807849865290472860264;
+        // int expectedResultExp = -37;
+
+        packedFloat retVal = Float128.ln(mantissa, exponent);
         (int mantissaF, int exponentF) = Float128.decode(retVal);
-        console2.log("mantissaF: ", mantissaF);
-        console2.log("exponentF: ", exponentF);
+        assertEq(mantissaF, expectedResultMantissa);
+        assertEq(exponentF, expectedResultExp);
+
     }
 }

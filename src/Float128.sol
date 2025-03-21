@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import "forge-std/console2.sol";
 import {Uint512} from "./lib/Uint512.sol";
 
 /**
@@ -222,8 +221,6 @@ library Float128 {
                         (addition <= MAX_L_DIGIT_NUMBER && addition >= MIN_L_DIGIT_NUMBER))
                 ) {
                     uint digitsMantissa = findNumberOfDigits(addition);
-                    // console2.log("digitsMantissa", digitsMantissa);
-                    // console2.log("rExp", rExp);
                     assembly {
                         let mantissaReducer := sub(digitsMantissa, MAX_DIGITS_M)
                         let isResultL := slt(MAXIMUM_EXPONENT, add(sub(rExp, ZERO_OFFSET), mantissaReducer))
@@ -417,8 +414,6 @@ library Float128 {
                         (addition <= MAX_L_DIGIT_NUMBER && addition >= MIN_L_DIGIT_NUMBER))
                 ) {
                     uint digitsMantissa = findNumberOfDigits(addition);
-                    // console2.log("digitsMantissa", digitsMantissa);
-                    // console2.log("rExp", rExp);
                     assembly {
                         let mantissaReducer := sub(digitsMantissa, MAX_DIGITS_M)
                         let isResultL := slt(MAXIMUM_EXPONENT, add(sub(rExp, ZERO_OFFSET), mantissaReducer))
@@ -518,7 +513,6 @@ library Float128 {
             // MIN_L_DIGIT_NUMBER is equal to BASE ** (MAX_L_DIGITS - 1).
             // We avoid losing the lsd this way, but we could get 1 extra digit
             rMan = Uint512.div512x256(r0, r1, MIN_L_DIGIT_NUMBER);
-            // console2.log("rMan after 512 division", rMan);
             assembly {
                 rExp := add(rExp, MAX_DIGITS_L_MINUS_1)
                 let hasExtraDigit := gt(rMan, MAX_L_DIGIT_NUMBER)
@@ -608,7 +602,6 @@ library Float128 {
      * @notice this version of the function uses only the packedFloat type
      */
     function div(packedFloat a, packedFloat b, bool rL) internal pure returns (packedFloat r) {
-        // console2.log(packedFloat.unwrap(b));
         assembly {
             if eq(and(b, MANTISSA_MASK), 0) {
                 let ptr := mload(0x40) // Get free memory pointer
@@ -812,7 +805,6 @@ library Float128 {
             // final encoding
             r := or(shl(EXPONENT_BIT, aExp), s)
         }
-        // console2.log("a", aMan);
     }
 
     /**
@@ -1179,14 +1171,16 @@ library Float128 {
         }
     }
 
-     function ln_prec(int mantissa, int exp) public pure returns (packedFloat result) {
+     function ln(int mantissa, int exp) public pure returns (packedFloat result) {
 
         int len_mantissa = int(findNumberOfDigits(uint(mantissa)));
         
         int positiveExp = exp * -1;
-        int comparison = int(uint(10) ** uint(positiveExp));
-        
-        if(exp <= 0 && mantissa == comparison) {
+
+        packedFloat input = toPackedFloat(mantissa, exp);
+        packedFloat float_one = toPackedFloat(int(1), 0);
+
+        if(eq(input, float_one)) {
             // This is the case in which the argument of the logarithm is 1.
             return packedFloat.wrap(0);
         } else if(len_mantissa > positiveExp) {
@@ -1215,7 +1209,7 @@ library Float128 {
             }
             int exp_one_over_argument = 0 - 38 - 76 - exp;
 
-            packedFloat a = sub(packedFloat.wrap(0), ln_prec(int(one_over_arguments_76), -m76));
+            packedFloat a = sub(packedFloat.wrap(0), ln(int(one_over_arguments_76), -m76));
             packedFloat b = sub(a, toPackedFloat((exp_one_over_argument + m10), 0));
             result = mul(b, ln10);
         }
@@ -1254,7 +1248,6 @@ library Float128 {
             int256 q1;
             (q1, uMantissa) = calculateQ1(uMantissa);
 
-
             // We find the suitable value of q2 and the multiplier (1.014)**q2
             // so that 0.986 <= (1.014)**q2 * updated_x <= 1 
             // We use the following intervals:
@@ -1271,7 +1264,7 @@ library Float128 {
 
             int256 q2;
             (q2, uMantissa) = calculateQ2(uMantissa);
-            
+
             // Now digits has already been updated
             // assert digits >= 9860 * 10**72
             // assert digits <= 10**76
@@ -1289,19 +1282,17 @@ library Float128 {
             // 6 ->  993708179366 * 10**64 
             // 7 ->  995 * 10**73
             // partition_10013 = [0.986, 0.987274190490, 0.988557646937, 0.989842771878, 0.991129567482, 0.992418035920, 0.993708179366, 0.995, 1]
-            
+
             int256 q3;
             (q3, uMantissa) = calculateQ3(uMantissa);
-            
-            // Now digits has already been updated
-            // assert digits > 9949 * 10**72
-            // assert digits <= 10**76
 
+            // Now digits has already been updated
             int z_int = 10**76 - int(uMantissa);
             int len_z_int = int(findNumberOfDigits(uint(z_int)));
-
-            int diff = len_z_int - 38;
-            z_int = z_int / int(10**uint(diff));
+            if(z_int != 0) {
+                int diff = len_z_int - 38;
+                z_int = int(uint(z_int) / 10**uint(diff));
+            }
 
             packedFloat z = toPackedFloat(z_int, (len_z_int - 76 - 38));
             
@@ -1340,7 +1331,7 @@ library Float128 {
                     updatedMantissa = uMantissa;
                 } else {
                     q1 = 1;
-                    updatedMantissa = uMantissa / 10;
+                    updatedMantissa = uMantissa + uMantissa / 10;
                 }
             } else {
                 if(uMantissa > (75000000 * 10**68)) {
