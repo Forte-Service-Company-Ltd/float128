@@ -6,13 +6,16 @@ from math import log10
 
 def calculate_float(args):
     getcontext().prec = 150
-    max_digits = 38
+    max_digits_m = 38
+    max_digits_l = 72
+    max_exponent = -18
     base = 10
     aMan = Decimal(args.aMan)
     aExp = Decimal(args.aExp)
     bMan = Decimal(args.bMan)
     bExp = Decimal(args.bExp)
     operation = args.operation
+    largeResult = args.largeResult > 0
     result_float = 0
 
     a = Decimal(aMan * base**aExp)
@@ -30,11 +33,19 @@ def calculate_float(args):
         result_float = a.sqrt()
     elif(operation == "le"):
         result_float = 1 if a <= b else 0
+    elif(operation == "lt"):
+        result_float = 1 if a < b else 0
+    elif(operation == "gt"):
+        result_float = 1 if a > b else 0
+    elif(operation == "ge"):
+        result_float = 1 if a >= b else 0
     
     log_10 = 0 if result_float == 0 else Decimal(abs(result_float)).log10()
     result_digits = int(log_10) + 1
     if (result_digits < 0): result_digits -= 1
-    result_exp = Decimal(result_digits - max_digits)
+    result_exp = Decimal(result_digits - max_digits_m)
+    if(result_exp > max_exponent or largeResult):
+        result_exp -= max_digits_l - max_digits_m
     result_man = int(result_float*10**(-result_exp))
 
     return result_man, int(result_exp)
@@ -47,6 +58,7 @@ def parse_args():
     parser.add_argument("bMan", type=int)
     parser.add_argument("bExp", type=int)
     parser.add_argument("operation", type=str)
+    parser.add_argument("largeResult", type=int)
     return parser.parse_args()
 
 

@@ -14,23 +14,24 @@ a floating point number is a way to represent numbers in an efficient way. It is
 
 Some examples:
 
-- -0.0001 can be expressed as -1 x $10^{-4}$. 
-    - Mantissa: -1
-    - Base: 10
-    - Exponent: -4
+- -0.0001 can be expressed as -1 x $10^{-4}$.
 
-- 2222000000000000 can be expressed as 2222 x $10^{12}$. 
-    - Mantissa: 2222
-    - Base: 10
-    - Exponent: 12
+  - Mantissa: -1
+  - Base: 10
+  - Exponent: -4
 
-Floating point numbers can represent the same number in infinite ways by playing with the exponent. For instance, the first example could be also represented by -10 x $10^{-5}$, -100 x $10^{-6}$, -1000 x $10^{-7}$, etc. 
+- 2222000000000000 can be expressed as 2222 x $10^{12}$.
+  - Mantissa: 2222
+  - Base: 10
+  - Exponent: 12
+
+Floating point numbers can represent the same number in infinite ways by playing with the exponent. For instance, the first example could be also represented by -10 x $10^{-5}$, -100 x $10^{-6}$, -1000 x $10^{-7}$, etc.
 
 #### Library main features
 
 - Base: 10
 - Significant digits: 38
-- Exponent range: -16384 and +16383
+- Exponent range: -8192 and +8191
 
 Available operations:
 
@@ -129,15 +130,16 @@ For this reason, it is important to use the functions `toFloat()` and `toPackedF
 
 _Note: It is encouraged to store the numbers as floating-point values, and not to convert them to fixed-point numbers or any other conversion that might truncate the significant digits as this will mean nothing less than loss of precision._
 
-_Note: Additionally when using constants (i.e. multiplcation or division by 2) it is most efficient from a gas perspective to normalize beforehand.
+\_Note: Additionally when using constants (i.e. multiplcation or division by 2) it is most efficient from a gas perspective to normalize beforehand.
 
 ### Representation of zero
 
-Zero is a special case in this library. It is the only number which mantissa is represented by all zeros. Its exponent is the smallest possible which is -16384.
+Zero is a special case in this library. It is the only number which mantissa is represented by all zeros. Its exponent is the smallest possible which is -8192.
 
 ### Gas Profile
 
 To run the gas estimates from the repo use the following command:
+
 ```c
 forge test --ffi -vv --match-contract GasReport
 ```
@@ -146,43 +148,42 @@ Here are the current Gas Results:
 
 #### Gas Report - functions using Float structs
 
-| Function (and scenario) | Min | Average | Max |  
-| ----------------------- | --------- | -------| -------|
-| Addition                | 596       | 1174   | 1778
-| Addition (matching exponents) | 499 | 941    | 1556
-| Addition (subtraction via addition) | 609 | 1331 | 1791
-| Subtraction | 577 | 1175 | 1769
-| Subtraction (matching exponents) | 491 | 928 | 1567
-| Subtraction (addition via subtraction) | 604 | 1018 | 1784
-| Multiplication | 295 | 575 | 856
-| Multiplication (by zero) | 295 | 576 | 858
-| Division | 296 | 590 | 886
-| Division (numerator is zero) | 295 | 577 | 860 
-| Square Root | 1247 | 1416 | 1588
+| Function (and scenario)                | Min  | Average | Max  |
+| -------------------------------------- | ---- | ------- | ---- |
+| Addition                               | 596  | 1174    | 1778 |
+| Addition (matching exponents)          | 499  | 941     | 1556 |
+| Addition (subtraction via addition)    | 609  | 1331    | 1791 |
+| Subtraction                            | 577  | 1175    | 1769 |
+| Subtraction (matching exponents)       | 491  | 928     | 1567 |
+| Subtraction (addition via subtraction) | 604  | 1018    | 1784 |
+| Multiplication                         | 295  | 575     | 856  |
+| Multiplication (by zero)               | 295  | 576     | 858  |
+| Division                               | 296  | 590     | 886  |
+| Division (numerator is zero)           | 295  | 577     | 860  |
+| Square Root                            | 1247 | 1416    | 1588 |
 
 #### Gas Report - functions using packedFloats
 
-| Function (and scenario) |  Min | Average | Max |  
-| ----------------------- | --------- | -------| -------|
-| Addition    | 472 | 841 | 1158
-| Addition (matching exponents) | 437 | 581 | 1158
-| Addition (subtraction via addition) | 481 | 982 | 1152
-| Subtraction | 469 | 840 | 1157
-| Subtraction (matching exponents) | 434 | 589 | 1158
-| Subtraction (addition via subtraction) | 434 | 675 | 1149
-| Multiplication | 301 | 302 | 303
-| Multiplication (by zero) | 118 | 118 | 118
-| Division | 269 | 283 | 299
-| Division (numerator is zero) | 123 | 123 | 123
-| Square Root | 932 | 951 | 970
-
+| Function (and scenario)                | Min | Average | Max  |
+| -------------------------------------- | --- | ------- | ---- |
+| Addition                               | 472 | 841     | 1158 |
+| Addition (matching exponents)          | 437 | 581     | 1158 |
+| Addition (subtraction via addition)    | 481 | 982     | 1152 |
+| Subtraction                            | 469 | 840     | 1157 |
+| Subtraction (matching exponents)       | 434 | 589     | 1158 |
+| Subtraction (addition via subtraction) | 434 | 675     | 1149 |
+| Multiplication                         | 301 | 302     | 303  |
+| Multiplication (by zero)               | 118 | 118     | 118  |
+| Division                               | 269 | 283     | 299  |
+| Division (numerator is zero)           | 123 | 123     | 123  |
+| Square Root                            | 932 | 951     | 970  |
 
 #### Gas Report - Builder + Conversion functions
 
-| Function (and scenario) |  Min | Average | Max |  
-| ----------------------- | --------- | -------| -------|
-| toFloat    | 456 | 1416 | 2749
-| toFloat (already normalized) | 458 | 1401 | 2353
-| convertToPackedFloat | 281 | 343 | 764
-| convertToUnpackedFloat | 307 | 596 | 886
-| Log10 | 345 | 346 | 351
+| Function (and scenario)      | Min | Average | Max  |
+| ---------------------------- | --- | ------- | ---- |
+| toFloat                      | 456 | 1416    | 2749 |
+| toFloat (already normalized) | 458 | 1401    | 2353 |
+| convertToPackedFloat         | 281 | 343     | 764  |
+| convertToUnpackedFloat       | 307 | 596     | 886  |
+| Log10                        | 345 | 346     | 351  |
