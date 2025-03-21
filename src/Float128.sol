@@ -37,8 +37,9 @@ library Float128 {
     uint constant MAX_DIGITS_L_PLUS_1 = 73;
     uint constant DIGIT_DIFF_L_M = 34;
     uint constant DIGIT_DIFF_L_M_PLUS_1 = 35;
-    uint constant DIGIT_DIFF_76_L = 4;
     uint constant DIGIT_DIFF_76_L_MINUS_1 = 3;
+    uint constant DIGIT_DIFF_76_L = 4;
+    uint constant DIGIT_DIFF_76_L_PLUS_1 = 5;
     uint constant MAX_M_DIGIT_NUMBER = 99999999999999999999999999999999999999;
     uint constant MIN_M_DIGIT_NUMBER = 10000000000000000000000000000000000000;
     uint constant MAX_L_DIGIT_NUMBER = 999999999999999999999999999999999999999999999999999999999999999999999999;
@@ -50,8 +51,9 @@ library Float128 {
     uint constant BASE_TO_THE_MAX_DIGITS_M = 100000000000000000000000000000000000000;
     uint constant BASE_TO_THE_MAX_DIGITS_M_PLUS_1 = 1000000000000000000000000000000000000000;
     uint constant BASE_TO_THE_MAX_DIGITS_M_X_2 = 10000000000000000000000000000000000000000000000000000000000000000000000000000;
-    uint constant BASE_TO_THE_DIFF_76_L = 10_000;
     uint constant BASE_TO_THE_DIFF_76_L_MINUS_1 = 1_000;
+    uint constant BASE_TO_THE_DIFF_76_L = 10_000;
+    uint constant BASE_TO_THE_DIFF_76_L_PLUS_1 = 100_000;
     uint constant MAX_75_DIGIT_NUMBER = 999999999999999999999999999999999999999999999999999999999999999999999999999;
     uint constant MAX_76_DIGIT_NUMBER = 9999999999999999999999999999999999999999999999999999999999999999999999999999;
     int constant MAXIMUM_EXPONENT = -18; // guarantees all results will have at least 18 decimals. Constrainst the exponents
@@ -668,8 +670,12 @@ library Float128 {
         uint s;
         uint aExp;
         uint x;
+        uint aMan;
         uint256 roundedDownResult;
+        if (packedFloat.unwrap(a) == 0) return a;
         assembly {
+            let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
+            aMan := and(a, MANTISSA_MASK)
             if and(a, MANTISSA_SIGN_MASK) {
                 let ptr := mload(0x40) // Get free memory pointer
                 mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
@@ -682,12 +688,24 @@ library Float128 {
             aExp := shr(EXPONENT_BIT, and(a, EXPONENT_MASK))
             // we need the exponent to be even so we can calculate the square root correctly
             if iszero(mod(aExp, 2)) {
-                x := mul(and(a, MANTISSA_MASK), BASE_TO_THE_MAX_DIGITS_M)
-                aExp := sub(aExp, MAX_DIGITS_M)
+                if aL {
+                    x := mul(aMan, BASE_TO_THE_DIFF_76_L)
+                    aExp := sub(aExp, DIGIT_DIFF_76_L)
+                }
+                if iszero(aL) {
+                    x := mul(aMan, BASE_TO_THE_MAX_DIGITS_M)
+                    aExp := sub(aExp, MAX_DIGITS_M)
+                }
             }
             if mod(aExp, 2) {
-                x := mul(and(a, MANTISSA_MASK), BASE_TO_THE_MAX_DIGITS_M_PLUS_1)
-                aExp := sub(aExp, MAX_DIGITS_M_PLUS_1)
+                if aL {
+                    x := mul(aMan, BASE_TO_THE_DIFF_76_L_PLUS_1)
+                    aExp := sub(aExp, DIGIT_DIFF_76_L_PLUS_1)
+                }
+                if iszero(aL) {
+                    x := mul(aMan, BASE_TO_THE_MAX_DIGITS_M_PLUS_1)
+                    aExp := sub(aExp, MAX_DIGITS_M_PLUS_1)
+                }
             }
             s := 1
 
@@ -742,6 +760,7 @@ library Float128 {
             // final encoding
             r := or(shl(EXPONENT_BIT, aExp), s)
         }
+        console2.log("a", aMan);
     }
 
     /**
