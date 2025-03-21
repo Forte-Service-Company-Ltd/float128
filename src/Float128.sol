@@ -2,13 +2,11 @@
 pragma solidity 0.8.24;
 
 import "forge-std/console2.sol";
+import {Uint512} from "./Uint512.sol";
 
 /**
  * @title Floating point Library base 10 with 38 digits signed
- * @dev the library uses 2 exclusive types which means they can carry out operations only with their own type. They can
- * be easily converted, however, to ensure max flexibility. The reason for 2 different types to exist is that one is
- * optimized for operational gas efficiency (Float), and the other one is optimized for storage gas efficiency
- * (packedFloat). Their gas usage is nevertheless very similar in terms of operational consumption.
+ * @dev the library uses the type packedFloat whih is a uint under the hood
  * @author Inspired by a Python proposal by @miguel-ot and refined/implemented in Solidity by @oscarsernarosero @Palmerg4
  */
 
@@ -31,6 +29,7 @@ library Float128 {
     uint constant ZERO_OFFSET_MINUS_1 = 8191;
     uint constant EXPONENT_BIT = 242;
     uint constant MAX_DIGITS_M = 38;
+    uint constant MAX_DIGITS_M_X_2 = 76;
     uint constant MAX_DIGITS_M_MINUS_1 = 37;
     uint constant MAX_DIGITS_M_PLUS_1 = 39;
     uint constant MAX_DIGITS_L = 72;
@@ -38,6 +37,7 @@ library Float128 {
     uint constant MAX_DIGITS_L_PLUS_1 = 73;
     uint constant DIGIT_DIFF_L_M = 34;
     uint constant DIGIT_DIFF_76_L = 4;
+    uint constant DIGIT_DIFF_76_L_MINUS_1 = 3;
     uint constant MAX_M_DIGIT_NUMBER = 99999999999999999999999999999999999999;
     uint constant MIN_M_DIGIT_NUMBER = 10000000000000000000000000000000000000;
     uint constant MAX_L_DIGIT_NUMBER = 999999999999999999999999999999999999999999999999999999999999999999999999;
@@ -46,7 +46,9 @@ library Float128 {
     uint constant BASE_TO_THE_MAX_DIGITS_M_MINUS_1 = 10000000000000000000000000000000000000;
     uint constant BASE_TO_THE_MAX_DIGITS_M = 100000000000000000000000000000000000000;
     uint constant BASE_TO_THE_MAX_DIGITS_M_PLUS_1 = 1000000000000000000000000000000000000000;
-    uint constant BASE_TO_THE_DIFF_76_L = 10000;
+    uint constant BASE_TO_THE_MAX_DIGITS_M_X_2 = 10000000000000000000000000000000000000000000000000000000000000000000000000000;
+    uint constant BASE_TO_THE_DIFF_76_L = 10_000;
+    uint constant BASE_TO_THE_DIFF_76_L_MINUS_1 = 1_000;
     uint constant MAX_75_DIGIT_NUMBER = 999999999999999999999999999999999999999999999999999999999999999999999999999;
     uint constant MAX_76_DIGIT_NUMBER = 9999999999999999999999999999999999999999999999999999999999999999999999999999;
     int constant MAXIMUM_EXPONENT = -18; // guarantees all results will have at least 18 decimals. Constrainst the exponents
@@ -444,29 +446,84 @@ library Float128 {
     function mul(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
         uint rMan;
         uint rExp;
+        uint r0;
+        uint r1;
+        bool Loperation;
         assembly {
             // if any of the elements is zero then the result will be zero
             if iszero(or(iszero(a), iszero(b))) {
+                let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
+                let bL := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
+                Loperation := or(aL, bL)
                 // we extract the exponent and mantissas for both
                 let aExp := and(a, EXPONENT_MASK)
                 let bExp := and(b, EXPONENT_MASK)
                 let aMan := and(a, MANTISSA_MASK)
                 let bMan := and(b, MANTISSA_MASK)
 
-                rMan := mul(aMan, bMan)
-                rExp := sub(add(shr(EXPONENT_BIT, aExp), shr(EXPONENT_BIT, bExp)), ZERO_OFFSET)
+                if Loperation {
+                    // we make sure both of them are size L before continuing
+                    if iszero(aL) {
+                        aMan := mul(aMan, BASE_TO_THE_DIGIT_DIFF)
+                        aExp := sub(aExp, shl(EXPONENT_BIT, DIGIT_DIFF_L_M))
+                    }
+                    if iszero(bL) {
+                        bMan := mul(bMan, BASE_TO_THE_DIGIT_DIFF)
+                        bExp := sub(bExp, shl(EXPONENT_BIT, DIGIT_DIFF_L_M))
+                    }
+                    rExp := sub(add(shr(EXPONENT_BIT, aExp), shr(EXPONENT_BIT, bExp)), ZERO_OFFSET)
+                    let mm := mulmod(aMan, bMan, not(0))
+                    r0 := mul(aMan, bMan)
+                    r1 := sub(sub(mm, r0), lt(mm, r0))
+                }
+                if iszero(Loperation) {
+                    rMan := mul(aMan, bMan)
+                    rExp := sub(add(shr(EXPONENT_BIT, aExp), shr(EXPONENT_BIT, bExp)), ZERO_OFFSET)
+                }
+            }
+        }
+        if (Loperation) {
+            // MIN_L_DIGIT_NUMBER is equal to BASE ** (MAX_L_DIGITS - 1).
+            // We avoid losing the lsd this way, but we could get 1 extra digit
+            rMan = Uint512.div512x256(r0, r1, MIN_L_DIGIT_NUMBER);
+            assembly {
+                rExp := add(rExp, MAX_DIGITS_L)
+                let hasExtraDigit := gt(rMan, MAX_L_DIGIT_NUMBER)
+                // if not, we then know that it is a 2k-1-digit number
+                if iszero(isLdigits) {
+                    rMan := div(rMan, BASE)
+                    rExp := add(rExp, 1)
+                }
+            }
+        } else {
+            assembly {
                 // multiplication between 2 numbers with k digits can result in a number between 2*k - 1 and 2*k digits
                 // we check first if rMan is a 2k-digit number
                 let is76digit := gt(rMan, MAX_75_DIGIT_NUMBER)
+                let maxExp := add(sub(sub(add(ZERO_OFFSET, MAXIMUM_EXPONENT), DIGIT_DIFF_L_M), DIGIT_DIFF_76_L), iszero(is76digit))
+                let isL := gt(rExp, maxExp)
                 if is76digit {
-                    rMan := div(rMan, BASE_TO_THE_MAX_DIGITS_M)
-                    rExp := add(rExp, MAX_DIGITS_M)
+                    if isL {
+                        rMan := div(rMan, BASE_TO_THE_DIFF_76_L)
+                        rExp := add(rExp, DIGIT_DIFF_76_L)
+                    }
+                    if iszero(isL) {
+                        rMan := div(rMan, BASE_TO_THE_MAX_DIGITS_M)
+                        rExp := add(rExp, MAX_DIGITS_M)
+                    }
                 }
                 // if not, we then know that it is a 2k-1-digit number
                 if iszero(is76digit) {
-                    rMan := div(rMan, BASE_TO_THE_MAX_DIGITS_M_MINUS_1)
-                    rExp := add(rExp, MAX_DIGITS_M_MINUS_1)
+                    if isL {
+                        rMan := div(rMan, BASE_TO_THE_DIFF_76_L_MINUS_1)
+                        rExp := add(rExp, DIGIT_DIFF_76_L_MINUS_1)
+                    }
+                    if iszero(isL) {
+                        rMan := div(rMan, BASE_TO_THE_MAX_DIGITS_M_MINUS_1)
+                        rExp := add(rExp, MAX_DIGITS_M_MINUS_1)
+                    }
                 }
+
                 r := or(xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK)), or(rMan, shl(EXPONENT_BIT, rExp)))
             }
         }
