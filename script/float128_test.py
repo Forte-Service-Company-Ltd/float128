@@ -37,7 +37,6 @@ def calculate_float(args):
     result_digits = int(log_10) + 1
     if (result_digits < 0): result_digits -= 1
     result_exp = Decimal(result_digits - max_digits_m)
-    # print("result_exp", result_exp)
     if(result_exp > max_exponent):
         result_exp -= max_digits_l - max_digits_m
     result_man = int(result_float*10**(-result_exp))
