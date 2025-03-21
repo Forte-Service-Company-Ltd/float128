@@ -2,7 +2,7 @@
 pragma solidity 0.8.24;
 
 import "forge-std/console2.sol";
-import {Uint512} from "./Uint512.sol";
+import {Uint512} from "./lib/Uint512.sol";
 
 /**
  * @title Floating point Library base 10 with 38 digits signed
@@ -36,6 +36,7 @@ library Float128 {
     uint constant MAX_DIGITS_L_MINUS_1 = 71;
     uint constant MAX_DIGITS_L_PLUS_1 = 73;
     uint constant DIGIT_DIFF_L_M = 34;
+    uint constant DIGIT_DIFF_L_M_PLUS_1 = 35;
     uint constant DIGIT_DIFF_76_L = 4;
     uint constant DIGIT_DIFF_76_L_MINUS_1 = 3;
     uint constant MAX_M_DIGIT_NUMBER = 99999999999999999999999999999999999999;
@@ -43,6 +44,7 @@ library Float128 {
     uint constant MAX_L_DIGIT_NUMBER = 999999999999999999999999999999999999999999999999999999999999999999999999;
     uint constant MIN_L_DIGIT_NUMBER = 100000000000000000000000000000000000000000000000000000000000000000000000;
     uint constant BASE_TO_THE_DIGIT_DIFF = 10000000000000000000000000000000000;
+    uint constant BASE_TO_THE_DIGIT_DIFF_PLUS_1 = 100000000000000000000000000000000000;
     uint constant BASE_TO_THE_MAX_DIGITS_M_MINUS_1 = 10000000000000000000000000000000000000;
     uint constant BASE_TO_THE_MAX_DIGITS_M = 100000000000000000000000000000000000000;
     uint constant BASE_TO_THE_MAX_DIGITS_M_PLUS_1 = 1000000000000000000000000000000000000000;
@@ -449,50 +451,67 @@ library Float128 {
         uint r0;
         uint r1;
         bool Loperation;
+        if (packedFloat.unwrap(a) == 0 || packedFloat.unwrap(b) == 0) return packedFloat.wrap(0);
         assembly {
             // if any of the elements is zero then the result will be zero
-            if iszero(or(iszero(a), iszero(b))) {
-                let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
-                let bL := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
-                Loperation := or(aL, bL)
-                // we extract the exponent and mantissas for both
-                let aExp := and(a, EXPONENT_MASK)
-                let bExp := and(b, EXPONENT_MASK)
-                let aMan := and(a, MANTISSA_MASK)
-                let bMan := and(b, MANTISSA_MASK)
+            let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
+            let bL := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
+            Loperation := or(aL, bL)
+            // we extract the exponent and mantissas for both
+            let aExp := and(a, EXPONENT_MASK)
+            let bExp := and(b, EXPONENT_MASK)
+            let aMan := and(a, MANTISSA_MASK)
+            let bMan := and(b, MANTISSA_MASK)
 
-                if Loperation {
-                    // we make sure both of them are size L before continuing
-                    if iszero(aL) {
-                        aMan := mul(aMan, BASE_TO_THE_DIGIT_DIFF)
-                        aExp := sub(aExp, shl(EXPONENT_BIT, DIGIT_DIFF_L_M))
-                    }
-                    if iszero(bL) {
-                        bMan := mul(bMan, BASE_TO_THE_DIGIT_DIFF)
-                        bExp := sub(bExp, shl(EXPONENT_BIT, DIGIT_DIFF_L_M))
-                    }
-                    rExp := sub(add(shr(EXPONENT_BIT, aExp), shr(EXPONENT_BIT, bExp)), ZERO_OFFSET)
-                    let mm := mulmod(aMan, bMan, not(0))
-                    r0 := mul(aMan, bMan)
-                    r1 := sub(sub(mm, r0), lt(mm, r0))
+            if Loperation {
+                // we make sure both of them are size L before continuing
+                if iszero(aL) {
+                    aMan := mul(aMan, BASE_TO_THE_DIGIT_DIFF)
+                    aExp := sub(aExp, shl(EXPONENT_BIT, DIGIT_DIFF_L_M))
                 }
-                if iszero(Loperation) {
-                    rMan := mul(aMan, bMan)
-                    rExp := sub(add(shr(EXPONENT_BIT, aExp), shr(EXPONENT_BIT, bExp)), ZERO_OFFSET)
+                if iszero(bL) {
+                    bMan := mul(bMan, BASE_TO_THE_DIGIT_DIFF)
+                    bExp := sub(bExp, shl(EXPONENT_BIT, DIGIT_DIFF_L_M))
                 }
+                rExp := sub(add(shr(EXPONENT_BIT, aExp), shr(EXPONENT_BIT, bExp)), ZERO_OFFSET)
+                let mm := mulmod(aMan, bMan, not(0))
+                r0 := mul(aMan, bMan)
+                r1 := sub(sub(mm, r0), lt(mm, r0))
+            }
+            if iszero(Loperation) {
+                rMan := mul(aMan, bMan)
+                rExp := sub(add(shr(EXPONENT_BIT, aExp), shr(EXPONENT_BIT, bExp)), ZERO_OFFSET)
             }
         }
+        console2.log("Loperation", Loperation);
+        console2.log("rMan", rMan);
+        console2.log("rExp", rExp);
+        console2.log("r0", r0);
+        console2.log("r1", r1);
         if (Loperation) {
             // MIN_L_DIGIT_NUMBER is equal to BASE ** (MAX_L_DIGITS - 1).
             // We avoid losing the lsd this way, but we could get 1 extra digit
             rMan = Uint512.div512x256(r0, r1, MIN_L_DIGIT_NUMBER);
+            console2.log("rMan after 512 division", rMan);
             assembly {
-                rExp := add(rExp, MAX_DIGITS_L)
+                rExp := add(rExp, MAX_DIGITS_L_MINUS_1)
                 let hasExtraDigit := gt(rMan, MAX_L_DIGIT_NUMBER)
+                let maxExp := sub(sub(add(ZERO_OFFSET, MAXIMUM_EXPONENT), DIGIT_DIFF_L_M), hasExtraDigit)
+                Loperation := gt(rExp, maxExp)
                 // if not, we then know that it is a 2k-1-digit number
-                if iszero(isLdigits) {
+                if and(Loperation, hasExtraDigit) {
                     rMan := div(rMan, BASE)
                     rExp := add(rExp, 1)
+                }
+                if iszero(Loperation) {
+                    if hasExtraDigit {
+                        rMan := div(rMan, BASE_TO_THE_DIGIT_DIFF_PLUS_1)
+                        rExp := add(rExp, DIGIT_DIFF_L_M_PLUS_1)
+                    }
+                    if iszero(hasExtraDigit) {
+                        rMan := div(rMan, BASE_TO_THE_DIGIT_DIFF)
+                        rExp := add(rExp, DIGIT_DIFF_L_M)
+                    }
                 }
             }
         } else {
@@ -501,30 +520,34 @@ library Float128 {
                 // we check first if rMan is a 2k-digit number
                 let is76digit := gt(rMan, MAX_75_DIGIT_NUMBER)
                 let maxExp := add(sub(sub(add(ZERO_OFFSET, MAXIMUM_EXPONENT), DIGIT_DIFF_L_M), DIGIT_DIFF_76_L), iszero(is76digit))
-                let isL := gt(rExp, maxExp)
+                Loperation := gt(rExp, maxExp)
                 if is76digit {
-                    if isL {
+                    if Loperation {
                         rMan := div(rMan, BASE_TO_THE_DIFF_76_L)
                         rExp := add(rExp, DIGIT_DIFF_76_L)
                     }
-                    if iszero(isL) {
+                    if iszero(Loperation) {
                         rMan := div(rMan, BASE_TO_THE_MAX_DIGITS_M)
                         rExp := add(rExp, MAX_DIGITS_M)
                     }
                 }
                 // if not, we then know that it is a 2k-1-digit number
                 if iszero(is76digit) {
-                    if isL {
+                    if Loperation {
                         rMan := div(rMan, BASE_TO_THE_DIFF_76_L_MINUS_1)
                         rExp := add(rExp, DIGIT_DIFF_76_L_MINUS_1)
                     }
-                    if iszero(isL) {
+                    if iszero(Loperation) {
                         rMan := div(rMan, BASE_TO_THE_MAX_DIGITS_M_MINUS_1)
                         rExp := add(rExp, MAX_DIGITS_M_MINUS_1)
                     }
                 }
-
-                r := or(xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK)), or(rMan, shl(EXPONENT_BIT, rExp)))
+            }
+        }
+        assembly {
+            r := or(xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK)), or(rMan, shl(EXPONENT_BIT, rExp)))
+            if Loperation {
+                r := or(r, MANTISSA_L_FLAG_MASK)
             }
         }
     }

@@ -66,7 +66,7 @@ contract Float128FuzzTest is FloatUtils {
         packedFloat result = Float128.mul(a, b);
         (int rMan, int rExp) = Float128.decode(result);
 
-        checkResults(rMan, rExp, pyMan, pyExp);
+        checkResults(result, rMan, rExp, pyMan, pyExp, false);
     }
 
     /// forge-config: default.allow_internal_expect_revert = true
