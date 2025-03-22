@@ -1189,6 +1189,10 @@ library Float128 {
                 }
             }
         }
+        result = ln_helper(mantissa, exp, logOfOne, len_mantissa, positiveExp);
+    }
+
+    function ln_helper(int mantissa, int exp, bool logOfOne, int len_mantissa, int positiveExp) internal pure returns(packedFloat result) {
         if(!logOfOne) {
             if(len_mantissa > positiveExp) {
                 if(len_mantissa > 38) {
@@ -1293,41 +1297,49 @@ library Float128 {
                 int256 q3;
                 (q3, uMantissa) = calculateQ3(uMantissa);
 
-                // Now digits has already been updated
-                int z_int = 10**76 - int(uMantissa);
-                int len_z_int = int(findNumberOfDigits(uint(z_int)));
-                if(z_int != 0) {
-                    int diff = len_z_int - 38;
-                    z_int = int(uint(z_int) / 10**uint(diff));
-                }
-
-                packedFloat z = toPackedFloat(z_int, (len_z_int - 76 - 38));
-                
-                // Number of terms of the Taylor series:
-                int terms = 15;
-                result = z;
-                packedFloat z_to_j = z;
-                for(uint j = 2; j < uint(terms + 1); j++) {
-                    z_to_j = mul(z_to_j, z);
-                    result = add(result, div(z_to_j, toPackedFloat(int(j), int(0))));
-                } 
-
-                packedFloat lnB = toPackedFloat(13902905168991420865477877458246859530, -39);
-                packedFloat lnC = toPackedFloat(12991557316200501157605555658804528711, -40);
-
-                packedFloat firstTerm = add(result, mul(toPackedFloat(k, 0), ln2));
-
-                packedFloat secondTerm = add(firstTerm, mul(toPackedFloat(q1, 0), ln1dot1));
-
-                packedFloat thirdTerm = add(secondTerm, mul(toPackedFloat(q2, 0), lnB));
-
-                packedFloat fourthTerm = add(thirdTerm, mul(toPackedFloat(q3, 0), lnC));
-
-                packedFloat fifthTerm = sub(fourthTerm, mul(toPackedFloat(m10, 0), ln10));
-
-                result = mul(fifthTerm, toPackedFloat(-1, 0));
+                result = intermediateTermAddition(result, k, q1, q2, q3, m10, uMantissa);
             }
         }
+    }
+
+    function intermediateTermAddition(packedFloat result, int256 k, int256 q1, int256 q2, int256 q3, int256 m10, uint256 uMantissa) internal pure returns(packedFloat finalResult) {
+        // Now digits has already been updated
+        int z_int = 10**76 - int(uMantissa);
+        int len_z_int = int(findNumberOfDigits(uint(z_int)));
+        if(z_int != 0) {
+            int diff = len_z_int - 38;
+            z_int = int(uint(z_int) / 10**uint(diff));
+        }
+
+        packedFloat z = toPackedFloat(z_int, (len_z_int - 76 - 38));
+        
+        // Number of terms of the Taylor series:
+        int terms = 15;
+        result = z;
+        packedFloat z_to_j = z;
+        for(uint j = 2; j < uint(terms + 1); j++) {
+            z_to_j = mul(z_to_j, z);
+            result = add(result, div(z_to_j, toPackedFloat(int(j), int(0))));
+        } 
+
+        packedFloat lnB = toPackedFloat(13902905168991420865477877458246859530, -39);
+        packedFloat lnC = toPackedFloat(12991557316200501157605555658804528711, -40);
+
+        finalResult = finalTermAddition(result, k, q1, q2, q3, m10, lnB, lnC);
+    }
+
+    function finalTermAddition(packedFloat result, int256 k, int256 q1, int256 q2, int256 q3, int256 m10, packedFloat lnB, packedFloat lnC) internal pure returns (packedFloat finalResult) {
+        packedFloat firstTerm = add(result, mul(toPackedFloat(k, 0), ln2));
+
+        packedFloat secondTerm = add(firstTerm, mul(toPackedFloat(q1, 0), ln1dot1));
+
+        packedFloat thirdTerm = add(secondTerm, mul(toPackedFloat(q2, 0), lnB));
+
+        packedFloat fourthTerm = add(thirdTerm, mul(toPackedFloat(q3, 0), lnC));
+
+        packedFloat fifthTerm = sub(fourthTerm, mul(toPackedFloat(m10, 0), ln10));
+
+        finalResult = mul(fifthTerm, toPackedFloat(-1, 0));
     }
 
     function calculateQ1(uint256 uMantissa) public pure returns(int256 q1, uint256 updatedMantissa) {
