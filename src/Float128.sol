@@ -1220,7 +1220,7 @@ library Float128 {
 
         bool logOfOne = false;
         if (exp < 0) {
-            if (positiveExp == (int(MAX_DIGITS_L) - 1)) {
+            if (positiveExp == int(MAX_DIGITS_L_MINUS_1)) {
                 if ((uint(mantissa) / 10 ** uint(positiveExp)) == 1) {
                     result = packedFloat.wrap(0);
                     logOfOne = true;
@@ -1233,15 +1233,9 @@ library Float128 {
     function ln_helper(int mantissa, int exp, bool logOfOne, int positiveExp) internal pure returns (packedFloat result) {
         if (!logOfOne) {
             if (int(MAX_DIGITS_L) > positiveExp) {
-                if (int(MAX_DIGITS_L) > 38) {
-                    uint extra_digits = uint(int(MAX_DIGITS_L) - 38);
-                    mantissa = mantissa / int(10 ** extra_digits);
-                    exp = exp + int(extra_digits);
-                } else if (int(MAX_DIGITS_L) < 38) {
-                    uint extra_digits = uint(38 - int(MAX_DIGITS_L));
-                    mantissa = mantissa * int(10 ** extra_digits);
-                    exp = exp - int(extra_digits);
-                }
+                uint extra_digits = uint(int(MAX_DIGITS_L) - 38);
+                mantissa = mantissa / int(10 ** extra_digits);
+                exp = exp + int(extra_digits);
 
                 int q1 = (10 ** 76) / mantissa;
                 int r1 = (10 ** 76) % mantissa;
