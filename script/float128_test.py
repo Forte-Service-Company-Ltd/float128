@@ -18,8 +18,8 @@ def calculate_float(args):
     largeResult = args.largeResult > 0
     result_float = 0
 
-    a = Decimal(aMan * base**aExp)
-    b = Decimal(bMan * base**bExp)
+    a = Decimal(aMan * (base**aExp)) # if aExp > 0 else Decimal(aMan / int(base**(-aExp)))
+    b = Decimal(bMan * (base**bExp)) # if bExp > 0 else Decimal(bMan / int(base**(-bExp)))
 
     if(operation == "mul"): 
         result_float = a * b
@@ -42,7 +42,7 @@ def calculate_float(args):
     elif(operation == "ln"):
         result_float = a.ln()
 
-    print(result_float)
+    # print(result_float)
     log_10 = 0 if result_float == 0 else Decimal(abs(result_float)).log10()
     result_digits = int(log_10) + 1
     if (result_digits < 0): result_digits -= 1

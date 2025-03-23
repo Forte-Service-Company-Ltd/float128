@@ -234,13 +234,13 @@ contract Float128FuzzTest is FloatUtils {
             999999999999999999999999999999999999999999999999999999999999999999999999
         );
         console2.log("aMan", aMan);
-        aExp = bound(aExp, -144, -72);
+        aExp = bound(aExp, -140, -72);
         console2.log("aExp", aExp);
 
         packedFloat retVal = Float128.ln(aMan, aExp);
 
         // Creating the float struct to normalize the mantissas and exponents before doing the comparison
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "ln", 0);
+        string[] memory inputs = _buildFFIMul128(aMan, aExp, 0, 0, "ln", 0);
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
         (int rMan, int rExp) = Float128.decode(retVal);

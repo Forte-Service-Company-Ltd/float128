@@ -2,6 +2,7 @@
 pragma solidity 0.8.24;
 
 import {Uint512} from "./lib/Uint512.sol";
+import "forge-std/console2.sol";
 
 /**
  * @title Floating point Library base 10 with 38 digits signed
@@ -1213,57 +1214,94 @@ library Float128 {
     }
 
     function ln(int mantissa, int exp) public pure returns (packedFloat result) {
-        int positiveExp = exp * -1;
+        int len_mantissa = int(findNumberOfDigits(uint(mantissa)));
 
+        int positiveExp = exp * -1;
+        console2.log("positiveExp", positiveExp);
         packedFloat input = toPackedFloat(mantissa, exp);
         packedFloat float_one = toPackedFloat(int(1), 0);
 
         bool logOfOne = false;
         if (exp < 0) {
-            if (positiveExp == int(MAX_DIGITS_L_MINUS_1)) {
+            if (positiveExp == (len_mantissa - 1)) {
                 if ((uint(mantissa) / 10 ** uint(positiveExp)) == 1) {
                     result = packedFloat.wrap(0);
                     logOfOne = true;
                 }
             }
         }
-        result = ln_helper(mantissa, exp, logOfOne, positiveExp);
+        console2.log("logOfOne", logOfOne);
+        result = ln_helper(mantissa, exp, logOfOne, len_mantissa, positiveExp);
     }
 
-    function ln_helper(int mantissa, int exp, bool logOfOne, int positiveExp) internal pure returns (packedFloat result) {
+    function ln_helper(int mantissa, int exp, bool logOfOne, int len_mantissa, int positiveExp) internal pure returns (packedFloat result) {
         if (!logOfOne) {
-            if (int(MAX_DIGITS_L) > positiveExp) {
-                // uint extra_digits = DIGIT_DIFF_L_M;
-                mantissa = mantissa / int(10 ** DIGIT_DIFF_L_M);
-                exp = exp + int(DIGIT_DIFF_L_M);
+            console2.log("len_mantissa", len_mantissa);
+            console2.log("condition", len_mantissa > positiveExp);
+            if (len_mantissa > positiveExp) {
+                if (len_mantissa > 38) {
+                    console2.log("len_mantissa", len_mantissa);
+                    uint extra_digits = uint(len_mantissa - 38);
+                    console2.log("extra_digits", extra_digits);
+                    mantissa = mantissa / int(10 ** extra_digits);
+                    console2.log("mantissa", mantissa);
+                    exp = exp + int(extra_digits);
+                    console2.log("exp", exp);
+                } else if (len_mantissa < 38) {
+                    console2.log("if Im here. mantissa is less than 38 digits");
+                    uint extra_digits = uint(38 - len_mantissa);
+                    mantissa = mantissa * int(10 ** extra_digits);
+                    exp = exp - int(extra_digits);
+                }
 
                 int q1 = (10 ** 76) / mantissa;
+                console2.log("q1", q1);
                 int r1 = (10 ** 76) % mantissa;
+                console2.log("r1", r1);
                 int q2 = ((10 ** 38) * r1) / mantissa;
+                console2.log("q2", q2);
                 uint one_over_argument_in_long_int = uint(q1) * (10 ** 38) + uint(q2);
-                int m10 = int(findNumberOfDigits(uint(one_over_argument_in_long_int))); // TODO: optimize
+                console2.log("one_over_argument_in_long_int", one_over_argument_in_long_int);
+                int m10 = int(findNumberOfDigits(uint(one_over_argument_in_long_int)));
+                console2.log("m10", m10);
 
                 uint one_over_arguments_76 = one_over_argument_in_long_int;
+                console2.log("one_over_arguments_76", one_over_arguments_76);
                 int m76 = m10;
+                console2.log("m76", m76);
                 if (m76 > 76) {
+                    console2.log("m76 > 76");
                     uint extra_digits = uint(m76) - 76;
+                    console2.log("extra_digits", extra_digits);
                     m76 = m76 - int(extra_digits);
+                    console2.log("m76", m76);
                     one_over_arguments_76 = one_over_argument_in_long_int / 10 ** extra_digits;
+                    console2.log("one_over_arguments_76", one_over_arguments_76);
                 }
                 int exp_one_over_argument = 0 - 38 - 76 - exp;
+                console2.log("exp_one_over_argument", exp_one_over_argument);
 
                 packedFloat a = sub(packedFloat.wrap(0), ln(int(one_over_arguments_76), -m76));
+                console2.log("a", packedFloat.unwrap(a));
                 packedFloat b = sub(a, toPackedFloat((exp_one_over_argument + m10), 0));
+                console2.log("b", packedFloat.unwrap(b));
                 result = mul(b, ln10);
+                console2.log("result", packedFloat.unwrap(result));
             }
 
-            if (int(MAX_DIGITS_L) <= positiveExp) {
-                int256 m10 = int(MAX_DIGITS_L) + exp;
+            if (len_mantissa <= positiveExp) {
+                console2.log("len_mantissa is less or equal than positive exponent");
+                int256 m10 = len_mantissa + exp;
+                console2.log("m10", m10);
                 exp = exp - m10;
+                console2.log("exp", exp);
 
-                int256 m2 = 76 - int(MAX_DIGITS_L);
+                int256 m2 = 76 - len_mantissa;
+                console2.log("m2", m2);
                 mantissa = mantissa * int(10 ** uint(m2));
+                console2.log("mantissa", mantissa);
                 exp = exp - m2;
+                console2.log("exp", exp);
 
                 int256 k;
                 int256 multiplier_k;
@@ -1286,10 +1324,15 @@ library Float128 {
                     }
                 }
                 mantissa = mantissa * multiplier_k;
+                console2.log("mantissa", mantissa);
                 uint256 uMantissa = uint256(mantissa);
+                console2.log("uMantissa", uMantissa);
 
                 int256 q1;
+                console2.log("q1", q1);
                 (q1, uMantissa) = calculateQ1(uMantissa);
+                console2.log("q1", q1);
+                console2.log("uMantissa", uMantissa);
 
                 // We find the suitable value of q2 and the multiplier (1.014)**q2
                 // so that 0.986 <= (1.014)**q2 * updated_x <= 1
@@ -1306,7 +1349,10 @@ library Float128 {
                 // partition_1014 = [0.9, 0.9072, 0.9199, 0.9328, 0.9459, 0.9591, 0.9725, 0.986, 1]
 
                 int256 q2;
+                console2.log("q2", q2);
                 (q2, uMantissa) = calculateQ2(uMantissa);
+                console2.log("q2", q2);
+                console2.log("uMantissa", uMantissa);
 
                 // Now digits has already been updated
                 // assert digits >= 9860 * 10**72
@@ -1327,7 +1373,10 @@ library Float128 {
                 // partition_10013 = [0.986, 0.987274190490, 0.988557646937, 0.989842771878, 0.991129567482, 0.992418035920, 0.993708179366, 0.995, 1]
 
                 int256 q3;
+                console2.log("q3", q3);
                 (q3, uMantissa) = calculateQ3(uMantissa);
+                console2.log("q3", q3);
+                console2.log("uMantissa", uMantissa);
 
                 result = intermediateTermAddition(result, k, q1, q2, q3, m10, uMantissa);
             }
@@ -1345,13 +1394,19 @@ library Float128 {
     ) internal pure returns (packedFloat finalResult) {
         // Now digits has already been updated
         int z_int = 10 ** 76 - int(uMantissa);
+        console2.log("z_int", z_int);
         int len_z_int = int(findNumberOfDigits(uint(z_int)));
+        console2.log("len_z_int", len_z_int);
         if (z_int != 0) {
+            console2.log("z_int != 0");
             int diff = len_z_int - 38;
-            z_int = int(uint(z_int) / 10 ** uint(diff));
+            console2.log("diff", diff);
+            z_int = diff < 0 ? int(uint(z_int) * 10 ** uint(diff * -1)) : int(uint(z_int) / 10 ** uint(diff));
+            console2.log("z_int", z_int);
         }
 
         packedFloat z = toPackedFloat(z_int, (len_z_int - 76 - 38));
+        console2.log("z", packedFloat.unwrap(z));
 
         // Number of terms of the Taylor series:
         int terms = 15;
@@ -1359,7 +1414,9 @@ library Float128 {
         packedFloat z_to_j = z;
         for (uint j = 2; j < uint(terms + 1); j++) {
             z_to_j = mul(z_to_j, z);
+            console2.log("z_to_j", packedFloat.unwrap(z_to_j));
             result = add(result, div(z_to_j, toPackedFloat(int(j), int(0))));
+            console2.log("result", packedFloat.unwrap(result));
         }
 
         packedFloat lnB = toPackedFloat(13902905168991420865477877458246859530, -39);
