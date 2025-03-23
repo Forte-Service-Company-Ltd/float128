@@ -320,10 +320,10 @@ contract Float128FuzzTest is FloatUtils {
         assertEq(exponentF, expectedResultExp);
     }
 
-    function testLNCaseThree() public pure {   
+    function testLNCaseThree() public pure {
         // Test Case 3:
-        int mantissa = 471738548555985204842829168083810940950366912454141453216936305944405297084;
-        int exponent = -76;
+        int mantissa = 471738548555985204842829168083810940950366912454141453216936305944405297;
+        int exponent = -73;
         int expectedResultMantissa = -30539154624132792807849865290472860264;
         int expectedResultExp = -37;
 

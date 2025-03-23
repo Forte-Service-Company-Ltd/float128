@@ -1213,8 +1213,6 @@ library Float128 {
     }
 
     function ln(int mantissa, int exp) public pure returns (packedFloat result) {
-        int len_mantissa = int(findNumberOfDigits(uint(mantissa)));
-
         int positiveExp = exp * -1;
 
         packedFloat input = toPackedFloat(mantissa, exp);
@@ -1222,25 +1220,25 @@ library Float128 {
 
         bool logOfOne = false;
         if (exp < 0) {
-            if (positiveExp == (len_mantissa - 1)) {
+            if (positiveExp == (int(MAX_DIGITS_L) - 1)) {
                 if ((uint(mantissa) / 10 ** uint(positiveExp)) == 1) {
                     result = packedFloat.wrap(0);
                     logOfOne = true;
                 }
             }
         }
-        result = ln_helper(mantissa, exp, logOfOne, len_mantissa, positiveExp);
+        result = ln_helper(mantissa, exp, logOfOne, positiveExp);
     }
 
-    function ln_helper(int mantissa, int exp, bool logOfOne, int len_mantissa, int positiveExp) internal pure returns (packedFloat result) {
+    function ln_helper(int mantissa, int exp, bool logOfOne, int positiveExp) internal pure returns (packedFloat result) {
         if (!logOfOne) {
-            if (len_mantissa > positiveExp) {
-                if (len_mantissa > 38) {
-                    uint extra_digits = uint(len_mantissa - 38);
+            if (int(MAX_DIGITS_L) > positiveExp) {
+                if (int(MAX_DIGITS_L) > 38) {
+                    uint extra_digits = uint(int(MAX_DIGITS_L) - 38);
                     mantissa = mantissa / int(10 ** extra_digits);
                     exp = exp + int(extra_digits);
-                } else if (len_mantissa < 38) {
-                    uint extra_digits = uint(38 - len_mantissa);
+                } else if (int(MAX_DIGITS_L) < 38) {
+                    uint extra_digits = uint(38 - int(MAX_DIGITS_L));
                     mantissa = mantissa * int(10 ** extra_digits);
                     exp = exp - int(extra_digits);
                 }
@@ -1265,11 +1263,11 @@ library Float128 {
                 result = mul(b, ln10);
             }
 
-            if (len_mantissa <= positiveExp) {
-                int256 m10 = len_mantissa + exp;
+            if (int(MAX_DIGITS_L) <= positiveExp) {
+                int256 m10 = int(MAX_DIGITS_L) + exp;
                 exp = exp - m10;
 
-                int256 m2 = 76 - len_mantissa;
+                int256 m2 = 76 - int(MAX_DIGITS_L);
                 mantissa = mantissa * int(10 ** uint(m2));
                 exp = exp - m2;
 
