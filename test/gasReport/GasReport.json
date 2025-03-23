@@ -60,31 +60,31 @@
     "add": {
       "matchingexponents": {
         "min": 739,
-        "avg": 1073,
-        "max": 1457
+        "avg": 1063,
+        "max": 1483
       },
       "addsub": {
         "min": 544,
-        "avg": 1434,
-        "max": 1483
+        "avg": 1431,
+        "max": 1478
       },
       "min": 774,
-      "avg": 1184,
+      "avg": 1192,
       "max": 1478
     },
     "sub": {
       "matchingexponents": {
         "min": 736,
-        "avg": 1027,
+        "avg": 1033,
         "max": 1392
       },
       "subadd": {
         "min": 736,
         "avg": 917,
-        "max": 949
+        "max": 944
       },
-      "min": 736,
-      "avg": 1178,
+      "min": 771,
+      "avg": 1189,
       "max": 1476
     },
     "mul": {
@@ -94,7 +94,7 @@
         "max": 171
       },
       "min": 550,
-      "avg": 1012,
+      "avg": 998,
       "max": 1124
     },
     "div": {
@@ -104,12 +104,12 @@
         "max": 189
       },
       "min": 585,
-      "avg": 1123,
+      "avg": 1138,
       "max": 1238
     },
     "sqrt": {
       "min": 1325,
-      "avg": 2193,
+      "avg": 2188,
       "max": 3113
     }
   },

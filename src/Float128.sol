@@ -1233,15 +1233,15 @@ library Float128 {
     function ln_helper(int mantissa, int exp, bool logOfOne, int positiveExp) internal pure returns (packedFloat result) {
         if (!logOfOne) {
             if (int(MAX_DIGITS_L) > positiveExp) {
-                uint extra_digits = uint(int(MAX_DIGITS_L) - 38);
-                mantissa = mantissa / int(10 ** extra_digits);
-                exp = exp + int(extra_digits);
+                // uint extra_digits = DIGIT_DIFF_L_M;
+                mantissa = mantissa / int(10 ** DIGIT_DIFF_L_M);
+                exp = exp + int(DIGIT_DIFF_L_M);
 
                 int q1 = (10 ** 76) / mantissa;
                 int r1 = (10 ** 76) % mantissa;
                 int q2 = ((10 ** 38) * r1) / mantissa;
                 uint one_over_argument_in_long_int = uint(q1) * (10 ** 38) + uint(q2);
-                int m10 = int(findNumberOfDigits(uint(one_over_argument_in_long_int)));
+                int m10 = int(findNumberOfDigits(uint(one_over_argument_in_long_int))); // TODO: optimize
 
                 uint one_over_arguments_76 = one_over_argument_in_long_int;
                 int m76 = m10;
