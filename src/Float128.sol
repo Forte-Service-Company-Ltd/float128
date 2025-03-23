@@ -713,14 +713,13 @@ library Float128 {
      */
     function sqrt(packedFloat a) internal pure returns (packedFloat r) {
         uint s;
-        uint aExp;
+        int aExp;
         uint x;
         uint aMan;
         uint256 roundedDownResult;
-        if (packedFloat.unwrap(a) == 0) return a;
+        bool Loperation;
+        bool aL;
         assembly {
-            let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
-            aMan := and(a, MANTISSA_MASK)
             if and(a, MANTISSA_SIGN_MASK) {
                 let ptr := mload(0x40) // Get free memory pointer
                 mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
@@ -729,81 +728,123 @@ library Float128 {
                 mstore(add(ptr, 0x44), "float128: squareroot of negative")
                 revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
             }
-
+            if iszero(a) {
+                stop()
+            }
+            aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
+            aMan := and(a, MANTISSA_MASK)
             aExp := shr(EXPONENT_BIT, and(a, EXPONENT_MASK))
-            // we need the exponent to be even so we can calculate the square root correctly
-            if iszero(mod(aExp, 2)) {
-                if aL {
-                    x := mul(aMan, BASE_TO_THE_DIFF_76_L)
-                    aExp := sub(aExp, DIGIT_DIFF_76_L)
-                }
-                if iszero(aL) {
-                    x := mul(aMan, BASE_TO_THE_MAX_DIGITS_M)
-                    aExp := sub(aExp, MAX_DIGITS_M)
-                }
-            }
-            if mod(aExp, 2) {
-                if aL {
-                    x := mul(aMan, BASE_TO_THE_DIFF_76_L_PLUS_1)
-                    aExp := sub(aExp, DIGIT_DIFF_76_L_PLUS_1)
-                }
-                if iszero(aL) {
-                    x := mul(aMan, BASE_TO_THE_MAX_DIGITS_M_PLUS_1)
-                    aExp := sub(aExp, MAX_DIGITS_M_PLUS_1)
-                }
-            }
-            s := 1
+            // Loperation := and(gt(aExp, 1), aL)
+        }
 
-            let xAux := x
-
-            let cmp := or(gt(xAux, 0x100000000000000000000000000000000), eq(xAux, 0x100000000000000000000000000000000))
-            xAux := sar(mul(cmp, 128), xAux)
-            s := shl(mul(cmp, 64), s)
-
-            cmp := or(gt(xAux, 0x10000000000000000), eq(xAux, 0x10000000000000000))
-            xAux := sar(mul(cmp, 64), xAux)
-            s := shl(mul(cmp, 32), s)
-
-            cmp := or(gt(xAux, 0x100000000), eq(xAux, 0x100000000))
-            xAux := sar(mul(cmp, 32), xAux)
-            s := shl(mul(cmp, 16), s)
-
-            cmp := or(gt(xAux, 0x10000), eq(xAux, 0x10000))
-            xAux := sar(mul(cmp, 16), xAux)
-            s := shl(mul(cmp, 8), s)
-
-            cmp := or(gt(xAux, 0x100), eq(xAux, 0x100))
-            xAux := sar(mul(cmp, 8), xAux)
-            s := shl(mul(cmp, 4), s)
-
-            cmp := or(gt(xAux, 0x10), eq(xAux, 0x10))
-            xAux := sar(mul(cmp, 4), xAux)
-            s := shl(mul(cmp, 2), s)
-
-            s := shl(mul(or(gt(xAux, 0x8), eq(xAux, 0x8)), 2), s)
-
-            s := shr(1, add(div(x, s), s))
-            s := shr(1, add(div(x, s), s))
-            s := shr(1, add(div(x, s), s))
-            s := shr(1, add(div(x, s), s))
-            s := shr(1, add(div(x, s), s))
-            s := shr(1, add(div(x, s), s))
-            s := shr(1, add(div(x, s), s))
-
-            roundedDownResult := div(x, s)
-            if or(gt(s, roundedDownResult), eq(s, roundedDownResult)) {
-                s := roundedDownResult
+        if ((aL && aExp > int(ZERO_OFFSET) - int(DIGIT_DIFF_L_M - 1)) || (!aL && aExp > int(ZERO_OFFSET) - int(MAX_DIGITS_M / 2 - 1))) {
+            if (!aL) {
+                aMan *= BASE_TO_THE_DIGIT_DIFF;
+                aExp -= int(DIGIT_DIFF_L_M);
             }
 
-            // exponent should now be half of what it was
-            aExp := add(div(sub(aExp, ZERO_OFFSET), 2), ZERO_OFFSET)
-            // if we have extra digits, we know it comes from the extra digit to make the exponent even
-            if gt(s, MAX_M_DIGIT_NUMBER) {
-                aExp := add(aExp, 1)
-                s := div(s, BASE)
+            aExp -= int(ZERO_OFFSET);
+            if (aExp % 2 != 0) {
+                aMan *= BASE;
+                --aExp;
             }
-            // final encoding
-            r := or(shl(EXPONENT_BIT, aExp), s)
+            (uint a0, uint a1) = Uint512.mul256x256(aMan, BASE_TO_THE_MAX_DIGITS_L);
+            uint rMan = Uint512.sqrt512(a0, a1);
+            int rExp = aExp - int(MAX_DIGITS_L);
+            bool Lresult = true;
+            unchecked {
+                if (rMan > MAX_L_DIGIT_NUMBER) {
+                    rMan /= BASE;
+                    ++rExp;
+                }
+                rExp = (rExp) / 2;
+                if (rExp <= MAXIMUM_EXPONENT - int(DIGIT_DIFF_L_M)) {
+                    rMan /= BASE_TO_THE_DIGIT_DIFF;
+                    rExp += int(DIGIT_DIFF_L_M);
+                    Lresult = false;
+                }
+                rExp += int(ZERO_OFFSET);
+            }
+            assembly {
+                r := or(or(shl(EXPONENT_BIT, rExp), rMan), mul(Lresult, MANTISSA_L_FLAG_MASK))
+            }
+        }
+        // we need the exponent to be even so we can calculate the square root correctly
+        else {
+            assembly {
+                if iszero(mod(aExp, 2)) {
+                    if aL {
+                        x := mul(aMan, BASE_TO_THE_DIFF_76_L)
+                        aExp := sub(aExp, DIGIT_DIFF_76_L)
+                    }
+                    if iszero(aL) {
+                        x := mul(aMan, BASE_TO_THE_MAX_DIGITS_M)
+                        aExp := sub(aExp, MAX_DIGITS_M)
+                    }
+                }
+                if mod(aExp, 2) {
+                    if aL {
+                        x := mul(aMan, BASE_TO_THE_DIFF_76_L_PLUS_1)
+                        aExp := sub(aExp, DIGIT_DIFF_76_L_PLUS_1)
+                    }
+                    if iszero(aL) {
+                        x := mul(aMan, BASE_TO_THE_MAX_DIGITS_M_PLUS_1)
+                        aExp := sub(aExp, MAX_DIGITS_M_PLUS_1)
+                    }
+                }
+                s := 1
+
+                let xAux := x
+
+                let cmp := or(gt(xAux, 0x100000000000000000000000000000000), eq(xAux, 0x100000000000000000000000000000000))
+                xAux := sar(mul(cmp, 128), xAux)
+                s := shl(mul(cmp, 64), s)
+
+                cmp := or(gt(xAux, 0x10000000000000000), eq(xAux, 0x10000000000000000))
+                xAux := sar(mul(cmp, 64), xAux)
+                s := shl(mul(cmp, 32), s)
+
+                cmp := or(gt(xAux, 0x100000000), eq(xAux, 0x100000000))
+                xAux := sar(mul(cmp, 32), xAux)
+                s := shl(mul(cmp, 16), s)
+
+                cmp := or(gt(xAux, 0x10000), eq(xAux, 0x10000))
+                xAux := sar(mul(cmp, 16), xAux)
+                s := shl(mul(cmp, 8), s)
+
+                cmp := or(gt(xAux, 0x100), eq(xAux, 0x100))
+                xAux := sar(mul(cmp, 8), xAux)
+                s := shl(mul(cmp, 4), s)
+
+                cmp := or(gt(xAux, 0x10), eq(xAux, 0x10))
+                xAux := sar(mul(cmp, 4), xAux)
+                s := shl(mul(cmp, 2), s)
+
+                s := shl(mul(or(gt(xAux, 0x8), eq(xAux, 0x8)), 2), s)
+
+                s := shr(1, add(div(x, s), s))
+                s := shr(1, add(div(x, s), s))
+                s := shr(1, add(div(x, s), s))
+                s := shr(1, add(div(x, s), s))
+                s := shr(1, add(div(x, s), s))
+                s := shr(1, add(div(x, s), s))
+                s := shr(1, add(div(x, s), s))
+
+                roundedDownResult := div(x, s)
+                if or(gt(s, roundedDownResult), eq(s, roundedDownResult)) {
+                    s := roundedDownResult
+                }
+
+                // exponent should now be half of what it was
+                aExp := add(div(sub(aExp, ZERO_OFFSET), 2), ZERO_OFFSET)
+                // if we have extra digits, we know it comes from the extra digit to make the exponent even
+                if gt(s, MAX_M_DIGIT_NUMBER) {
+                    aExp := add(aExp, 1)
+                    s := div(s, BASE)
+                }
+                // final encoding
+                r := or(shl(EXPONENT_BIT, aExp), s)
+            }
         }
     }
 
