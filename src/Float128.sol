@@ -1218,165 +1218,155 @@ library Float128 {
         packedFloat input = toPackedFloat(mantissa, exp); //TODO accept float in params
         packedFloat float_one = toPackedFloat(int(1), 0);
 
-        bool logOfOne = false;
-        if (exp < 0) {
-            if (positiveExp == int(MAX_DIGITS_L_MINUS_1)) {
-                if ((uint(mantissa) / 10 ** uint(positiveExp)) == 1) {
-                    result = packedFloat.wrap(0);
-                    logOfOne = true;
-                }
-            }
-        }
-        console2.log("logOfOne", logOfOne);
-        result = ln_helper(mantissa, exp, logOfOne, int(MAX_DIGITS_L), positiveExp);
+        if (exp == 0 - int(MAX_DIGITS_L_MINUS_1) && mantissa == int(MIN_L_DIGIT_NUMBER)) return packedFloat.wrap(0);
+
+        result = ln_helper(mantissa, exp, int(MAX_DIGITS_L), positiveExp);
     }
 
-    function ln_helper(int mantissa, int exp, bool logOfOne, int len_mantissa, int positiveExp) internal pure returns (packedFloat result) {
-        if (!logOfOne) {
-            console2.log("len_mantissa", len_mantissa);
-            console2.log("condition", len_mantissa > positiveExp);
-            if (len_mantissa > positiveExp) {
-                if (len_mantissa > 38) {
-                    console2.log("len_mantissa", len_mantissa);
-                    uint extra_digits = uint(len_mantissa - 38);
-                    console2.log("extra_digits", extra_digits);
-                    mantissa = mantissa / int(10 ** extra_digits);
-                    console2.log("mantissa", mantissa);
-                    exp = exp + int(extra_digits);
-                    console2.log("exp", exp);
-                } else if (len_mantissa < 38) {
-                    console2.log("if Im here. mantissa is less than 38 digits");
-                    uint extra_digits = uint(38 - len_mantissa);
-                    mantissa = mantissa * int(10 ** extra_digits);
-                    exp = exp - int(extra_digits);
-                }
+    function ln_helper(int mantissa, int exp, int len_mantissa, int positiveExp) internal pure returns (packedFloat result) {
+        console2.log("len_mantissa", len_mantissa);
+        console2.log("condition", len_mantissa > positiveExp);
+        if (len_mantissa > positiveExp) {
+            if (len_mantissa > 38) {
+                console2.log("len_mantissa", len_mantissa);
+                uint extra_digits = uint(len_mantissa - 38);
+                console2.log("extra_digits", extra_digits);
+                mantissa = mantissa / int(10 ** extra_digits);
+                console2.log("mantissa", mantissa);
+                exp = exp + int(extra_digits);
+                console2.log("exp", exp);
+            } else if (len_mantissa < 38) {
+                console2.log("if Im here. mantissa is less than 38 digits");
+                uint extra_digits = uint(38 - len_mantissa);
+                mantissa = mantissa * int(10 ** extra_digits);
+                exp = exp - int(extra_digits);
+            }
 
-                int q1 = (10 ** 76) / mantissa;
-                console2.log("q1", q1);
-                int r1 = (10 ** 76) % mantissa;
-                console2.log("r1", r1);
-                int q2 = ((10 ** 38) * r1) / mantissa;
-                console2.log("q2", q2);
-                uint one_over_argument_in_long_int = uint(q1) * (10 ** 38) + uint(q2);
-                console2.log("one_over_argument_in_long_int", one_over_argument_in_long_int);
-                int m10 = int(findNumberOfDigits(uint(one_over_argument_in_long_int)));
-                console2.log("m10", m10);
+            int q1 = (10 ** 76) / mantissa;
+            console2.log("q1", q1);
+            int r1 = (10 ** 76) % mantissa;
+            console2.log("r1", r1);
+            int q2 = ((10 ** 38) * r1) / mantissa;
+            console2.log("q2", q2);
+            uint one_over_argument_in_long_int = uint(q1) * (10 ** 38) + uint(q2);
+            console2.log("one_over_argument_in_long_int", one_over_argument_in_long_int);
+            int m10 = int(findNumberOfDigits(uint(one_over_argument_in_long_int)));
+            console2.log("m10", m10);
 
-                uint one_over_arguments_76 = one_over_argument_in_long_int;
-                console2.log("one_over_arguments_76", one_over_arguments_76);
-                int m76 = m10;
+            uint one_over_arguments_76 = one_over_argument_in_long_int;
+            console2.log("one_over_arguments_76", one_over_arguments_76);
+            int m76 = m10;
+            console2.log("m76", m76);
+            if (m76 > 76) {
+                console2.log("m76 > 76");
+                uint extra_digits = uint(m76) - 76;
+                console2.log("extra_digits", extra_digits);
+                m76 = m76 - int(extra_digits);
                 console2.log("m76", m76);
-                if (m76 > 76) {
-                    console2.log("m76 > 76");
-                    uint extra_digits = uint(m76) - 76;
-                    console2.log("extra_digits", extra_digits);
-                    m76 = m76 - int(extra_digits);
-                    console2.log("m76", m76);
-                    one_over_arguments_76 = one_over_argument_in_long_int / 10 ** extra_digits;
-                    console2.log("one_over_arguments_76", one_over_arguments_76);
-                }
-                int exp_one_over_argument = 0 - 38 - 76 - exp;
-                console2.log("exp_one_over_argument", exp_one_over_argument);
-
-                packedFloat a = sub(packedFloat.wrap(0), ln(int(one_over_arguments_76), -m76));
-                console2.log("a", packedFloat.unwrap(a));
-                packedFloat b = sub(a, toPackedFloat((exp_one_over_argument + m10), 0));
-                console2.log("b", packedFloat.unwrap(b));
-                result = mul(b, ln10);
-                console2.log("result", packedFloat.unwrap(result));
+                one_over_arguments_76 = one_over_argument_in_long_int / 10 ** extra_digits;
+                console2.log("one_over_arguments_76", one_over_arguments_76);
             }
+            int exp_one_over_argument = 0 - 38 - 76 - exp;
+            console2.log("exp_one_over_argument", exp_one_over_argument);
 
-            if (len_mantissa <= positiveExp) {
-                console2.log("len_mantissa is less or equal than positive exponent");
-                int256 m10 = len_mantissa + exp;
-                console2.log("m10", m10);
-                exp = exp - m10;
-                console2.log("exp", exp);
+            packedFloat a = sub(packedFloat.wrap(0), ln(int(one_over_arguments_76), -m76));
+            console2.log("a", packedFloat.unwrap(a));
+            packedFloat b = sub(a, toPackedFloat((exp_one_over_argument + m10), 0));
+            console2.log("b", packedFloat.unwrap(b));
+            result = mul(b, ln10);
+            console2.log("result", packedFloat.unwrap(result));
+        }
 
-                int256 m2 = int(DIGIT_DIFF_L_M);
-                console2.log("m2", m2);
-                mantissa = mantissa * int(BASE_TO_THE_DIFF_76_L);
-                console2.log("mantissa", mantissa);
-                exp = exp - m2;
-                console2.log("exp", exp);
+        if (len_mantissa <= positiveExp) {
+            console2.log("len_mantissa is less or equal than positive exponent");
+            int256 m10 = len_mantissa + exp;
+            console2.log("m10", m10);
+            exp = exp - m10;
+            console2.log("exp", exp);
 
-                int256 k;
-                int256 multiplier_k;
+            int256 m2 = int(DIGIT_DIFF_L_M);
+            console2.log("m2", m2);
+            mantissa = mantissa * int(BASE_TO_THE_DIFF_76_L);
+            console2.log("mantissa", mantissa);
+            exp = exp - m2;
+            console2.log("exp", exp);
 
-                if (mantissa > (25 * (10 ** 74))) {
-                    if (mantissa > (50 * (10 ** 74))) {
-                        k = 0;
-                        multiplier_k = 1;
-                    } else {
-                        k = 1;
-                        multiplier_k = 2;
-                    }
+            int256 k;
+            int256 multiplier_k;
+
+            if (mantissa > (25 * (10 ** 74))) {
+                if (mantissa > (50 * (10 ** 74))) {
+                    k = 0;
+                    multiplier_k = 1;
                 } else {
-                    if (mantissa > (125 * 10 ** 73)) {
-                        k = 2;
-                        multiplier_k = 4;
-                    } else {
-                        k = 3;
-                        multiplier_k = 8;
-                    }
+                    k = 1;
+                    multiplier_k = 2;
                 }
-                mantissa = mantissa * multiplier_k;
-                console2.log("mantissa", mantissa);
-                uint256 uMantissa = uint256(mantissa);
-                console2.log("uMantissa", uMantissa);
-
-                int256 q1;
-                console2.log("q1", q1);
-                (q1, uMantissa) = calculateQ1(uMantissa);
-                console2.log("q1", q1);
-                console2.log("uMantissa", uMantissa);
-
-                // We find the suitable value of q2 and the multiplier (1.014)**q2
-                // so that 0.986 <= (1.014)**q2 * updated_x <= 1
-                // We use the following intervals:
-                // (index -> lower bound of the interval)
-                // 0 ->  9 * 10**75
-                // 1 ->  9072 * 10**72
-                // 2 ->  9199 * 10**72
-                // 3 ->  9328 * 10**72
-                // 4 ->  9459 * 10**72
-                // 5 ->  9591 * 10**72
-                // 6 ->  9725 * 10**72
-                // 7 ->  9860 * 10**72
-                // partition_1014 = [0.9, 0.9072, 0.9199, 0.9328, 0.9459, 0.9591, 0.9725, 0.986, 1]
-
-                int256 q2;
-                console2.log("q2", q2);
-                (q2, uMantissa) = calculateQ2(uMantissa);
-                console2.log("q2", q2);
-                console2.log("uMantissa", uMantissa);
-
-                // Now digits has already been updated
-                // assert digits >= 9860 * 10**72
-                // assert digits <= 10**76
-
-                // We find the suitable value of q3 and the multiplier (1.0013)**q3
-                // so that 0.9949 <= (1.0013)**q3 * updated_x <= 1
-                // We use the following intervals:
-                // (index -> lower bound of the interval)
-                // 0 ->  986 * 10**73
-                // 1 ->  987274190490 * 10**64
-                // 2 ->  988557646937 * 10**64
-                // 3 ->  989842771878 * 10**64
-                // 4 ->  991129567482 * 10**64
-                // 5 ->  992418035920 * 10**64
-                // 6 ->  993708179366 * 10**64
-                // 7 ->  995 * 10**73
-                // partition_10013 = [0.986, 0.987274190490, 0.988557646937, 0.989842771878, 0.991129567482, 0.992418035920, 0.993708179366, 0.995, 1]
-
-                int256 q3;
-                console2.log("q3", q3);
-                (q3, uMantissa) = calculateQ3(uMantissa);
-                console2.log("q3", q3);
-                console2.log("uMantissa", uMantissa);
-
-                result = intermediateTermAddition(result, k, q1, q2, q3, m10, uMantissa);
+            } else {
+                if (mantissa > (125 * 10 ** 73)) {
+                    k = 2;
+                    multiplier_k = 4;
+                } else {
+                    k = 3;
+                    multiplier_k = 8;
+                }
             }
+            mantissa = mantissa * multiplier_k;
+            console2.log("mantissa", mantissa);
+            uint256 uMantissa = uint256(mantissa);
+            console2.log("uMantissa", uMantissa);
+
+            int256 q1;
+            console2.log("q1", q1);
+            (q1, uMantissa) = calculateQ1(uMantissa);
+            console2.log("q1", q1);
+            console2.log("uMantissa", uMantissa);
+
+            // We find the suitable value of q2 and the multiplier (1.014)**q2
+            // so that 0.986 <= (1.014)**q2 * updated_x <= 1
+            // We use the following intervals:
+            // (index -> lower bound of the interval)
+            // 0 ->  9 * 10**75
+            // 1 ->  9072 * 10**72
+            // 2 ->  9199 * 10**72
+            // 3 ->  9328 * 10**72
+            // 4 ->  9459 * 10**72
+            // 5 ->  9591 * 10**72
+            // 6 ->  9725 * 10**72
+            // 7 ->  9860 * 10**72
+            // partition_1014 = [0.9, 0.9072, 0.9199, 0.9328, 0.9459, 0.9591, 0.9725, 0.986, 1]
+
+            int256 q2;
+            console2.log("q2", q2);
+            (q2, uMantissa) = calculateQ2(uMantissa);
+            console2.log("q2", q2);
+            console2.log("uMantissa", uMantissa);
+
+            // Now digits has already been updated
+            // assert digits >= 9860 * 10**72
+            // assert digits <= 10**76
+
+            // We find the suitable value of q3 and the multiplier (1.0013)**q3
+            // so that 0.9949 <= (1.0013)**q3 * updated_x <= 1
+            // We use the following intervals:
+            // (index -> lower bound of the interval)
+            // 0 ->  986 * 10**73
+            // 1 ->  987274190490 * 10**64
+            // 2 ->  988557646937 * 10**64
+            // 3 ->  989842771878 * 10**64
+            // 4 ->  991129567482 * 10**64
+            // 5 ->  992418035920 * 10**64
+            // 6 ->  993708179366 * 10**64
+            // 7 ->  995 * 10**73
+            // partition_10013 = [0.986, 0.987274190490, 0.988557646937, 0.989842771878, 0.991129567482, 0.992418035920, 0.993708179366, 0.995, 1]
+
+            int256 q3;
+            console2.log("q3", q3);
+            (q3, uMantissa) = calculateQ3(uMantissa);
+            console2.log("q3", q3);
+            console2.log("uMantissa", uMantissa);
+
+            result = intermediateTermAddition(result, k, q1, q2, q3, m10, uMantissa);
         }
     }
 

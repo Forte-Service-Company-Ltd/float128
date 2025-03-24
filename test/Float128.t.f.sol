@@ -356,4 +356,17 @@ contract Float128FuzzTest is FloatUtils {
         assertEq(mantissaF, expectedResultMantissa);
         assertEq(exponentF, expectedResultExp);
     }
+
+    function testLNCaseFour() public pure {
+        // Test Case 1:
+        int mantissa = 100000000000000000000000000000000000000000000000000000000000000000000000;
+        int exponent = -71;
+        int expectedResultMantissa = 0;
+        int expectedResultExp = -8192;
+
+        packedFloat retVal = Float128.ln(mantissa, exponent);
+        (int mantissaF, int exponentF) = Float128.decode(retVal);
+        assertEq(mantissaF, expectedResultMantissa);
+        assertEq(exponentF, expectedResultExp);
+    }
 }
