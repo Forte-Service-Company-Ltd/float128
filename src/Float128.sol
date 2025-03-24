@@ -1214,16 +1214,13 @@ library Float128 {
     }
 
     function ln(int mantissa, int exp) public pure returns (packedFloat result) {
-        int len_mantissa = int(findNumberOfDigits(uint(mantissa)));
-
         int positiveExp = exp * -1;
-        console2.log("positiveExp", positiveExp);
-        packedFloat input = toPackedFloat(mantissa, exp);
+        packedFloat input = toPackedFloat(mantissa, exp); //TODO accept float in params
         packedFloat float_one = toPackedFloat(int(1), 0);
 
         bool logOfOne = false;
         if (exp < 0) {
-            if (positiveExp == (len_mantissa - 1)) {
+            if (positiveExp == int(MAX_DIGITS_L_MINUS_1)) {
                 if ((uint(mantissa) / 10 ** uint(positiveExp)) == 1) {
                     result = packedFloat.wrap(0);
                     logOfOne = true;
@@ -1231,7 +1228,7 @@ library Float128 {
             }
         }
         console2.log("logOfOne", logOfOne);
-        result = ln_helper(mantissa, exp, logOfOne, len_mantissa, positiveExp);
+        result = ln_helper(mantissa, exp, logOfOne, int(MAX_DIGITS_L), positiveExp);
     }
 
     function ln_helper(int mantissa, int exp, bool logOfOne, int len_mantissa, int positiveExp) internal pure returns (packedFloat result) {
@@ -1296,9 +1293,9 @@ library Float128 {
                 exp = exp - m10;
                 console2.log("exp", exp);
 
-                int256 m2 = 76 - len_mantissa;
+                int256 m2 = int(DIGIT_DIFF_L_M);
                 console2.log("m2", m2);
-                mantissa = mantissa * int(10 ** uint(m2));
+                mantissa = mantissa * int(BASE_TO_THE_DIFF_76_L);
                 console2.log("mantissa", mantissa);
                 exp = exp - m2;
                 console2.log("exp", exp);
