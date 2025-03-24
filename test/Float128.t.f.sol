@@ -231,7 +231,7 @@ contract Float128FuzzTest is FloatUtils {
     function testLnpackedFloatFuzz(int aMan, int aExp, int bMan, int bExp) public {
         aMan = bound(aMan, 1, 999999999999999999999999999999999999999999999999999999999999999999999999);
         console2.log("aMan", aMan);
-        aExp = bound(aExp, -140, -72);
+        aExp = bound(aExp, -140, 0);
         console2.log("aExp", aExp);
         packedFloat a = Float128.toPackedFloat(aMan, aExp);
 
@@ -245,7 +245,7 @@ contract Float128FuzzTest is FloatUtils {
         console2.log("rMan", rMan);
         console2.log("rExp", rExp);
 
-        checkResults(retVal, rMan, rExp, pyMan, pyExp, 6);
+        checkResults(retVal, rMan, rExp, pyMan, pyExp, 7);
     }
 
     function testToPackedFloatFuzz(int256 man, int256 exp) public pure {

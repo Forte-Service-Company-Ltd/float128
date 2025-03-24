@@ -56,7 +56,7 @@ library Float128 {
     uint constant BASE_TO_THE_DIFF_76_L_PLUS_1 = 100_000;
     uint constant MAX_75_DIGIT_NUMBER = 999999999999999999999999999999999999999999999999999999999999999999999999999;
     uint constant MAX_76_DIGIT_NUMBER = 9999999999999999999999999999999999999999999999999999999999999999999999999999;
-    int constant MAXIMUM_EXPONENT = -18; // guarantees all results will have at least 18 decimals. Constrainst the exponents
+    int constant MAXIMUM_EXPONENT = -18; // guarantees all results will have at least 18 decimals in the M size. Autoscales to L if necessary
 
     // ln specific variables
     int constant M = 38; // number of digits of precision that we work with.
@@ -1236,7 +1236,7 @@ library Float128 {
 
     function ln_helper(uint mantissa, int exp, bool inputL) internal pure returns (packedFloat result) {
         int positiveExp = exp * -1;
-        if ((inputL && int(MAX_DIGITS_L) > positiveExp) || (!inputL && int(MAX_DIGITS_M) > positiveExp)) {
+        if ((inputL && int(MAX_DIGITS_L) > positiveExp)) {
             if (inputL) {
                 mantissa /= BASE_TO_THE_DIGIT_DIFF;
                 exp += int(DIGIT_DIFF_L_M);
@@ -1248,19 +1248,21 @@ library Float128 {
             uint one_over_argument_in_long_int = q1 * BASE_TO_THE_MAX_DIGITS_M + q2;
             // uint m10 = findNumberOfDigits(uint(one_over_argument_in_long_int));
             uint m10 = one_over_argument_in_long_int > MAX_76_DIGIT_NUMBER ? 77 : 76; // TODO enable this line and remove the line above
+            console2.log("m10", m10);
 
             uint one_over_arguments_76 = one_over_argument_in_long_int;
             uint m76 = m10;
             if (m76 > MAX_DIGITS_M_X_2) {
-                uint extra_digits = m76 - MAX_DIGITS_M_X_2;
-                m76 = m76 - extra_digits;
-                one_over_arguments_76 = one_over_argument_in_long_int / 10 ** extra_digits;
+                console2.log("extra_digits");
+                --m76;
+                one_over_arguments_76 = one_over_argument_in_long_int / BASE;
+                console2.log("one_over_arguments_76", one_over_arguments_76);
             }
-            int exp_one_over_argument = int(0 - MAX_DIGITS_M - MAX_DIGITS_M_X_2) - exp;
+            int exp_one_over_argument = 0 - int(MAX_DIGITS_M) - int(MAX_DIGITS_M_X_2) - exp;
+            console2.log("exp_one_over_argument", exp_one_over_argument);
 
             packedFloat a = sub(packedFloat.wrap(0), ln(toPackedFloat(int(one_over_arguments_76), 0 - int(m76))));
-            packedFloat b = sub(a, toPackedFloat((exp_one_over_argument + int(m10)), 0));
-            result = mul(b, ln10);
+            result = sub(a, mul(toPackedFloat((exp_one_over_argument + int(m10)), 0), ln10));
         } else {
             int256 m10 = inputL ? int(MAX_DIGITS_L) + exp : int(MAX_DIGITS_M) + exp;
             exp -= m10;
