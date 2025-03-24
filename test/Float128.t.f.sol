@@ -237,8 +237,9 @@ contract Float128FuzzTest is FloatUtils {
         console2.log("aMan", aMan);
         aExp = bound(aExp, -140, -72);
         console2.log("aExp", aExp);
+        packedFloat a = Float128.toPackedFloat(aMan, aExp);
 
-        packedFloat retVal = Float128.ln(aMan, aExp);
+        packedFloat retVal = Float128.ln(a);
 
         // Creating the float struct to normalize the mantissas and exponents before doing the comparison
         string[] memory inputs = _buildFFIMul128(aMan, aExp, 0, 0, "ln", 0);
@@ -324,8 +325,9 @@ contract Float128FuzzTest is FloatUtils {
         int exponent = -84;
         int expectedResultMantissa = -28712638366447213800267852694553857212;
         int expectedResultExp = -36;
+        packedFloat a = Float128.toPackedFloat(mantissa, exponent);
 
-        packedFloat retVal = Float128.ln(mantissa, exponent);
+        packedFloat retVal = Float128.ln(a);
         (int mantissaF, int exponentF) = Float128.decode(retVal);
         assertEq(mantissaF, expectedResultMantissa);
         assertEq(exponentF, expectedResultExp);
@@ -337,8 +339,9 @@ contract Float128FuzzTest is FloatUtils {
         int exponent = -72;
         int expectedResultMantissa = -86956614316348604164580027803497950664;
         int expectedResultExp = -38;
+        packedFloat a = Float128.toPackedFloat(mantissa, exponent);
 
-        packedFloat retVal = Float128.ln(mantissa, exponent);
+        packedFloat retVal = Float128.ln(a);
         (int mantissaF, int exponentF) = Float128.decode(retVal);
         assertEq(mantissaF, expectedResultMantissa);
         assertEq(exponentF, expectedResultExp);
@@ -350,8 +353,9 @@ contract Float128FuzzTest is FloatUtils {
         int exponent = -73;
         int expectedResultMantissa = -30539154624132792807849865290472860264;
         int expectedResultExp = -37;
+        packedFloat a = Float128.toPackedFloat(mantissa, exponent);
 
-        packedFloat retVal = Float128.ln(mantissa, exponent);
+        packedFloat retVal = Float128.ln(a);
         (int mantissaF, int exponentF) = Float128.decode(retVal);
         assertEq(mantissaF, expectedResultMantissa);
         assertEq(exponentF, expectedResultExp);
@@ -363,8 +367,9 @@ contract Float128FuzzTest is FloatUtils {
         int exponent = -71;
         int expectedResultMantissa = 0;
         int expectedResultExp = -8192;
+        packedFloat a = Float128.toPackedFloat(mantissa, exponent);
 
-        packedFloat retVal = Float128.ln(mantissa, exponent);
+        packedFloat retVal = Float128.ln(a);
         (int mantissaF, int exponentF) = Float128.decode(retVal);
         assertEq(mantissaF, expectedResultMantissa);
         assertEq(exponentF, expectedResultExp);
