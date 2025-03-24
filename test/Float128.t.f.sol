@@ -229,11 +229,7 @@ contract Float128FuzzTest is FloatUtils {
     }
 
     function testLnpackedFloatFuzz(int aMan, int aExp, int bMan, int bExp) public {
-        aMan = bound(
-            aMan,
-            100000000000000000000000000000000000000000000000000000000000000000000000,
-            999999999999999999999999999999999999999999999999999999999999999999999999
-        );
+        aMan = bound(aMan, 1, 999999999999999999999999999999999999999999999999999999999999999999999999);
         console2.log("aMan", aMan);
         aExp = bound(aExp, -140, -72);
         console2.log("aExp", aExp);

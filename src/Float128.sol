@@ -1246,7 +1246,8 @@ library Float128 {
             uint r1 = BASE_TO_THE_MAX_DIGITS_M_X_2 % mantissa;
             uint q2 = (BASE_TO_THE_MAX_DIGITS_M * r1) / mantissa;
             uint one_over_argument_in_long_int = q1 * BASE_TO_THE_MAX_DIGITS_M + q2;
-            uint m10 = findNumberOfDigits(uint(one_over_argument_in_long_int));
+            // uint m10 = findNumberOfDigits(uint(one_over_argument_in_long_int));
+            uint m10 = one_over_argument_in_long_int > MAX_76_DIGIT_NUMBER ? 77 : 76; // TODO enable this line and remove the line above
 
             uint one_over_arguments_76 = one_over_argument_in_long_int;
             uint m76 = m10;
