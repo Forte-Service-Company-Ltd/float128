@@ -1226,16 +1226,19 @@ library Float128 {
             mantissa := and(input, MANTISSA_MASK)
             exponent := sub(shr(EXPONENT_BIT, and(input, EXPONENT_MASK)), ZERO_OFFSET)
         }
-        int positiveExp = exponent * -1;
 
-        if (exponent == 0 - int(MAX_DIGITS_L_MINUS_1) && mantissa == int(MIN_L_DIGIT_NUMBER)) return packedFloat.wrap(0);
+        if (
+            exponent == 0 - int(inputL ? MAX_DIGITS_L_MINUS_1 : MAX_DIGITS_M_MINUS_1) &&
+            mantissa == int(inputL ? MIN_L_DIGIT_NUMBER : MIN_M_DIGIT_NUMBER)
+        ) return packedFloat.wrap(0);
         console2.log("inputL", inputL);
         console2.log("mantissa", mantissa);
         console2.log("exponent", exponent);
-        result = ln_helper(mantissa, exponent, inputL, positiveExp);
+        result = ln_helper(mantissa, exponent, inputL);
     }
 
-    function ln_helper(int mantissa, int exp, bool inputL, int positiveExp) internal pure returns (packedFloat result) {
+    function ln_helper(int mantissa, int exp, bool inputL) internal pure returns (packedFloat result) {
+        int positiveExp = exp * -1;
         if ((inputL && int(MAX_DIGITS_L) > positiveExp) || (!inputL && int(MAX_DIGITS_M) > positiveExp)) {
             if (inputL) {
                 mantissa /= int(BASE_TO_THE_DIGIT_DIFF);
@@ -1276,22 +1279,15 @@ library Float128 {
             result = mul(b, ln10);
             console2.log("result", packedFloat.unwrap(result));
         } else {
-            // console2.log("len_mantissa is less or equal than positive exponent");
             int256 m10 = inputL ? int(MAX_DIGITS_L) + exp : int(MAX_DIGITS_M) + exp;
-            // console2.log("m10", m10);
             exp -= m10;
-            // console2.log("exp", exp);
 
-            // int256 m2 = int(DIGIT_DIFF_L_M);
-            // console2.log("m2", m2);
-            mantissa *= int(BASE_TO_THE_DIFF_76_L);
-            // console2.log("mantissa", mantissa);
-            exp = exp - int(DIGIT_DIFF_L_M);
+            mantissa *= int(inputL ? BASE_TO_THE_DIFF_76_L : BASE_TO_THE_MAX_DIGITS_M);
+            exp -= int(inputL ? DIGIT_DIFF_L_M : MAX_DIGITS_M);
             console2.log("exp", exp);
 
             int256 k;
             int256 multiplier_k;
-            // console2.log("multiplier_k", multiplier_k);
             if (mantissa > (25 * (10 ** 74))) {
                 if (mantissa > (50 * (10 ** 74))) {
                     // k = 0;
@@ -1309,10 +1305,8 @@ library Float128 {
                     multiplier_k = 8;
                 }
             }
-            mantissa = mantissa * multiplier_k;
-            // console2.log("mantissa", mantissa);
+            mantissa *= multiplier_k;
             uint256 uMantissa = uint256(mantissa);
-            // console2.log("uMantissa", uMantissa);
 
             int256 q1;
             console2.log("q1", q1);
