@@ -1218,7 +1218,7 @@ library Float128 {
     }
 
     function ln(packedFloat input) public pure returns (packedFloat result) {
-        int mantissa;
+        uint mantissa;
         int exponent;
         bool inputL;
         assembly {
@@ -1229,68 +1229,48 @@ library Float128 {
 
         if (
             exponent == 0 - int(inputL ? MAX_DIGITS_L_MINUS_1 : MAX_DIGITS_M_MINUS_1) &&
-            mantissa == int(inputL ? MIN_L_DIGIT_NUMBER : MIN_M_DIGIT_NUMBER)
+            mantissa == (inputL ? MIN_L_DIGIT_NUMBER : MIN_M_DIGIT_NUMBER)
         ) return packedFloat.wrap(0);
-        console2.log("inputL", inputL);
-        console2.log("mantissa", mantissa);
-        console2.log("exponent", exponent);
         result = ln_helper(mantissa, exponent, inputL);
     }
 
-    function ln_helper(int mantissa, int exp, bool inputL) internal pure returns (packedFloat result) {
+    function ln_helper(uint mantissa, int exp, bool inputL) internal pure returns (packedFloat result) {
         int positiveExp = exp * -1;
         if ((inputL && int(MAX_DIGITS_L) > positiveExp) || (!inputL && int(MAX_DIGITS_M) > positiveExp)) {
             if (inputL) {
-                mantissa /= int(BASE_TO_THE_DIGIT_DIFF);
+                mantissa /= BASE_TO_THE_DIGIT_DIFF;
                 exp += int(DIGIT_DIFF_L_M);
             }
 
-            int q1 = int(BASE_TO_THE_MAX_DIGITS_M_X_2) / mantissa;
-            console2.log("q1", q1);
-            int r1 = int(BASE_TO_THE_MAX_DIGITS_M_X_2) % mantissa;
-            console2.log("r1", r1);
-            int q2 = (int(BASE_TO_THE_MAX_DIGITS_M) * r1) / mantissa;
-            console2.log("q2", q2);
-            uint one_over_argument_in_long_int = uint(q1) * BASE_TO_THE_MAX_DIGITS_M + uint(q2);
-            console2.log("one_over_argument_in_long_int", one_over_argument_in_long_int);
-            int m10 = int(findNumberOfDigits(uint(one_over_argument_in_long_int)));
-            console2.log("m10", m10);
+            uint q1 = BASE_TO_THE_MAX_DIGITS_M_X_2 / mantissa;
+            uint r1 = BASE_TO_THE_MAX_DIGITS_M_X_2 % mantissa;
+            uint q2 = (BASE_TO_THE_MAX_DIGITS_M * r1) / mantissa;
+            uint one_over_argument_in_long_int = q1 * BASE_TO_THE_MAX_DIGITS_M + q2;
+            uint m10 = findNumberOfDigits(uint(one_over_argument_in_long_int));
 
             uint one_over_arguments_76 = one_over_argument_in_long_int;
-            console2.log("one_over_arguments_76", one_over_arguments_76);
-            int m76 = m10;
-            console2.log("m76", m76);
-            if (m76 > 76) {
-                console2.log("m76 > 76");
-                uint extra_digits = uint(m76) - 76;
-                console2.log("extra_digits", extra_digits);
-                m76 = m76 - int(extra_digits);
-                console2.log("m76", m76);
+            uint m76 = m10;
+            if (m76 > MAX_DIGITS_M_X_2) {
+                uint extra_digits = m76 - MAX_DIGITS_M_X_2;
+                m76 = m76 - extra_digits;
                 one_over_arguments_76 = one_over_argument_in_long_int / 10 ** extra_digits;
-                console2.log("one_over_arguments_76", one_over_arguments_76);
             }
-            int exp_one_over_argument = 0 - 38 - 76 - exp;
-            console2.log("exp_one_over_argument", exp_one_over_argument);
+            int exp_one_over_argument = int(0 - MAX_DIGITS_M - MAX_DIGITS_M_X_2) - exp;
 
-            packedFloat a = sub(packedFloat.wrap(0), ln(toPackedFloat(int(one_over_arguments_76), -m76)));
-            console2.log("a", packedFloat.unwrap(a));
-            packedFloat b = sub(a, toPackedFloat((exp_one_over_argument + m10), 0));
-            console2.log("b", packedFloat.unwrap(b));
+            packedFloat a = sub(packedFloat.wrap(0), ln(toPackedFloat(int(one_over_arguments_76), 0 - int(m76))));
+            packedFloat b = sub(a, toPackedFloat((exp_one_over_argument + int(m10)), 0));
             result = mul(b, ln10);
-            console2.log("result", packedFloat.unwrap(result));
         } else {
             int256 m10 = inputL ? int(MAX_DIGITS_L) + exp : int(MAX_DIGITS_M) + exp;
             exp -= m10;
 
-            mantissa *= int(inputL ? BASE_TO_THE_DIFF_76_L : BASE_TO_THE_MAX_DIGITS_M);
+            mantissa *= (inputL ? BASE_TO_THE_DIFF_76_L : BASE_TO_THE_MAX_DIGITS_M);
             exp -= int(inputL ? DIGIT_DIFF_L_M : MAX_DIGITS_M);
-            console2.log("exp", exp);
 
-            int256 k;
-            int256 multiplier_k;
+            uint256 k;
+            uint256 multiplier_k;
             if (mantissa > (25 * (10 ** 74))) {
                 if (mantissa > (50 * (10 ** 74))) {
-                    // k = 0;
                     multiplier_k = 1;
                 } else {
                     k = 1;
@@ -1308,11 +1288,8 @@ library Float128 {
             mantissa *= multiplier_k;
             uint256 uMantissa = uint256(mantissa);
 
-            int256 q1;
-            console2.log("q1", q1);
+            uint256 q1;
             (q1, uMantissa) = calculateQ1(uMantissa);
-            console2.log("q1", q1);
-            console2.log("uMantissa", uMantissa);
 
             // We find the suitable value of q2 and the multiplier (1.014)**q2
             // so that 0.986 <= (1.014)**q2 * updated_x <= 1
@@ -1328,15 +1305,8 @@ library Float128 {
             // 7 ->  9860 * 10**72
             // partition_1014 = [0.9, 0.9072, 0.9199, 0.9328, 0.9459, 0.9591, 0.9725, 0.986, 1]
 
-            int256 q2;
-            console2.log("q2", q2);
+            uint256 q2;
             (q2, uMantissa) = calculateQ2(uMantissa);
-            console2.log("q2", q2);
-            console2.log("uMantissa", uMantissa);
-
-            // Now digits has already been updated
-            // assert digits >= 9860 * 10**72
-            // assert digits <= 10**76
 
             // We find the suitable value of q3 and the multiplier (1.0013)**q3
             // so that 0.9949 <= (1.0013)**q3 * updated_x <= 1
@@ -1352,11 +1322,8 @@ library Float128 {
             // 7 ->  995 * 10**73
             // partition_10013 = [0.986, 0.987274190490, 0.988557646937, 0.989842771878, 0.991129567482, 0.992418035920, 0.993708179366, 0.995, 1]
 
-            int256 q3;
-            console2.log("q3", q3);
+            uint256 q3;
             (q3, uMantissa) = calculateQ3(uMantissa);
-            console2.log("q3", q3);
-            console2.log("uMantissa", uMantissa);
 
             result = intermediateTermAddition(result, k, q1, q2, q3, m10, uMantissa);
         }
@@ -1364,10 +1331,10 @@ library Float128 {
 
     function intermediateTermAddition(
         packedFloat result,
-        int256 k,
-        int256 q1,
-        int256 q2,
-        int256 q3,
+        uint256 k,
+        uint256 q1,
+        uint256 q2,
+        uint256 q3,
         int256 m10,
         uint256 uMantissa
     ) internal pure returns (packedFloat finalResult) {
@@ -1406,28 +1373,28 @@ library Float128 {
 
     function finalTermAddition(
         packedFloat result,
-        int256 k,
-        int256 q1,
-        int256 q2,
-        int256 q3,
+        uint256 k,
+        uint256 q1,
+        uint256 q2,
+        uint256 q3,
         int256 m10,
         packedFloat lnB,
         packedFloat lnC
     ) internal pure returns (packedFloat finalResult) {
-        packedFloat firstTerm = add(result, mul(toPackedFloat(k, 0), ln2));
+        packedFloat firstTerm = add(result, mul(toPackedFloat(int(k), 0), ln2));
 
-        packedFloat secondTerm = add(firstTerm, mul(toPackedFloat(q1, 0), ln1dot1));
+        packedFloat secondTerm = add(firstTerm, mul(toPackedFloat(int(q1), 0), ln1dot1));
 
-        packedFloat thirdTerm = add(secondTerm, mul(toPackedFloat(q2, 0), lnB));
+        packedFloat thirdTerm = add(secondTerm, mul(toPackedFloat(int(q2), 0), lnB));
 
-        packedFloat fourthTerm = add(thirdTerm, mul(toPackedFloat(q3, 0), lnC));
+        packedFloat fourthTerm = add(thirdTerm, mul(toPackedFloat(int(q3), 0), lnC));
 
-        packedFloat fifthTerm = sub(fourthTerm, mul(toPackedFloat(m10, 0), ln10));
+        packedFloat fifthTerm = sub(fourthTerm, mul(toPackedFloat(int(m10), 0), ln10));
 
         finalResult = mul(fifthTerm, toPackedFloat(-1, 0));
     }
 
-    function calculateQ1(uint256 uMantissa) public pure returns (int256 q1, uint256 updatedMantissa) {
+    function calculateQ1(uint256 uMantissa) public pure returns (uint256 q1, uint256 updatedMantissa) {
         if (uMantissa > (68300000 * 10 ** 68)) {
             if (uMantissa > (82000000 * 10 ** 68)) {
                 if (uMantissa > (90000000 * 10 ** 68)) {
@@ -1506,7 +1473,7 @@ library Float128 {
         }
     }
 
-    function calculateQ2(uint256 uMantissa) public pure returns (int256 q2, uint256 updatedMantissa) {
+    function calculateQ2(uint256 uMantissa) public pure returns (uint256 q2, uint256 updatedMantissa) {
         if (uMantissa > (9459 * 10 ** 72)) {
             if (uMantissa > (9725 * 10 ** 72)) {
                 if (uMantissa > 9860 * 10 ** 72) {
@@ -1778,7 +1745,7 @@ library Float128 {
         }
     }
 
-    function calculateQ3(uint256 uMantissa) public pure returns (int256 q3, uint256 updatedMantissa) {
+    function calculateQ3(uint256 uMantissa) public pure returns (uint256 q3, uint256 updatedMantissa) {
         if (uMantissa > (991129567482 * 10 ** 64)) {
             if (uMantissa > (993708179366 * 10 ** 64)) {
                 if (uMantissa > (995 * 10 ** 73)) {
