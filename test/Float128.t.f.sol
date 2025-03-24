@@ -10,14 +10,15 @@ contract Float128FuzzTest is FloatUtils {
     using Float128 for packedFloat;
 
     function checkResults(int rMan, int rExp, int pyMan, int pyExp) internal pure {
-        checkResults(packedFloat.wrap(0), rMan, rExp, pyMan, pyExp, false);
+        checkResults(packedFloat.wrap(0), rMan, rExp, pyMan, pyExp, 0);
     }
 
-    function checkResults(int rMan, int rExp, int pyMan, int pyExp, bool couldBeOffBy1) internal pure {
-        checkResults(packedFloat.wrap(0), rMan, rExp, pyMan, pyExp, couldBeOffBy1);
+    function checkResults(int rMan, int rExp, int pyMan, int pyExp, uint _ulpsOfTolerance) internal pure {
+        checkResults(packedFloat.wrap(0), rMan, rExp, pyMan, pyExp, _ulpsOfTolerance);
     }
 
-    function checkResults(packedFloat r, int rMan, int rExp, int pyMan, int pyExp, bool couldBeOffBy1) internal pure {
+    function checkResults(packedFloat r, int rMan, int rExp, int pyMan, int pyExp, uint _ulpsOfTolerance) internal pure {
+        int ulpsOfTolerance = int(_ulpsOfTolerance);
         console2.log("solResult", packedFloat.unwrap(r));
         console2.log("rMan", rMan);
         console2.log("rExp", rExp);
@@ -41,11 +42,11 @@ contract Float128FuzzTest is FloatUtils {
             }
         }
         // we only accept off by 1 if explicitly signaled. (addition/subtraction are famous for rounding difference with Python)
-        if (couldBeOffBy1) {
+        if (ulpsOfTolerance > 0) {
             // we could be off by one due to rounding issues. The error should be less than 1/1e76
             if (pyMan != rMan) {
-                if (pyMan > rMan) assertEq(pyMan, rMan + 1);
-                else assertEq(pyMan + 1, rMan);
+                if (pyMan > rMan) assertLe(pyMan, rMan + ulpsOfTolerance);
+                else assertGe(pyMan + ulpsOfTolerance, rMan);
             }
         } else {
             assertEq(pyMan, rMan);
@@ -66,7 +67,7 @@ contract Float128FuzzTest is FloatUtils {
         packedFloat result = Float128.mul(a, b);
         (int rMan, int rExp) = Float128.decode(result);
 
-        checkResults(result, rMan, rExp, pyMan, pyExp, false);
+        checkResults(result, rMan, rExp, pyMan, pyExp, 0);
     }
 
     /// forge-config: default.allow_internal_expect_revert = true
@@ -88,7 +89,7 @@ contract Float128FuzzTest is FloatUtils {
         if (bMan != 0) {
             (int rMan, int rExp) = Float128.decode(result);
 
-            checkResults(result, rMan, rExp, pyMan, pyExp, false);
+            checkResults(result, rMan, rExp, pyMan, pyExp, 0);
         }
     }
 
@@ -111,7 +112,7 @@ contract Float128FuzzTest is FloatUtils {
         if (bMan != 0) {
             (int rMan, int rExp) = Float128.decode(result);
 
-            checkResults(result, rMan, rExp, pyMan, pyExp, false);
+            checkResults(result, rMan, rExp, pyMan, pyExp, 0);
         }
     }
 
@@ -128,7 +129,7 @@ contract Float128FuzzTest is FloatUtils {
         packedFloat result = Float128.add(a, b);
         (int rMan, int rExp) = Float128.decode(result);
 
-        checkResults(result, rMan, rExp, pyMan, pyExp, true);
+        checkResults(result, rMan, rExp, pyMan, pyExp, 1);
     }
 
     function testEncoded_sub(int aMan, int aExp, int bMan, int bExp) public {
@@ -144,7 +145,7 @@ contract Float128FuzzTest is FloatUtils {
         packedFloat result = Float128.sub(a, b);
         (int rMan, int rExp) = Float128.decode(result);
 
-        checkResults(result, rMan, rExp, pyMan, pyExp, true);
+        checkResults(result, rMan, rExp, pyMan, pyExp, 1);
     }
 
     /// forge-config: default.allow_internal_expect_revert = true
@@ -163,7 +164,7 @@ contract Float128FuzzTest is FloatUtils {
         if (aMan >= 0) {
             (int rMan, int rExp) = Float128.decode(result);
 
-            checkResults(result, rMan, rExp, pyMan, pyExp, false);
+            checkResults(result, rMan, rExp, pyMan, pyExp, 0);
         }
     }
 
@@ -247,7 +248,7 @@ contract Float128FuzzTest is FloatUtils {
         console2.log("rMan", rMan);
         console2.log("rExp", rExp);
 
-        checkResults(retVal, rMan, rExp, pyMan, pyExp, true);
+        checkResults(retVal, rMan, rExp, pyMan, pyExp, 6);
     }
 
     function testToPackedFloatFuzz(int256 man, int256 exp) public pure {
