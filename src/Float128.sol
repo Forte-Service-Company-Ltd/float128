@@ -1236,7 +1236,7 @@ library Float128 {
 
     function ln_helper(uint mantissa, int exp, bool inputL) internal pure returns (packedFloat result) {
         int positiveExp = exp * -1;
-        if ((inputL && int(MAX_DIGITS_L) > positiveExp)) {
+        if ((inputL && int(MAX_DIGITS_L) > positiveExp) || (!inputL && int(MAX_DIGITS_M) > positiveExp)) {
             if (inputL) {
                 mantissa /= BASE_TO_THE_DIGIT_DIFF;
                 exp += int(DIGIT_DIFF_L_M);
