@@ -59,7 +59,6 @@ library Float128 {
     int constant MAXIMUM_EXPONENT = -18; // guarantees all results will have at least 18 decimals in the M size. Autoscales to L if necessary
 
     // ln specific variables
-    int constant M = 38; // number of digits of precision that we work with.
 
     // ln(2) from Wolfram
     // 0.6931471805599453094172321214581765680755001343602552541206800094933936219696947
