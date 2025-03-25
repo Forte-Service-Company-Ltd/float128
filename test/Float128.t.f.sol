@@ -228,7 +228,7 @@ contract Float128FuzzTest is FloatUtils {
         assertEq(retVal, pyRes);
     }
 
-    function testLnpackedFloatFuzz(int aMan, int aExp, int bMan, int bExp) public {
+    function testLnpackedFloatFuzz(int aMan, int aExp) public {
         aMan = bound(aMan, 1, 999999999999999999999999999999999999999999999999999999999999999999999999);
         console2.log("aMan", aMan);
         aExp = bound(aExp, -140, 0);

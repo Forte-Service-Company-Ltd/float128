@@ -717,7 +717,6 @@ library Float128 {
         uint x;
         uint aMan;
         uint256 roundedDownResult;
-        bool Loperation;
         bool aL;
         assembly {
             if and(a, MANTISSA_SIGN_MASK) {
@@ -734,7 +733,6 @@ library Float128 {
             aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
             aMan := and(a, MANTISSA_MASK)
             aExp := shr(EXPONENT_BIT, and(a, EXPONENT_MASK))
-            // Loperation := and(gt(aExp, 1), aL)
         }
 
         if ((aL && aExp > int(ZERO_OFFSET) - int(DIGIT_DIFF_L_M - 1)) || (!aL && aExp > int(ZERO_OFFSET) - int(MAX_DIGITS_M / 2 - 1))) {
