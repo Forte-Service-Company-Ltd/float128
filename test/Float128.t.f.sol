@@ -10,14 +10,15 @@ contract Float128FuzzTest is FloatUtils {
     using Float128 for packedFloat;
 
     function checkResults(int rMan, int rExp, int pyMan, int pyExp) internal pure {
-        checkResults(packedFloat.wrap(0), rMan, rExp, pyMan, pyExp, false);
+        checkResults(packedFloat.wrap(0), rMan, rExp, pyMan, pyExp, 0);
     }
 
-    function checkResults(int rMan, int rExp, int pyMan, int pyExp, bool couldBeOffBy1) internal pure {
-        checkResults(packedFloat.wrap(0), rMan, rExp, pyMan, pyExp, couldBeOffBy1);
+    function checkResults(int rMan, int rExp, int pyMan, int pyExp, uint _ulpsOfTolerance) internal pure {
+        checkResults(packedFloat.wrap(0), rMan, rExp, pyMan, pyExp, _ulpsOfTolerance);
     }
 
-    function checkResults(packedFloat r, int rMan, int rExp, int pyMan, int pyExp, bool couldBeOffBy1) internal pure {
+    function checkResults(packedFloat r, int rMan, int rExp, int pyMan, int pyExp, uint _ulpsOfTolerance) internal pure {
+        int ulpsOfTolerance = int(_ulpsOfTolerance);
         console2.log("solResult", packedFloat.unwrap(r));
         console2.log("rMan", rMan);
         console2.log("rExp", rExp);
@@ -41,11 +42,11 @@ contract Float128FuzzTest is FloatUtils {
             }
         }
         // we only accept off by 1 if explicitly signaled. (addition/subtraction are famous for rounding difference with Python)
-        if (couldBeOffBy1) {
+        if (ulpsOfTolerance > 0) {
             // we could be off by one due to rounding issues. The error should be less than 1/1e76
             if (pyMan != rMan) {
-                if (pyMan > rMan) assertEq(pyMan, rMan + 1);
-                else assertEq(pyMan + 1, rMan);
+                if (pyMan > rMan) assertLe(pyMan, rMan + ulpsOfTolerance);
+                else assertGe(pyMan + ulpsOfTolerance, rMan);
             }
         } else {
             assertEq(pyMan, rMan);
@@ -66,7 +67,7 @@ contract Float128FuzzTest is FloatUtils {
         packedFloat result = Float128.mul(a, b);
         (int rMan, int rExp) = Float128.decode(result);
 
-        checkResults(result, rMan, rExp, pyMan, pyExp, false);
+        checkResults(result, rMan, rExp, pyMan, pyExp, 0);
     }
 
     /// forge-config: default.allow_internal_expect_revert = true
@@ -88,7 +89,7 @@ contract Float128FuzzTest is FloatUtils {
         if (bMan != 0) {
             (int rMan, int rExp) = Float128.decode(result);
 
-            checkResults(result, rMan, rExp, pyMan, pyExp, false);
+            checkResults(result, rMan, rExp, pyMan, pyExp, 0);
         }
     }
 
@@ -111,7 +112,7 @@ contract Float128FuzzTest is FloatUtils {
         if (bMan != 0) {
             (int rMan, int rExp) = Float128.decode(result);
 
-            checkResults(result, rMan, rExp, pyMan, pyExp, false);
+            checkResults(result, rMan, rExp, pyMan, pyExp, 0);
         }
     }
 
@@ -128,7 +129,7 @@ contract Float128FuzzTest is FloatUtils {
         packedFloat result = Float128.add(a, b);
         (int rMan, int rExp) = Float128.decode(result);
 
-        checkResults(result, rMan, rExp, pyMan, pyExp, true);
+        checkResults(result, rMan, rExp, pyMan, pyExp, 1);
     }
 
     function testEncoded_sub(int aMan, int aExp, int bMan, int bExp) public {
@@ -144,7 +145,7 @@ contract Float128FuzzTest is FloatUtils {
         packedFloat result = Float128.sub(a, b);
         (int rMan, int rExp) = Float128.decode(result);
 
-        checkResults(result, rMan, rExp, pyMan, pyExp, true);
+        checkResults(result, rMan, rExp, pyMan, pyExp, 1);
     }
 
     /// forge-config: default.allow_internal_expect_revert = true
@@ -163,7 +164,7 @@ contract Float128FuzzTest is FloatUtils {
         if (aMan >= 0) {
             (int rMan, int rExp) = Float128.decode(result);
 
-            checkResults(result, rMan, rExp, pyMan, pyExp, false);
+            checkResults(result, rMan, rExp, pyMan, pyExp, 0);
         }
     }
 
@@ -225,6 +226,26 @@ contract Float128FuzzTest is FloatUtils {
         (int pyMan, ) = abi.decode((res), (int256, int256));
         bool pyRes = pyMan > 0;
         assertEq(retVal, pyRes);
+    }
+
+    function testLnpackedFloatFuzz(int aMan, int aExp) public {
+        aMan = bound(aMan, 1, 999999999999999999999999999999999999999999999999999999999999999999999999);
+        console2.log("aMan", aMan);
+        aExp = bound(aExp, -140, 0);
+        console2.log("aExp", aExp);
+        packedFloat a = Float128.toPackedFloat(aMan, aExp);
+
+        packedFloat retVal = Float128.ln(a);
+
+        // Creating the float struct to normalize the mantissas and exponents before doing the comparison
+        string[] memory inputs = _buildFFIMul128(aMan, aExp, 0, 0, "ln", 0);
+        bytes memory res = vm.ffi(inputs);
+        (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
+        (int rMan, int rExp) = Float128.decode(retVal);
+        console2.log("rMan", rMan);
+        console2.log("rExp", rExp);
+
+        checkResults(retVal, rMan, rExp, pyMan, pyExp, 7);
     }
 
     function testToPackedFloatFuzz(int256 man, int256 exp) public pure {
@@ -300,8 +321,9 @@ contract Float128FuzzTest is FloatUtils {
         int exponent = -84;
         int expectedResultMantissa = -28712638366447213800267852694553857212;
         int expectedResultExp = -36;
+        packedFloat a = Float128.toPackedFloat(mantissa, exponent);
 
-        packedFloat retVal = Float128.ln(mantissa, exponent);
+        packedFloat retVal = Float128.ln(a);
         (int mantissaF, int exponentF) = Float128.decode(retVal);
         assertEq(mantissaF, expectedResultMantissa);
         assertEq(exponentF, expectedResultExp);
@@ -313,21 +335,37 @@ contract Float128FuzzTest is FloatUtils {
         int exponent = -72;
         int expectedResultMantissa = -86956614316348604164580027803497950664;
         int expectedResultExp = -38;
+        packedFloat a = Float128.toPackedFloat(mantissa, exponent);
 
-        packedFloat retVal = Float128.ln(mantissa, exponent);
+        packedFloat retVal = Float128.ln(a);
         (int mantissaF, int exponentF) = Float128.decode(retVal);
         assertEq(mantissaF, expectedResultMantissa);
         assertEq(exponentF, expectedResultExp);
     }
 
-    function testLNCaseThree() public pure {   
+    function testLNCaseThree() public pure {
         // Test Case 3:
-        int mantissa = 471738548555985204842829168083810940950366912454141453216936305944405297084;
-        int exponent = -76;
+        int mantissa = 471738548555985204842829168083810940950366912454141453216936305944405297;
+        int exponent = -73;
         int expectedResultMantissa = -30539154624132792807849865290472860264;
         int expectedResultExp = -37;
+        packedFloat a = Float128.toPackedFloat(mantissa, exponent);
 
-        packedFloat retVal = Float128.ln(mantissa, exponent);
+        packedFloat retVal = Float128.ln(a);
+        (int mantissaF, int exponentF) = Float128.decode(retVal);
+        assertEq(mantissaF, expectedResultMantissa);
+        assertEq(exponentF, expectedResultExp);
+    }
+
+    function testLNCaseFour() public pure {
+        // Test Case 1:
+        int mantissa = 100000000000000000000000000000000000000000000000000000000000000000000000;
+        int exponent = -71;
+        int expectedResultMantissa = 0;
+        int expectedResultExp = -8192;
+        packedFloat a = Float128.toPackedFloat(mantissa, exponent);
+
+        packedFloat retVal = Float128.ln(a);
         (int mantissaF, int exponentF) = Float128.decode(retVal);
         assertEq(mantissaF, expectedResultMantissa);
         assertEq(exponentF, expectedResultExp);
