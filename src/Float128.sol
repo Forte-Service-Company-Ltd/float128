@@ -2,7 +2,6 @@
 pragma solidity 0.8.24;
 
 import {Uint512} from "./lib/Uint512.sol";
-import "forge-std/console2.sol";
 
 /**
  * @title Floating point Library base 10 with 38 digits signed
@@ -1250,7 +1249,6 @@ library Float128 {
             if (m76 > MAX_DIGITS_M_X_2) {
                 --m76;
                 one_over_arguments_76 = one_over_argument_in_long_int / BASE;
-                console2.log("one_over_arguments_76", one_over_arguments_76);
             }
             int exp_one_over_argument = 0 - int(MAX_DIGITS_M) - int(MAX_DIGITS_M_X_2) - exp;
 
