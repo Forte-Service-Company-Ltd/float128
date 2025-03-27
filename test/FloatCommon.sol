@@ -11,7 +11,7 @@ contract FloatCommon is FloatUtils {
 
     int constant ZERO_OFFSET_NEG = -8192;
 
-    function testEncoded_mul_zero(int bMan, int bExp) public {
+    function testEncoded_mul_zero(int bMan, int bExp) public pure {
         (bMan, bExp) = setBounds(bMan, bExp);
         // check when a == 0
         int aMan = 0;
@@ -79,7 +79,7 @@ contract FloatCommon is FloatUtils {
         assertEq(rExp, ZERO_OFFSET_NEG,"Solidity result is not zero");
     }
 
-    function testEncoded_add_zero(int bMan, int bExp) public {
+    function testEncoded_add_zero(int bMan, int bExp) public pure {
         (bMan, bExp) = setBounds(bMan, bExp);
         int aMan = 0;
         int aExp = ZERO_OFFSET_NEG;
@@ -117,7 +117,7 @@ contract FloatCommon is FloatUtils {
         assertEq(rExp, aExp,"Solidity result is not consistent with zero rules");
     }
 
-    function testEncoded_sub_zero(int bMan, int bExp) public {
+    function testEncoded_sub_zero(int bMan, int bExp) public pure {
         (bMan, bExp) = setBounds(bMan, bExp);
         int aMan = 0;
         int aExp = ZERO_OFFSET_NEG;
@@ -151,7 +151,7 @@ contract FloatCommon is FloatUtils {
     }
 
     /// forge-config: default.allow_internal_expect_revert = true
-    function testEncoded_sqrt_0() public {
+    function testEncoded_sqrt_0() public pure {
         packedFloat a = Float128.toPackedFloat(0, ZERO_OFFSET_NEG);
 
         // sqrt of 0 = 0
