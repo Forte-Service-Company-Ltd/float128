@@ -10,7 +10,7 @@ import {packedFloat} from "./Types.sol";
  * @author Inspired by a Python proposal by @miguel-ot and refined/implemented in Solidity by @oscarsernarosero @Palmerg4
  */
 
-library Float128 {
+library Ln {
     uint constant MANTISSA_MASK = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
     uint constant MANTISSA_SIGN_MASK = 0x1000000000000000000000000000000000000000000000000000000000000;
     uint constant MANTISSA_L_FLAG_MASK = 0x2000000000000000000000000000000000000000000000000000000000000;
@@ -50,6 +50,34 @@ library Float128 {
     uint constant MAX_76_DIGIT_NUMBER = 9999999999999999999999999999999999999999999999999999999999999999999999999999;
     int constant MAXIMUM_EXPONENT = -18; // guarantees all results will have at least 18 decimals in the M size. Autoscales to L if necessary
 
+      // ln specific variables
+
+    // ln(2) from Wolfram
+    // 0.6931471805599453094172321214581765680755001343602552541206800094933936219696947
+
+    // ln(1.1) from Wolfram
+    // 0.095310179804324860043952123280765092220605365308644199185239808163001014
+
+    int constant ln10_70 = 23025850929940456840179914546843642076011014886287729760333279009675726;
+    int constant ln2_70 = 6931471805599453094172321214581765680755001343602552541206800094933936;
+    int constant ln1dot1_70 = 953101798043248600439521232807650922206053653086441991852398081630010;
+    int constant ln1dot01_70 = 99503308531680828482153575442607416886796099400587978646095597668666;
+    int constant ln1dot001_70 = 9995003330835331668093989205350114607550623931665519970196668289003;
+
+    // ln10, ln2 and ln1.1 represented as integers with M significant digits
+    int constant ln10_M = ln10_70 / int(10 ** (uint(70 - MAX_DIGITS_M + 1)));
+    int constant ln2_M = ln2_70 / int(10 ** (uint(70 - MAX_DIGITS_M)));
+    int constant ln1dot1_M = ln1dot1_70 / int(10 ** (uint(70 - MAX_DIGITS_M - 1)));
+    int constant ln1dot01_M = ln1dot01_70 / int(10 ** (uint(70 - MAX_DIGITS_M - 2)));
+    int constant ln1dot001_M = ln1dot001_70 / int(10 ** (uint(70 - MAX_DIGITS_M - 3)));
+
+    // ln10, ln2 and ln1.1 represented as float128
+    packedFloat constant ln10 = packedFloat.wrap(57634551253070896831007164474234001986315550567012630870766974200712100735196);
+    packedFloat constant ln2 = packedFloat.wrap(57627483864811783293688831284231030312298529498551182469036031073505904270823);
+    packedFloat constant ln1dot1 = packedFloat.wrap(57620416476552669756370498094228058638261215024712010322305773559835681227132);
+    packedFloat constant ln1dot01 = packedFloat.wrap(57613349088293556219052164904225086964202098217851863814911488587192353072694);
+    packedFloat constant ln1dot001 = packedFloat.wrap(57606281700034442681733831714222115290139235007041033827277788478998076322779);
+
     /**
      * @dev adds 2 signed floating point numbers
      * @param a the first addend
@@ -57,7 +85,7 @@ library Float128 {
      * @return r the result of a + b
      * @notice this version of the function uses only the packedFloat type
      */
-    function add(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
+    function add(packedFloat a, packedFloat b) private pure returns (packedFloat r) {
         uint addition;
         bool isSubtraction;
         bool sameExponent;
@@ -180,7 +208,8 @@ library Float128 {
             if (isSubtraction) {
                 // subtraction case can have a number of digits anywhere from 1 to 76
                 // we might get a normalized result, so we only normalize if necessary
-                if (!((addition <= MAX_M_DIGIT_NUMBER && addition >= MIN_M_DIGIT_NUMBER) ||
+                if (
+                    !((addition <= MAX_M_DIGIT_NUMBER && addition >= MIN_M_DIGIT_NUMBER) ||
                         (addition <= MAX_L_DIGIT_NUMBER && addition >= MIN_L_DIGIT_NUMBER))
                 ) {
                     uint digitsMantissa = findNumberOfDigits(addition);
@@ -242,7 +271,7 @@ library Float128 {
      * @return r the result of a - b
      * @notice this version of the function uses only the packedFloat type
      */
-    function sub(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
+    function sub(packedFloat a, packedFloat b) private pure returns (packedFloat r) {
         uint addition;
         bool isSubtraction;
         bool sameExponent;
@@ -372,7 +401,8 @@ library Float128 {
             if (isSubtraction) {
                 // subtraction case can have a number of digits anywhere from 1 to 76
                 // we might get a normalized result, so we only normalize if necessary
-                if (!((addition <= MAX_M_DIGIT_NUMBER && addition >= MIN_M_DIGIT_NUMBER) ||
+                if (
+                    !((addition <= MAX_M_DIGIT_NUMBER && addition >= MIN_M_DIGIT_NUMBER) ||
                         (addition <= MAX_L_DIGIT_NUMBER && addition >= MIN_L_DIGIT_NUMBER))
                 ) {
                     uint digitsMantissa = findNumberOfDigits(addition);
@@ -434,7 +464,7 @@ library Float128 {
      * @return r the result of a * b
      * @notice this version of the function uses only the packedFloat type
      */
-    function mul(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
+    function mul(packedFloat a, packedFloat b) private pure returns (packedFloat r) {
         uint rMan;
         uint rExp;
         uint r0;
@@ -541,7 +571,7 @@ library Float128 {
      * @return r the result of a / b
      * @notice this version of the function uses only the packedFloat type
      */
-    function div(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
+    function div(packedFloat a, packedFloat b) private pure returns (packedFloat r) {
         r = div(a, b, false);
     }
 
@@ -552,7 +582,7 @@ library Float128 {
      * @return r the result of a / b
      * @notice this version of the function uses only the packedFloat type
      */
-    function divL(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
+    function divL(packedFloat a, packedFloat b) private pure returns (packedFloat r) {
         r = div(a, b, true);
     }
 
@@ -563,7 +593,7 @@ library Float128 {
      * @return r the result of a / b
      * @notice this version of the function uses only the packedFloat type
      */
-    function div(packedFloat a, packedFloat b, bool rL) internal pure returns (packedFloat r) {
+    function div(packedFloat a, packedFloat b, bool rL) private pure returns (packedFloat r) {
         assembly {
             if eq(and(b, MANTISSA_MASK), 0) {
                 let ptr := mload(0x40) // Get free memory pointer
@@ -673,7 +703,7 @@ library Float128 {
      * @return r the result of √a
      * @notice this version of the function uses only the packedFloat type
      */
-    function sqrt(packedFloat a) internal pure returns (packedFloat r) {
+    function sqrt(packedFloat a) private pure returns (packedFloat r) {
         uint s;
         int aExp;
         uint x;
@@ -815,7 +845,7 @@ library Float128 {
      * @return retVal the result of a < b
      * @notice this version of the function uses only the packedFloat type
      */
-    function lt(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
+    function lt(packedFloat a, packedFloat b) private pure returns (bool retVal) {
         if (packedFloat.unwrap(a) == packedFloat.unwrap(b)) return false;
         assembly {
             let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
@@ -873,7 +903,7 @@ library Float128 {
      * @return retVal the result of a <= b
      * @notice this version of the function uses only the packedFloat type
      */
-    function le(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
+    function le(packedFloat a, packedFloat b) private pure returns (bool retVal) {
         if (packedFloat.unwrap(a) == packedFloat.unwrap(b)) return true;
         assembly {
             let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
@@ -931,7 +961,7 @@ library Float128 {
      * @return retVal the result of a > b
      * @notice this version of the function uses only the packedFloat type
      */
-    function gt(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
+    function gt(packedFloat a, packedFloat b) private pure returns (bool retVal) {
         if (packedFloat.unwrap(a) == packedFloat.unwrap(b)) return false;
         assembly {
             let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
@@ -989,7 +1019,7 @@ library Float128 {
      * @return retVal the result of a >= b
      * @notice this version of the function uses only the packedFloat type
      */
-    function ge(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
+    function ge(packedFloat a, packedFloat b) private pure returns (bool retVal) {
         if (packedFloat.unwrap(a) == packedFloat.unwrap(b)) return true;
         assembly {
             let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
@@ -1047,7 +1077,7 @@ library Float128 {
      * @return retVal the result of a == b
      * @notice this version of the function uses only the packedFloat type
      */
-    function eq(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
+    function eq(packedFloat a, packedFloat b) private pure returns (bool retVal) {
         retVal = packedFloat.unwrap(a) == packedFloat.unwrap(b);
     }
 
@@ -1060,7 +1090,7 @@ library Float128 {
      * @return float the encoded number. This value will ocupy a single 256-bit word and will hold the normalized
      * version of the floating-point number (shifts the exponent enough times to have exactly 38 significant digits)
      */
-    function toPackedFloat(int mantissa, int exponent) internal pure returns (packedFloat float) {
+    function toPackedFloat(int mantissa, int exponent) private pure returns (packedFloat float) {
         uint digitsMantissa;
         uint mantissaMultiplier;
         // we start by extracting the sign of the mantissa
@@ -1072,7 +1102,8 @@ library Float128 {
                 }
             }
             // we normalize only if necessary
-            if (!((mantissa <= int(MAX_M_DIGIT_NUMBER) && mantissa >= int(MIN_M_DIGIT_NUMBER)) ||
+            if (
+                !((mantissa <= int(MAX_M_DIGIT_NUMBER) && mantissa >= int(MIN_M_DIGIT_NUMBER)) ||
                     (mantissa <= int(MAX_L_DIGIT_NUMBER) && mantissa >= int(MIN_L_DIGIT_NUMBER)))
             ) {
                 digitsMantissa = findNumberOfDigits(uint(mantissa));
@@ -1116,7 +1147,7 @@ library Float128 {
      * @return mantissa the 38 mantissa digits of the floating-point number
      * @return exponent the exponent of the floating-point number
      */
-    function decode(packedFloat float) internal pure returns (int mantissa, int exponent) {
+    function decode(packedFloat float) private pure returns (int mantissa, int exponent) {
         assembly {
             // exponent
             let _exp := shr(EXPONENT_BIT, float)
@@ -1140,7 +1171,7 @@ library Float128 {
      * @param x the number
      * @return log the amount of digits of x
      */
-    function findNumberOfDigits(uint x) internal pure returns (uint log) {
+    function findNumberOfDigits(uint x) private pure returns (uint log) {
         assembly {
             if gt(x, 0) {
                 if gt(x, 9999999999999999999999999999999999999999999999999999999999999999) {
@@ -1171,6 +1202,870 @@ library Float128 {
                     log := add(log, 1)
                 }
                 log := add(log, 1)
+            }
+        }
+    }
+
+    function ln(packedFloat input) public pure returns (packedFloat result) {
+        uint mantissa;
+        int exponent;
+        bool inputL;
+        assembly {
+            inputL := gt(and(input, MANTISSA_L_FLAG_MASK), 0)
+            mantissa := and(input, MANTISSA_MASK)
+            exponent := sub(shr(EXPONENT_BIT, and(input, EXPONENT_MASK)), ZERO_OFFSET)
+        }
+
+        if (
+            exponent == 0 - int(inputL ? MAX_DIGITS_L_MINUS_1 : MAX_DIGITS_M_MINUS_1) &&
+            mantissa == (inputL ? MIN_L_DIGIT_NUMBER : MIN_M_DIGIT_NUMBER)
+        ) return packedFloat.wrap(0);
+        result = ln_helper(mantissa, exponent, inputL);
+    }
+
+    function ln_helper(uint mantissa, int exp, bool inputL) private pure returns (packedFloat result) {
+        int positiveExp = exp * -1;
+        if ((inputL && int(MAX_DIGITS_L) > positiveExp) || (!inputL && int(MAX_DIGITS_M) > positiveExp)) {
+            if (inputL) {
+                mantissa /= BASE_TO_THE_DIGIT_DIFF;
+                exp += int(DIGIT_DIFF_L_M);
+            }
+
+            uint q1 = BASE_TO_THE_MAX_DIGITS_M_X_2 / mantissa;
+            uint r1 = BASE_TO_THE_MAX_DIGITS_M_X_2 % mantissa;
+            uint q2 = (BASE_TO_THE_MAX_DIGITS_M * r1) / mantissa;
+            uint one_over_argument_in_long_int = q1 * BASE_TO_THE_MAX_DIGITS_M + q2;
+            uint m10 = one_over_argument_in_long_int > MAX_76_DIGIT_NUMBER ? 77 : 76;
+
+            uint one_over_arguments_76 = one_over_argument_in_long_int;
+            uint m76 = m10;
+            if (m76 > MAX_DIGITS_M_X_2) {
+                --m76;
+                one_over_arguments_76 = one_over_argument_in_long_int / BASE;
+            }
+            int exp_one_over_argument = 0 - int(MAX_DIGITS_M) - int(MAX_DIGITS_M_X_2) - exp;
+
+            packedFloat a = sub(packedFloat.wrap(0), ln(toPackedFloat(int(one_over_arguments_76), 0 - int(m76))));
+            result = sub(a, mul(toPackedFloat((exp_one_over_argument + int(m10)), 0), ln10));
+        } else {
+            int256 m10 = inputL ? int(MAX_DIGITS_L) + exp : int(MAX_DIGITS_M) + exp;
+            exp -= m10;
+
+            mantissa *= (inputL ? BASE_TO_THE_DIFF_76_L : BASE_TO_THE_MAX_DIGITS_M);
+            exp -= int(inputL ? DIGIT_DIFF_L_M : MAX_DIGITS_M);
+
+            uint256 k;
+            uint256 multiplier_k;
+            if (mantissa > (25 * (10 ** 74))) {
+                if (mantissa > (50 * (10 ** 74))) {
+                    multiplier_k = 1;
+                } else {
+                    k = 1;
+                    multiplier_k = 2;
+                }
+            } else {
+                if (mantissa > (125 * 10 ** 73)) {
+                    k = 2;
+                    multiplier_k = 4;
+                } else {
+                    k = 3;
+                    multiplier_k = 8;
+                }
+            }
+            mantissa *= multiplier_k;
+            uint uMantissa = mantissa;
+
+            uint256 q1;
+            (q1, uMantissa) = calculateQ1(uMantissa);
+
+            // We find the suitable value of q2 and the multiplier (1.014)**q2
+            // so that 0.986 <= (1.014)**q2 * updated_x <= 1
+            // We use the following intervals:
+            // (index -> lower bound of the interval)
+            // 0 ->  9 * 10**75
+            // 1 ->  9072 * 10**72
+            // 2 ->  9199 * 10**72
+            // 3 ->  9328 * 10**72
+            // 4 ->  9459 * 10**72
+            // 5 ->  9591 * 10**72
+            // 6 ->  9725 * 10**72
+            // 7 ->  9860 * 10**72
+            // partition_1014 = [0.9, 0.9072, 0.9199, 0.9328, 0.9459, 0.9591, 0.9725, 0.986, 1]
+
+            uint256 q2;
+            (q2, uMantissa) = calculateQ2(uMantissa);
+
+            // We find the suitable value of q3 and the multiplier (1.0013)**q3
+            // so that 0.9949 <= (1.0013)**q3 * updated_x <= 1
+            // We use the following intervals:
+            // (index -> lower bound of the interval)
+            // 0 ->  986 * 10**73
+            // 1 ->  987274190490 * 10**64
+            // 2 ->  988557646937 * 10**64
+            // 3 ->  989842771878 * 10**64
+            // 4 ->  991129567482 * 10**64
+            // 5 ->  992418035920 * 10**64
+            // 6 ->  993708179366 * 10**64
+            // 7 ->  995 * 10**73
+            // partition_10013 = [0.986, 0.987274190490, 0.988557646937, 0.989842771878, 0.991129567482, 0.992418035920, 0.993708179366, 0.995, 1]
+
+            uint256 q3;
+            (q3, uMantissa) = calculateQ3(uMantissa);
+
+            result = intermediateTermAddition(result, k, q1, q2, q3, m10, uMantissa);
+        }
+    }
+
+    function intermediateTermAddition(
+        packedFloat result,
+        uint256 k,
+        uint256 q1,
+        uint256 q2,
+        uint256 q3,
+        int256 m10,
+        uint256 mantissa
+    ) private pure returns (packedFloat finalResult) {
+        // Now digits has already been updated
+        int z_int = 10 ** 76 - int(mantissa);
+        int len_z_int = int(findNumberOfDigits(uint(z_int)));
+        if (z_int != 0) {
+            int diff = len_z_int - 38;
+            z_int = diff < 0 ? int(uint(z_int) * 10 ** uint(diff * -1)) : int(uint(z_int) / 10 ** uint(diff));
+        }
+
+        packedFloat z = toPackedFloat(z_int, (len_z_int - 76 - 38));
+
+        // Number of terms of the Taylor series:
+        int terms = 15;
+        result = z;
+        packedFloat z_to_j = z;
+        for (uint j = 2; j < uint(terms + 1); j++) {
+            z_to_j = mul(z_to_j, z);
+            result = add(result, div(z_to_j, toPackedFloat(int(j), int(0))));
+        }
+
+        packedFloat lnB = toPackedFloat(13902905168991420865477877458246859530, -39);
+        packedFloat lnC = toPackedFloat(12991557316200501157605555658804528711, -40);
+
+        finalResult = finalTermAddition(result, k, q1, q2, q3, m10, lnB, lnC);
+    }
+
+    function finalTermAddition(
+        packedFloat result,
+        uint256 k,
+        uint256 q1,
+        uint256 q2,
+        uint256 q3,
+        int256 m10,
+        packedFloat lnB,
+        packedFloat lnC
+    ) private pure returns (packedFloat finalResult) {
+        packedFloat firstTerm = add(result, mul(toPackedFloat(int(k), 0), ln2));
+
+        packedFloat secondTerm = add(firstTerm, mul(toPackedFloat(int(q1), 0), ln1dot1));
+
+        packedFloat thirdTerm = add(secondTerm, mul(toPackedFloat(int(q2), 0), lnB));
+
+        packedFloat fourthTerm = add(thirdTerm, mul(toPackedFloat(int(q3), 0), lnC));
+
+        packedFloat fifthTerm = sub(fourthTerm, mul(toPackedFloat(int(m10), 0), ln10));
+
+        finalResult = mul(fifthTerm, toPackedFloat(-1, 0));
+    }
+
+    function calculateQ1(uint256 mantissa) public pure returns (uint256 q1, uint256 updatedMantissa) {
+        if (mantissa > (68300000 * 10 ** 68)) {
+            if (mantissa > (82000000 * 10 ** 68)) {
+                if (mantissa > (90000000 * 10 ** 68)) {
+                    q1 = 0;
+                    // multiplier_q1
+                    updatedMantissa = mantissa;
+                } else {
+                    q1 = 1;
+                    updatedMantissa = mantissa + mantissa / 10;
+                }
+            } else {
+                if (mantissa > (75000000 * 10 ** 68)) {
+                    q1 = 2;
+                    updatedMantissa = mantissa + (2 * mantissa) / 10 + mantissa / 100;
+                } else {
+                    q1 = 3;
+                    updatedMantissa = mantissa + (3 * mantissa) / 10 + (3 * mantissa) / 100 + mantissa / 1000;
+                }
+            }
+        } else {
+            if (mantissa > (56400000 * 10 ** 68)) {
+                if (mantissa > (62000000 * 10 ** 68)) {
+                    q1 = 4;
+                    updatedMantissa = mantissa + (4 * mantissa) / 10 + (6 * mantissa) / 100 + (4 * mantissa) / 1000 + mantissa / 10000;
+                } else {
+                    q1 = 5;
+                    updatedMantissa =
+                        mantissa +
+                        (6 * mantissa) /
+                        10 +
+                        (1 * mantissa) /
+                        100 +
+                        (5 * mantissa) /
+                        10000 +
+                        (1 * mantissa) /
+                        100000;
+                }
+            } else {
+                if (mantissa > (51200000 * 10 ** 68)) {
+                    q1 = 6;
+                    updatedMantissa =
+                        mantissa +
+                        (7 * mantissa) /
+                        10 +
+                        (7 * mantissa) /
+                        100 +
+                        (1 * mantissa) /
+                        1000 +
+                        (5 * mantissa) /
+                        10000 +
+                        (6 * mantissa) /
+                        100000 +
+                        (1 * mantissa) /
+                        1000000;
+                } else {
+                    q1 = 7;
+                    // multiplier_q1 = 1.1 ** 7 # = 1.9487171
+                    updatedMantissa =
+                        mantissa +
+                        (9 * mantissa) /
+                        10 +
+                        (4 * mantissa) /
+                        100 +
+                        (8 * mantissa) /
+                        1000 +
+                        (7 * mantissa) /
+                        10000 +
+                        (1 * mantissa) /
+                        100000 +
+                        (7 * mantissa) /
+                        1000000 +
+                        (1 * mantissa) /
+                        10000000;
+                }
+            }
+        }
+    }
+
+    function calculateQ2(uint256 mantissa) public pure returns (uint256 q2, uint256 updatedMantissa) {
+        if (mantissa > (9459 * 10 ** 72)) {
+            if (mantissa > (9725 * 10 ** 72)) {
+                if (mantissa > 9860 * 10 ** 72) {
+                    q2 = 0;
+                    // multiplier_q2 = 1
+                    updatedMantissa = mantissa;
+                } else {
+                    q2 = 1;
+                    updatedMantissa = mantissa + (1 * mantissa) / 100 + (4 * mantissa) / 1000;
+                }
+            } else {
+                if (mantissa > (9591 * 10 ** 72)) {
+                    q2 = 2;
+                    // multiplier_q2 = 1.028196
+                    updatedMantissa =
+                        mantissa +
+                        (2 * mantissa) /
+                        100 +
+                        (8 * mantissa) /
+                        1000 +
+                        (1 * mantissa) /
+                        10000 +
+                        (9 * mantissa) /
+                        100000 +
+                        (6 * mantissa) /
+                        1000000;
+                } else {
+                    q2 = 3;
+                    // multiplier_q2 = 1.042590744
+                    updatedMantissa =
+                        mantissa +
+                        (4 * mantissa) /
+                        100 +
+                        (2 * mantissa) /
+                        1000 +
+                        (5 * mantissa) /
+                        10000 +
+                        (9 * mantissa) /
+                        100000 +
+                        (0 * mantissa) /
+                        1000000 +
+                        (7 * mantissa) /
+                        10000000 +
+                        (4 * mantissa) /
+                        100000000 +
+                        (4 * mantissa) /
+                        1000000000;
+                }
+            }
+        } else {
+            if (mantissa > (9199 * 10 ** 72)) {
+                if (mantissa > (9328 * 10 ** 72)) {
+                    q2 = 4;
+                    // multiplier_q2 = 1.057187014416
+                    updatedMantissa =
+                        mantissa +
+                        (5 * mantissa) /
+                        100 +
+                        (7 * mantissa) /
+                        1000 +
+                        (1 * mantissa) /
+                        10000 +
+                        (8 * mantissa) /
+                        100000 +
+                        (7 * mantissa) /
+                        1000000 +
+                        (0 * mantissa) /
+                        10000000 +
+                        (1 * mantissa) /
+                        100000000 +
+                        (4 * mantissa) /
+                        1000000000 +
+                        (4 * mantissa) /
+                        10000000000 +
+                        (1 * mantissa) /
+                        100000000000 +
+                        (6 * mantissa) /
+                        1000000000000;
+                } else {
+                    q2 = 5;
+                    // multiplier_q2 = 1.071987632617824
+                    // updatedMantissa = mantissa + 7 * mantissa / 100 + 1 * mantissa / 1000
+                    //                 + 9 * mantissa / 10000 + 8 * mantissa / 100000 + 7 * mantissa / 1000000
+                    //                 + 6 * mantissa / 10000000 + 3 * mantissa / 100000000 + 2 * mantissa / 1000000000
+                    //                 + 6 * mantissa / 10000000000 + 1 * mantissa / 100000000000 + 7 * mantissa / 1000000000000
+                    //                 + 8 * mantissa / 10000000000000 + 2 * mantissa / 100000000000000 + 4 * mantissa / 1000000000000000;
+                    assembly {
+                        // Start with the base value
+                        updatedMantissa := mantissa
+
+                        // 7 * mantissa / 100
+                        updatedMantissa := add(updatedMantissa, div(mul(7, mantissa), 100))
+
+                        // 1 * mantissa / 1000
+                        updatedMantissa := add(updatedMantissa, div(mantissa, 1000))
+
+                        // 9 * mantissa / 10000
+                        updatedMantissa := add(updatedMantissa, div(mul(9, mantissa), 10000))
+
+                        // 8 * mantissa / 100000
+                        updatedMantissa := add(updatedMantissa, div(mul(8, mantissa), 100000))
+
+                        // 7 * mantissa / 1000000
+                        updatedMantissa := add(updatedMantissa, div(mul(7, mantissa), 1000000))
+
+                        // 6 * mantissa / 10000000
+                        updatedMantissa := add(updatedMantissa, div(mul(6, mantissa), 10000000))
+
+                        // 3 * mantissa / 100000000
+                        updatedMantissa := add(updatedMantissa, div(mul(3, mantissa), 100000000))
+
+                        // 2 * mantissa / 1000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(2, mantissa), 1000000000))
+
+                        // 6 * mantissa / 10000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(6, mantissa), 10000000000))
+
+                        // 1 * mantissa / 100000000000
+                        updatedMantissa := add(updatedMantissa, div(mantissa, 100000000000))
+
+                        // 7 * mantissa / 1000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(7, mantissa), 1000000000000))
+
+                        // 8 * mantissa / 10000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(8, mantissa), 10000000000000))
+
+                        // 2 * mantissa / 100000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(2, mantissa), 100000000000000))
+
+                        // 4 * mantissa / 1000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(4, mantissa), 1000000000000000))
+                    }
+                }
+            } else {
+                if (mantissa > (9072 * 10 ** 72)) {
+                    q2 = 6;
+                    // multiplier_q2 = 1.086995459474473536
+                    // updatedMantissa = mantissa + 8 * mantissa / 100 + 6 * mantissa / 1000
+                    //             + 9 * mantissa / 10000 + 9 * mantissa / 100000 + 5 * mantissa / 1000000
+                    //             + 4 * mantissa / 10000000 + 5 * mantissa / 100000000 + 9 * mantissa / 1000000000
+                    //             + 4 * mantissa / 10000000000 + 7 * mantissa / 100000000000 + 4 * mantissa / 1000000000000
+                    //             + 4 * mantissa / 10000000000000 + 7 * mantissa / 100000000000000 + 3 * mantissa / 1000000000000000
+                    //             + 5 * mantissa / 10000000000000000 + 3 * mantissa / 100000000000000000 + 6 * mantissa / 1000000000000000000;
+                    assembly {
+                        // Start with the base value
+                        updatedMantissa := mantissa
+
+                        // 8 * mantissa / 100
+                        updatedMantissa := add(updatedMantissa, div(mul(8, mantissa), 100))
+
+                        // 6 * mantissa / 1000
+                        updatedMantissa := add(updatedMantissa, div(mul(6, mantissa), 1000))
+
+                        // 9 * mantissa / 10000
+                        updatedMantissa := add(updatedMantissa, div(mul(9, mantissa), 10000))
+
+                        // 9 * mantissa / 100000
+                        updatedMantissa := add(updatedMantissa, div(mul(9, mantissa), 100000))
+
+                        // 5 * mantissa / 1000000
+                        updatedMantissa := add(updatedMantissa, div(mul(5, mantissa), 1000000))
+
+                        // 4 * mantissa / 10000000
+                        updatedMantissa := add(updatedMantissa, div(mul(4, mantissa), 10000000))
+
+                        // 5 * mantissa / 100000000
+                        updatedMantissa := add(updatedMantissa, div(mul(5, mantissa), 100000000))
+
+                        // 9 * mantissa / 1000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(9, mantissa), 1000000000))
+
+                        // 4 * mantissa / 10000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(4, mantissa), 10000000000))
+
+                        // 7 * mantissa / 100000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(7, mantissa), 100000000000))
+
+                        // 4 * mantissa / 1000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(4, mantissa), 1000000000000))
+
+                        // 4 * mantissa / 10000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(4, mantissa), 10000000000000))
+
+                        // 7 * mantissa / 100000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(7, mantissa), 100000000000000))
+
+                        // 3 * mantissa / 1000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(3, mantissa), 1000000000000000))
+
+                        // 5 * mantissa / 10000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(5, mantissa), 10000000000000000))
+
+                        // 3 * mantissa / 100000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(3, mantissa), 100000000000000000))
+
+                        // 6 * mantissa / 1000000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(6, mantissa), 1000000000000000000))
+                    }
+                } else {
+                    q2 = 7;
+                    // multiplier_q2 = 1.102213395907116165504
+                    // updatedMantissa = mantissa + 1 * mantissa / 10 + 2 * mantissa / 1000
+                    //         + 2 * mantissa / 10000 + 1 * mantissa / 100000 + 3 * mantissa / 1000000
+                    //         + 3 * mantissa / 10000000 + 9 * mantissa / 100000000 + 5 * mantissa / 1000000000
+                    //         + 9 * mantissa / 10000000000 + 7 * mantissa / 1000000000000
+                    //         + 1 * mantissa / 10000000000000 + 1 * mantissa / 100000000000000 + 6 * mantissa / 1000000000000000
+                    //         + 1 * mantissa / 10000000000000000 + 6 * mantissa / 100000000000000000 + 5 * mantissa / 1000000000000000000
+                    //         + 5 * mantissa / 10000000000000000000 + 4 * mantissa / 1000000000000000000000;
+                    assembly {
+                        // Start with the base value
+                        updatedMantissa := mantissa
+
+                        // 1 * mantissa / 10
+                        updatedMantissa := add(updatedMantissa, div(mantissa, 10))
+
+                        // 2 * mantissa / 1000
+                        updatedMantissa := add(updatedMantissa, div(mul(2, mantissa), 1000))
+
+                        // 2 * mantissa / 10000
+                        updatedMantissa := add(updatedMantissa, div(mul(2, mantissa), 10000))
+
+                        // 1 * mantissa / 100000
+                        updatedMantissa := add(updatedMantissa, div(mantissa, 100000))
+
+                        // 3 * mantissa / 1000000
+                        updatedMantissa := add(updatedMantissa, div(mul(3, mantissa), 1000000))
+
+                        // 3 * mantissa / 10000000
+                        updatedMantissa := add(updatedMantissa, div(mul(3, mantissa), 10000000))
+
+                        // 9 * mantissa / 100000000
+                        updatedMantissa := add(updatedMantissa, div(mul(9, mantissa), 100000000))
+
+                        // 5 * mantissa / 1000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(5, mantissa), 1000000000))
+
+                        // 9 * mantissa / 10000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(9, mantissa), 10000000000))
+
+                        // 7 * mantissa / 1000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(7, mantissa), 1000000000000))
+
+                        // 1 * mantissa / 10000000000000
+                        updatedMantissa := add(updatedMantissa, div(mantissa, 10000000000000))
+
+                        // 1 * mantissa / 100000000000000
+                        updatedMantissa := add(updatedMantissa, div(mantissa, 100000000000000))
+
+                        // 6 * mantissa / 1000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(6, mantissa), 1000000000000000))
+
+                        // 1 * mantissa / 10000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mantissa, 10000000000000000))
+
+                        // 6 * mantissa / 100000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(6, mantissa), 100000000000000000))
+
+                        // 5 * mantissa / 1000000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(5, mantissa), 1000000000000000000))
+
+                        // 5 * mantissa / 10000000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(5, mantissa), 10000000000000000000))
+
+                        // 4 * mantissa / 1000000000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(4, mantissa), 1000000000000000000000))
+                    }
+                }
+            }
+        }
+    }
+
+    function calculateQ3(uint256 mantissa) public pure returns (uint256 q3, uint256 updatedMantissa) {
+        if (mantissa > (991129567482 * 10 ** 64)) {
+            if (mantissa > (993708179366 * 10 ** 64)) {
+                if (mantissa > (995 * 10 ** 73)) {
+                    q3 = 0;
+                    // multiplier_q3 = 1
+                    updatedMantissa = mantissa;
+                } else {
+                    q3 = 1;
+                    // multiplier_q3 = 1.0013
+                    updatedMantissa = mantissa + (1 * mantissa) / 1000 + (3 * mantissa) / 10000;
+                }
+            } else {
+                if (mantissa > (992418035920 * 10 ** 64)) {
+                    q3 = 2;
+                    // multiplier_q3 = 1.00260169
+                    updatedMantissa =
+                        mantissa +
+                        (2 * mantissa) /
+                        1000 +
+                        (6 * mantissa) /
+                        10000 +
+                        (1 * mantissa) /
+                        1000000 +
+                        (6 * mantissa) /
+                        10000000 +
+                        (9 * mantissa) /
+                        100000000;
+                } else {
+                    q3 = 3;
+                    // multiplier_q3 = 1.003905072197
+                    updatedMantissa =
+                        mantissa +
+                        (3 * mantissa) /
+                        1000 +
+                        (9 * mantissa) /
+                        10000 +
+                        (5 * mantissa) /
+                        1000000 +
+                        (7 * mantissa) /
+                        100000000 +
+                        (2 * mantissa) /
+                        1000000000 +
+                        (1 * mantissa) /
+                        10000000000 +
+                        (9 * mantissa) /
+                        100000000000 +
+                        (7 * mantissa) /
+                        1000000000000;
+                }
+            }
+        } else {
+            if (mantissa > (988557646937 * 10 ** 64)) {
+                if (mantissa > (989842771878 * 10 ** 64)) {
+                    q3 = 4;
+                    // multiplier_q3 = 1.0052101487908561
+                    // updatedMantissa = mantissa + 5 * mantissa / 1000 + 2 * mantissa / 10000
+                    //             + 1 * mantissa / 100000 + 1 * mantissa / 10000000 + 4 * mantissa / 100000000
+                    //             + 8 * mantissa / 1000000000 + 7 * mantissa / 10000000000 + 9 * mantissa / 100000000000
+                    //             + 8 * mantissa / 10000000000000 + 5 * mantissa / 100000000000000 + 6 * mantissa / 1000000000000000 + 1 * mantissa / 10000000000000000;
+                    assembly {
+                        // Start with the base value
+                        updatedMantissa := mantissa
+
+                        // 5 * mantissa / 1000
+                        updatedMantissa := add(updatedMantissa, div(mul(5, mantissa), 1000))
+
+                        // 2 * mantissa / 10000
+                        updatedMantissa := add(updatedMantissa, div(mul(2, mantissa), 10000))
+
+                        // 1 * mantissa / 100000
+                        updatedMantissa := add(updatedMantissa, div(mantissa, 100000))
+
+                        // 1 * mantissa / 10000000
+                        updatedMantissa := add(updatedMantissa, div(mantissa, 10000000))
+
+                        // 4 * mantissa / 100000000
+                        updatedMantissa := add(updatedMantissa, div(mul(4, mantissa), 100000000))
+
+                        // 8 * mantissa / 1000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(8, mantissa), 1000000000))
+
+                        // 7 * mantissa / 10000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(7, mantissa), 10000000000))
+
+                        // 9 * mantissa / 100000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(9, mantissa), 100000000000))
+
+                        // 8 * mantissa / 10000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(8, mantissa), 10000000000000))
+
+                        // 5 * mantissa / 100000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(5, mantissa), 100000000000000))
+
+                        // 6 * mantissa / 1000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(6, mantissa), 1000000000000000))
+
+                        // 1 * mantissa / 10000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mantissa, 10000000000000000))
+                    }
+                } else {
+                    q3 = 5;
+                    // multiplier_q3 = 1.00651692198428421293
+                    // updatedMantissa = mantissa + 6 * mantissa / 1000 + 5 * mantissa / 10000
+                    //             + 1 * mantissa / 100000 + 6 * mantissa / 1000000 + 9 * mantissa / 10000000 + 2 * mantissa / 100000000
+                    //             + 1 * mantissa / 1000000000 + 9 * mantissa / 10000000000 + 8 * mantissa / 100000000000 + 4 * mantissa / 1000000000000
+                    //             + 2 * mantissa / 10000000000000 + 8 * mantissa / 100000000000000 + 4 * mantissa / 1000000000000000 + 2 * mantissa / 10000000000000000
+                    //             + 1 * mantissa / 100000000000000000 + 2 * mantissa / 1000000000000000000 + 9 * mantissa / 10000000000000000000 + 3 * mantissa / 100000000000000000000;
+                    assembly {
+                        // Start with the base value
+                        updatedMantissa := mantissa
+
+                        // 6 * mantissa / 1000
+                        updatedMantissa := add(updatedMantissa, div(mul(6, mantissa), 1000))
+
+                        // 5 * mantissa / 10000
+                        updatedMantissa := add(updatedMantissa, div(mul(5, mantissa), 10000))
+
+                        // 1 * mantissa / 100000
+                        updatedMantissa := add(updatedMantissa, div(mantissa, 100000))
+
+                        // 6 * mantissa / 1000000
+                        updatedMantissa := add(updatedMantissa, div(mul(6, mantissa), 1000000))
+
+                        // 9 * mantissa / 10000000
+                        updatedMantissa := add(updatedMantissa, div(mul(9, mantissa), 10000000))
+
+                        // 2 * mantissa / 100000000
+                        updatedMantissa := add(updatedMantissa, div(mul(2, mantissa), 100000000))
+
+                        // 1 * mantissa / 1000000000
+                        updatedMantissa := add(updatedMantissa, div(mantissa, 1000000000))
+
+                        // 9 * mantissa / 10000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(9, mantissa), 10000000000))
+
+                        // 8 * mantissa / 100000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(8, mantissa), 100000000000))
+
+                        // 4 * mantissa / 1000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(4, mantissa), 1000000000000))
+
+                        // 2 * mantissa / 10000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(2, mantissa), 10000000000000))
+
+                        // 8 * mantissa / 100000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(8, mantissa), 100000000000000))
+
+                        // 4 * mantissa / 1000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(4, mantissa), 1000000000000000))
+
+                        // 2 * mantissa / 10000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(2, mantissa), 10000000000000000))
+
+                        // 1 * mantissa / 100000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mantissa, 100000000000000000))
+
+                        // 2 * mantissa / 1000000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(2, mantissa), 1000000000000000000))
+
+                        // 9 * mantissa / 10000000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(9, mantissa), 10000000000000000000))
+
+                        // 3 * mantissa / 100000000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(3, mantissa), 100000000000000000000))
+                    }
+                }
+            } else {
+                if (mantissa > (987274190490 * 10 ** 64)) {
+                    q3 = 6;
+                    // multiplier_q3 = 1.007825393982863782406809
+                    // updatedMantissa = mantissa + 7 * mantissa / 1000 + 8 * mantissa / 10000
+                    //             + 2 * mantissa / 100000 + 5 * mantissa / 1000000 + 3 * mantissa / 10000000 + 9 * mantissa / 100000000
+                    //             + 3 * mantissa / 1000000000 + 9 * mantissa / 10000000000 + 8 * mantissa / 100000000000 + 2 * mantissa / 1000000000000
+                    //             + 8 * mantissa / 10000000000000 + 6 * mantissa / 100000000000000 + 3 * mantissa / 1000000000000000 + 7 * mantissa / 10000000000000000
+                    //             + 8 * mantissa / 100000000000000000 + 2 * mantissa / 1000000000000000000 + 4 * mantissa / 10000000000000000000
+                    //             + 6 * mantissa / 1000000000000000000000 + 8 * mantissa / 10000000000000000000000 + 9 * mantissa / 1000000000000000000000000;
+                    assembly {
+                        // Start with the base value
+                        updatedMantissa := mantissa
+
+                        // 0 * mantissa / 10 (skip since it's zero)
+                        // 0 * mantissa / 100 (skip since it's zero)
+
+                        // 7 * mantissa / 1000
+                        updatedMantissa := add(updatedMantissa, div(mul(7, mantissa), 1000))
+
+                        // 8 * mantissa / 10000
+                        updatedMantissa := add(updatedMantissa, div(mul(8, mantissa), 10000))
+
+                        // 2 * mantissa / 100000
+                        updatedMantissa := add(updatedMantissa, div(mul(2, mantissa), 100000))
+
+                        // 5 * mantissa / 1000000
+                        updatedMantissa := add(updatedMantissa, div(mul(5, mantissa), 1000000))
+
+                        // 3 * mantissa / 10000000
+                        updatedMantissa := add(updatedMantissa, div(mul(3, mantissa), 10000000))
+
+                        // 9 * mantissa / 100000000
+                        updatedMantissa := add(updatedMantissa, div(mul(9, mantissa), 100000000))
+
+                        // 3 * mantissa / 1000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(3, mantissa), 1000000000))
+
+                        // 9 * mantissa / 10000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(9, mantissa), 10000000000))
+
+                        // 8 * mantissa / 100000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(8, mantissa), 100000000000))
+
+                        // 2 * mantissa / 1000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(2, mantissa), 1000000000000))
+
+                        // 8 * mantissa / 10000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(8, mantissa), 10000000000000))
+
+                        // 6 * mantissa / 100000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(6, mantissa), 100000000000000))
+
+                        // 3 * mantissa / 1000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(3, mantissa), 1000000000000000))
+
+                        // 7 * mantissa / 10000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(7, mantissa), 10000000000000000))
+
+                        // 8 * mantissa / 100000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(8, mantissa), 100000000000000000))
+
+                        // 2 * mantissa / 1000000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(2, mantissa), 1000000000000000000))
+
+                        // 4 * mantissa / 10000000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(4, mantissa), 10000000000000000000))
+
+                        // 0 * mantissa / 100000000000000000000 (skip since it's zero)
+
+                        // 6 * mantissa / 1000000000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(6, mantissa), 1000000000000000000000))
+
+                        // 8 * mantissa / 10000000000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(8, mantissa), 10000000000000000000000))
+
+                        // 0 * mantissa / 100000000000000000000000 (skip since it's zero)
+
+                        // 9 * mantissa / 1000000000000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(9, mantissa), 1000000000000000000000000))
+                    }
+                } else {
+                    q3 = 7;
+                    // multiplier_q3 = 1.0091355669950415053239378517
+                    // updatedMantissa = mantissa + 9 * mantissa / 1000 + 1 * mantissa / 10000
+                    //             + 3 * mantissa / 100000 + 5 * mantissa / 1000000 + 5 * mantissa / 10000000 + 6 * mantissa / 100000000
+                    //             + 6 * mantissa / 1000000000 + 9 * mantissa / 10000000000 + 9 * mantissa / 100000000000 + 5 * mantissa / 1000000000000
+                    //             + 4 * mantissa / 100000000000000 + 1 * mantissa / 1000000000000000 + 5 * mantissa / 10000000000000000
+                    //             + 5 * mantissa / 1000000000000000000 + 3 * mantissa / 10000000000000000000 + 2 * mantissa / 100000000000000000000
+                    //             + 3 * mantissa / 1000000000000000000000 + 9 * mantissa / 10000000000000000000000 + 3 * mantissa / 100000000000000000000000 + 7 * mantissa / 1000000000000000000000000
+                    //             + 8 * mantissa / 10000000000000000000000000 + 5 * mantissa / 100000000000000000000000000 + 1 * mantissa / 1000000000000000000000000000 + 7 * mantissa / 10000000000000000000000000000;
+                    assembly {
+                        // Start with the base value
+                        updatedMantissa := mantissa
+
+                        // 0 * mantissa / 10 (skip since it's zero)
+                        // 0 * mantissa / 100 (skip since it's zero)
+
+                        // 9 * mantissa / 1000
+                        updatedMantissa := add(updatedMantissa, div(mul(9, mantissa), 1000))
+
+                        // 1 * mantissa / 10000
+                        updatedMantissa := add(updatedMantissa, div(mantissa, 10000))
+
+                        // 3 * mantissa / 100000
+                        updatedMantissa := add(updatedMantissa, div(mul(3, mantissa), 100000))
+
+                        // 5 * mantissa / 1000000
+                        updatedMantissa := add(updatedMantissa, div(mul(5, mantissa), 1000000))
+
+                        // 5 * mantissa / 10000000
+                        updatedMantissa := add(updatedMantissa, div(mul(5, mantissa), 10000000))
+
+                        // 6 * mantissa / 100000000
+                        updatedMantissa := add(updatedMantissa, div(mul(6, mantissa), 100000000))
+
+                        // 6 * mantissa / 1000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(6, mantissa), 1000000000))
+
+                        // 9 * mantissa / 10000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(9, mantissa), 10000000000))
+
+                        // 9 * mantissa / 100000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(9, mantissa), 100000000000))
+
+                        // 5 * mantissa / 1000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(5, mantissa), 1000000000000))
+
+                        // 0 * mantissa / 10000000000000 (skip since it's zero)
+
+                        // 4 * mantissa / 100000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(4, mantissa), 100000000000000))
+
+                        // 1 * mantissa / 1000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mantissa, 1000000000000000))
+
+                        // 5 * mantissa / 10000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(5, mantissa), 10000000000000000))
+
+                        // 0 * mantissa / 100000000000000000 (skip since it's zero)
+
+                        // 5 * mantissa / 1000000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(5, mantissa), 1000000000000000000))
+
+                        // 3 * mantissa / 10000000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(3, mantissa), 10000000000000000000))
+
+                        // 2 * mantissa / 100000000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(2, mantissa), 100000000000000000000))
+
+                        // 3 * mantissa / 1000000000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(3, mantissa), 1000000000000000000000))
+
+                        // 9 * mantissa / 10000000000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(9, mantissa), 10000000000000000000000))
+
+                        // 3 * mantissa / 100000000000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(3, mantissa), 100000000000000000000000))
+
+                        // 7 * mantissa / 1000000000000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(7, mantissa), 1000000000000000000000000))
+
+                        // 8 * mantissa / 10000000000000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(8, mantissa), 10000000000000000000000000))
+
+                        // 5 * mantissa / 100000000000000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(5, mantissa), 100000000000000000000000000))
+
+                        // 1 * mantissa / 1000000000000000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mantissa, 1000000000000000000000000000))
+
+                        // 7 * mantissa / 10000000000000000000000000000
+                        updatedMantissa := add(updatedMantissa, div(mul(7, mantissa), 10000000000000000000000000000))
+                    }
+                }
             }
         }
     }
