@@ -1,11 +1,9 @@
 /// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "forge-std/console2.sol";
-import "src/Float128.sol";
-import "test/FloatUtils.sol";
+import "test/FloatCommon.sol";
 
-contract Float128FuzzTest is FloatUtils {
+contract Float128FuzzTest is FloatCommon {
     using Float128 for int256;
     using Float128 for packedFloat;
 
@@ -30,6 +28,10 @@ contract Float128FuzzTest is FloatUtils {
         uint nDigits = findNumberOfDigits(uint(rMan < 0 ? rMan * -1 : rMan));
         console2.log("nDigits", nDigits);
         if (pyMan != 0) assertTrue(((nDigits == 38) || (nDigits == 72)), "Solidity result is not normalized");
+        if (pyMan == 0) {
+            assertEq(rMan, 0, "Solidity result is not zero");
+            assertEq(rExp, ZERO_OFFSET_NEG, "Solidity result is not zero");
+        }
         if (packedFloat.unwrap(r) != 0) nDigits == 38 ? assertFalse(isLarge) : assertTrue(isLarge);
         // we fix the python result due to the imprecision of python's log10. We cut precision where needed
         if (pyExp != rExp) {

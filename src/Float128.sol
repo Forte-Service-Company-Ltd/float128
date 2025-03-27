@@ -215,8 +215,7 @@ library Float128 {
             if (isSubtraction) {
                 // subtraction case can have a number of digits anywhere from 1 to 76
                 // we might get a normalized result, so we only normalize if necessary
-                if (
-                    !((addition <= MAX_M_DIGIT_NUMBER && addition >= MIN_M_DIGIT_NUMBER) ||
+                if (!((addition <= MAX_M_DIGIT_NUMBER && addition >= MIN_M_DIGIT_NUMBER) ||
                         (addition <= MAX_L_DIGIT_NUMBER && addition >= MIN_L_DIGIT_NUMBER))
                 ) {
                     uint digitsMantissa = findNumberOfDigits(addition);
@@ -408,8 +407,7 @@ library Float128 {
             if (isSubtraction) {
                 // subtraction case can have a number of digits anywhere from 1 to 76
                 // we might get a normalized result, so we only normalize if necessary
-                if (
-                    !((addition <= MAX_M_DIGIT_NUMBER && addition >= MIN_M_DIGIT_NUMBER) ||
+                if (!((addition <= MAX_M_DIGIT_NUMBER && addition >= MIN_M_DIGIT_NUMBER) ||
                         (addition <= MAX_L_DIGIT_NUMBER && addition >= MIN_L_DIGIT_NUMBER))
                 ) {
                     uint digitsMantissa = findNumberOfDigits(addition);
@@ -1109,8 +1107,7 @@ library Float128 {
                 }
             }
             // we normalize only if necessary
-            if (
-                !((mantissa <= int(MAX_M_DIGIT_NUMBER) && mantissa >= int(MIN_M_DIGIT_NUMBER)) ||
+            if (!((mantissa <= int(MAX_M_DIGIT_NUMBER) && mantissa >= int(MIN_M_DIGIT_NUMBER)) ||
                     (mantissa <= int(MAX_L_DIGIT_NUMBER) && mantissa >= int(MIN_L_DIGIT_NUMBER)))
             ) {
                 digitsMantissa = findNumberOfDigits(uint(mantissa));
@@ -1213,7 +1210,7 @@ library Float128 {
         }
     }
 
-    function ln(packedFloat input) public pure returns (packedFloat result) {
+    function ln(packedFloat input) internal pure returns (packedFloat result) {
         uint mantissa;
         int exponent;
         bool inputL;
@@ -1380,7 +1377,7 @@ library Float128 {
         finalResult = mul(fifthTerm, toPackedFloat(-1, 0));
     }
 
-    function calculateQ1(uint256 mantissa) public pure returns (uint256 q1, uint256 updatedMantissa) {
+    function calculateQ1(uint256 mantissa) internal pure returns (uint256 q1, uint256 updatedMantissa) {
         if (mantissa > (68300000 * 10 ** 68)) {
             if (mantissa > (82000000 * 10 ** 68)) {
                 if (mantissa > (90000000 * 10 ** 68)) {
@@ -1459,7 +1456,7 @@ library Float128 {
         }
     }
 
-    function calculateQ2(uint256 mantissa) public pure returns (uint256 q2, uint256 updatedMantissa) {
+    function calculateQ2(uint256 mantissa) internal pure returns (uint256 q2, uint256 updatedMantissa) {
         if (mantissa > (9459 * 10 ** 72)) {
             if (mantissa > (9725 * 10 ** 72)) {
                 if (mantissa > 9860 * 10 ** 72) {
@@ -1731,7 +1728,7 @@ library Float128 {
         }
     }
 
-    function calculateQ3(uint256 mantissa) public pure returns (uint256 q3, uint256 updatedMantissa) {
+    function calculateQ3(uint256 mantissa) internal pure returns (uint256 q3, uint256 updatedMantissa) {
         if (mantissa > (991129567482 * 10 ** 64)) {
             if (mantissa > (993708179366 * 10 ** 64)) {
                 if (mantissa > (995 * 10 ** 73)) {
