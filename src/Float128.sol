@@ -428,7 +428,7 @@ library Float128 {
     }
 
     /**
-     * @dev gets the multiplication of 2 signed floating point numbers
+     * @dev gets the multiplicative of 2 signed floating point numbers
      * @param a the first factor
      * @param b the second factor
      * @return r the result of a * b
@@ -535,7 +535,7 @@ library Float128 {
     }
 
     /**
-     * @dev gets the division of 2 signed floating point numbers
+     * @dev gets the remainder of 2 signed floating point numbers
      * @param a the numerator
      * @param b the denominator
      * @return r the result of a / b
@@ -546,7 +546,7 @@ library Float128 {
     }
 
     /**
-     * @dev gets the division of 2 signed floating point numbers which results in a large mantissa
+     * @dev gets the remainder of 2 signed floating point numbers which results in a large mantissa
      * @param a the numerator
      * @param b the denominator
      * @return r the result of a / b
@@ -557,7 +557,7 @@ library Float128 {
     }
 
     /**
-     * @dev gets the division of 2 signed floating point numbers
+     * @dev gets the remainder of 2 signed floating point numbers
      * @param a the numerator
      * @param b the denominator
      * @return r the result of a / b
@@ -667,7 +667,7 @@ library Float128 {
     }
 
     /**
-     * @dev gets the square root of a signed floating point
+     * @dev get the square root of a signed floating point
      * @notice only positive numbers can have their square root calculated through this function
      * @param a the numerator to get the square root of
      * @return r the result of √a
