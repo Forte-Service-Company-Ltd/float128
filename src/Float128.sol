@@ -1109,8 +1109,7 @@ library Float128 {
                 }
             }
             // we normalize only if necessary
-            if (
-                !((mantissa <= int(MAX_M_DIGIT_NUMBER) && mantissa >= int(MIN_M_DIGIT_NUMBER)) ||
+            if (!((mantissa <= int(MAX_M_DIGIT_NUMBER) && mantissa >= int(MIN_M_DIGIT_NUMBER)) ||
                     (mantissa <= int(MAX_L_DIGIT_NUMBER) && mantissa >= int(MIN_L_DIGIT_NUMBER)))
             ) {
                 digitsMantissa = findNumberOfDigits(uint(mantissa));
