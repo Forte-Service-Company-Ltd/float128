@@ -215,8 +215,7 @@ library Float128 {
             if (isSubtraction) {
                 // subtraction case can have a number of digits anywhere from 1 to 76
                 // we might get a normalized result, so we only normalize if necessary
-                if (
-                    !((addition <= MAX_M_DIGIT_NUMBER && addition >= MIN_M_DIGIT_NUMBER) ||
+                if (!((addition <= MAX_M_DIGIT_NUMBER && addition >= MIN_M_DIGIT_NUMBER) ||
                         (addition <= MAX_L_DIGIT_NUMBER && addition >= MIN_L_DIGIT_NUMBER))
                 ) {
                     uint digitsMantissa = findNumberOfDigits(addition);
