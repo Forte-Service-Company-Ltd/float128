@@ -41,7 +41,7 @@ contract FloatCommon is FloatUtils {
         assertEq(rExp, ZERO_OFFSET_NEG,"Solidity result is not zero");
     }
 
-    // forge-config: default.allow_internal_expect_revert = true
+    /// forge-config: default.allow_internal_expect_revert = true
     function testEncoded_div_zero(int bMan, int bExp) public {
         (bMan, bExp) = setBounds(bMan, bExp);
         int aMan = 0;
@@ -60,6 +60,7 @@ contract FloatCommon is FloatUtils {
         assertEq(rExp, ZERO_OFFSET_NEG,"Solidity result is not zero");
     }
 
+    /// forge-config: default.allow_internal_expect_revert = true
     function testEncoded_divL_zero(int bMan, int bExp) public {
         (bMan, bExp) = setBounds(bMan, bExp);
         int aMan = 0;
