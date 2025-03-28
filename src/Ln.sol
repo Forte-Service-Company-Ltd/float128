@@ -1232,7 +1232,7 @@ library Ln {
     /**
      * @dev Natural Log Helper function 
      * @param mantissa the integer that holds the mantissa digits (38 digits max)
-     * @param exponent the exponent of the floating point number (between -8192 and +8191) 
+     * @param exp the exponent of the floating point number (between -8192 and +8191) 
      * @param inputL use positive exponent 
      * @return result the log of the input from ln function
      */
@@ -1496,7 +1496,7 @@ library Ln {
     /**
      * @dev Helper function to calculate q2 in LN function 
      * @param mantissa the 38 mantissa digits of the floating-point number
-     * @return q1 uint value of q2
+     * @return q2 uint value of q2
      * @return updatedMantissa updated mantissa for q2
      */
     function calculateQ2(uint256 mantissa) public pure returns (uint256 q2, uint256 updatedMantissa) {
@@ -1774,7 +1774,7 @@ library Ln {
     /**
      * @dev Helper function to calculate q3 in LN function 
      * @param mantissa the 38 mantissa digits of the floating-point number
-     * @return q1 uint value of q3
+     * @return q3 uint value of q3
      * @return updatedMantissa updated mantissa for q3
      */
     function calculateQ3(uint256 mantissa) public pure returns (uint256 q3, uint256 updatedMantissa) {
