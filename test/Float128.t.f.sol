@@ -1,10 +1,12 @@
 /// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import "test/FloatCommon.sol";
 import "forge-std/console2.sol";
 import "src/Float128.sol";
 import {Ln} from "src/Ln.sol";
 import "test/FloatUtils.sol";
+
 
 contract Float128FuzzTest is FloatCommon {
     using Float128 for int256;
