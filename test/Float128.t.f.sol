@@ -2,10 +2,16 @@
 pragma solidity ^0.8.24;
 
 import "test/FloatCommon.sol";
+import "forge-std/console2.sol";
+import "src/Float128.sol";
+import {Ln} from "src/Ln.sol";
+import "test/FloatUtils.sol";
+
 
 contract Float128FuzzTest is FloatCommon {
     using Float128 for int256;
     using Float128 for packedFloat;
+    using Ln for packedFloat;
 
     function checkResults(int rMan, int rExp, int pyMan, int pyExp) internal pure {
         checkResults(packedFloat.wrap(0), rMan, rExp, pyMan, pyExp, 0);
@@ -47,6 +53,7 @@ contract Float128FuzzTest is FloatCommon {
         if (ulpsOfTolerance > 0) {
             // we could be off by one due to rounding issues. The error should be less than 1/1e76
             if (pyMan != rMan) {
+                console2.log("ulpsOfTolerance", ulpsOfTolerance);
                 if (pyMan > rMan) assertLe(pyMan, rMan + ulpsOfTolerance);
                 else assertGe(pyMan + ulpsOfTolerance, rMan);
             }
@@ -237,7 +244,7 @@ contract Float128FuzzTest is FloatCommon {
         console2.log("aExp", aExp);
         packedFloat a = Float128.toPackedFloat(aMan, aExp);
 
-        packedFloat retVal = Float128.ln(a);
+        packedFloat retVal = Ln.ln(a);
 
         // Creating the float struct to normalize the mantissas and exponents before doing the comparison
         string[] memory inputs = _buildFFIMul128(aMan, aExp, 0, 0, "ln", 0);
@@ -325,7 +332,7 @@ contract Float128FuzzTest is FloatCommon {
         int expectedResultExp = -36;
         packedFloat a = Float128.toPackedFloat(mantissa, exponent);
 
-        packedFloat retVal = Float128.ln(a);
+        packedFloat retVal = Ln.ln(a);
         (int mantissaF, int exponentF) = Float128.decode(retVal);
         assertEq(mantissaF, expectedResultMantissa);
         assertEq(exponentF, expectedResultExp);
@@ -339,7 +346,7 @@ contract Float128FuzzTest is FloatCommon {
         int expectedResultExp = -38;
         packedFloat a = Float128.toPackedFloat(mantissa, exponent);
 
-        packedFloat retVal = Float128.ln(a);
+        packedFloat retVal = Ln.ln(a);
         (int mantissaF, int exponentF) = Float128.decode(retVal);
         assertEq(mantissaF, expectedResultMantissa);
         assertEq(exponentF, expectedResultExp);
@@ -353,7 +360,7 @@ contract Float128FuzzTest is FloatCommon {
         int expectedResultExp = -37;
         packedFloat a = Float128.toPackedFloat(mantissa, exponent);
 
-        packedFloat retVal = Float128.ln(a);
+        packedFloat retVal = Ln.ln(a);
         (int mantissaF, int exponentF) = Float128.decode(retVal);
         assertEq(mantissaF, expectedResultMantissa);
         assertEq(exponentF, expectedResultExp);
@@ -367,7 +374,7 @@ contract Float128FuzzTest is FloatCommon {
         int expectedResultExp = -8192;
         packedFloat a = Float128.toPackedFloat(mantissa, exponent);
 
-        packedFloat retVal = Float128.ln(a);
+        packedFloat retVal = Ln.ln(a);
         (int mantissaF, int exponentF) = Float128.decode(retVal);
         assertEq(mantissaF, expectedResultMantissa);
         assertEq(exponentF, expectedResultExp);
