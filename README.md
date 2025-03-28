@@ -57,7 +57,7 @@ struct Float {
 }
 ```
 
-All the operations are available for both types. Their usage are exactly the same for both, and there are conversion functions to go back and forth between them:
+All of the operations are available for both types. Their usages are exactly the same for both, and there are conversion functions to go back and forth between them:
 
 ```Solidity
 function convertToPackedFloat(Float memory _float) internal pure returns(packedFloat float);
@@ -130,7 +130,7 @@ For this reason, it is important to use the functions `toFloat()` and `toPackedF
 
 _Note: It is encouraged to store the numbers as floating-point values, and not to convert them to fixed-point numbers or any other conversion that might truncate the significant digits as this will mean nothing less than loss of precision._
 
-\_Note: Additionally when using constants (i.e. multiplcation or division by 2) it is most efficient from a gas perspective to normalize beforehand.
+_Note: Additionally when using constants (i.e. multiplcation or division by 2) it is most efficient from a gas perspective to normalize beforehand._
 
 ### Representation of zero
 

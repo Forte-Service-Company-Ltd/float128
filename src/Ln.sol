@@ -1206,6 +1206,12 @@ library Ln {
         }
     }
 
+    // Natural Logs functions 
+    /**
+     * @dev determine the natural log of the input
+     * @param input the number of which to derive the natural log. 
+     * @return result log of the input
+     */
     function ln(packedFloat input) public pure returns (packedFloat result) {
         uint mantissa;
         int exponent;
@@ -1223,6 +1229,13 @@ library Ln {
         result = ln_helper(mantissa, exponent, inputL);
     }
 
+    /**
+     * @dev Natural Log Helper function 
+     * @param mantissa the integer that holds the mantissa digits (38 digits max)
+     * @param exp the exponent of the floating point number (between -8192 and +8191) 
+     * @param inputL use positive exponent 
+     * @return result the log of the input from ln function
+     */
     function ln_helper(uint mantissa, int exp, bool inputL) private pure returns (packedFloat result) {
         int positiveExp = exp * -1;
         if ((inputL && int(MAX_DIGITS_L) > positiveExp) || (!inputL && int(MAX_DIGITS_M) > positiveExp)) {
@@ -1316,6 +1329,17 @@ library Ln {
         }
     }
 
+    /**
+     * @dev Intermediate Addition Helper 
+     * @param result the result from the calling ln()
+     * @param k value passed from ln 
+     * @param q1 BASE_TO_THE_MAX_DIGITS_M_X_2 / mantissa
+     * @param q2 (BASE_TO_THE_MAX_DIGITS_M * r1) / mantissa
+     * @param q3 value returned from calculateQ3 function 
+     * @param m10 one_over_argument_in_long_int > MAX_76_DIGIT_NUMBER ? 77 : 76;
+     * @param mantissa the 38 mantissa digits of the floating-point number
+     * @return finalResult Log of the input from ln function 
+     */
     function intermediateTermAddition(
         packedFloat result,
         uint256 k,
@@ -1350,6 +1374,17 @@ library Ln {
         finalResult = finalTermAddition(result, k, q1, q2, q3, m10, lnB, lnC);
     }
 
+    /**
+     * @dev Final Addition Helper Function 
+     * @param result the result from the calling ln()
+     * @param k value passed from ln 
+     * @param q1 BASE_TO_THE_MAX_DIGITS_M_X_2 / mantissa
+     * @param q2 (BASE_TO_THE_MAX_DIGITS_M * r1) / mantissa
+     * @param q3 value returned from calculateQ3 function 
+     * @param m10 one_over_argument_in_long_int > MAX_76_DIGIT_NUMBER ? 77 : 76
+     * @param lnB toPackedFloat(13902905168991420865477877458246859530, -39)
+     * @param lnC toPackedFloat(12991557316200501157605555658804528711, -40)
+     */
     function finalTermAddition(
         packedFloat result,
         uint256 k,
@@ -1373,6 +1408,12 @@ library Ln {
         finalResult = mul(fifthTerm, toPackedFloat(-1, 0));
     }
 
+    /**
+     * @dev Helper function to calculate q1 in LN function 
+     * @param mantissa the 38 mantissa digits of the floating-point number
+     * @return q1 uint value of q1
+     * @return updatedMantissa updated mantissa for q1
+     */
     function calculateQ1(uint256 mantissa) public pure returns (uint256 q1, uint256 updatedMantissa) {
         if (mantissa > (68300000 * 10 ** 68)) {
             if (mantissa > (82000000 * 10 ** 68)) {
@@ -1452,6 +1493,12 @@ library Ln {
         }
     }
 
+    /**
+     * @dev Helper function to calculate q2 in LN function 
+     * @param mantissa the 38 mantissa digits of the floating-point number
+     * @return q2 uint value of q2
+     * @return updatedMantissa updated mantissa for q2
+     */
     function calculateQ2(uint256 mantissa) public pure returns (uint256 q2, uint256 updatedMantissa) {
         if (mantissa > (9459 * 10 ** 72)) {
             if (mantissa > (9725 * 10 ** 72)) {
@@ -1724,6 +1771,12 @@ library Ln {
         }
     }
 
+    /**
+     * @dev Helper function to calculate q3 in LN function 
+     * @param mantissa the 38 mantissa digits of the floating-point number
+     * @return q3 uint value of q3
+     * @return updatedMantissa updated mantissa for q3
+     */
     function calculateQ3(uint256 mantissa) public pure returns (uint256 q3, uint256 updatedMantissa) {
         if (mantissa > (991129567482 * 10 ** 64)) {
             if (mantissa > (993708179366 * 10 ** 64)) {
