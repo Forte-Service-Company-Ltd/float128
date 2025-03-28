@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.24;
 
 import {Uint512} from "./lib/Uint512.sol";
 import {packedFloat} from "./Types.sol";
