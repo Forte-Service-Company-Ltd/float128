@@ -43,6 +43,13 @@ Available operations:
 - Multiplication (mul)
 - Division (div)
 - Square root (sqrt)
+- Natural Logarithm (ln)
+- Less Than (lt)
+- Less Than Or Equal To (le)
+- Greater Than (gt)
+- Greater Than Or Equal To (ge)
+- Equal (eq)
+
 
 #### Types
 
