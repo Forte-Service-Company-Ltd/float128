@@ -35,14 +35,14 @@ library Uint512 {
      * @return r0 The result as an uint512. r0 contains the lower bits
      * @return r1 The higher bits of the result
      */
-    function mul512x256(uint256 a0, uint256 a1, uint256 b) internal pure returns (uint256 r0, uint256 r1) {
+    /*function mul512x256(uint256 a0, uint256 a1, uint256 b) internal pure returns (uint256 r0, uint256 r1) {
         assembly {
             let mm := mulmod(a0, b, not(0))
             r0 := mul(a0, b)
             r1 := sub(sub(mm, r0), lt(mm, r0))
             r1 := add(r1, mul(a1, b))
         }
-    }
+    }*/
 
     /**
      * @notice Calculates the product and remainder of two uint256
@@ -54,14 +54,14 @@ library Uint512 {
      * @return r1 The higher bits of the result
      * @return r2 The remainder
      */
-    function mulMod256x256(uint256 a, uint256 b, uint256 c) internal pure returns (uint256 r0, uint256 r1, uint256 r2) {
+    /*function mulMod256x256(uint256 a, uint256 b, uint256 c) internal pure returns (uint256 r0, uint256 r1, uint256 r2) {
         assembly {
             let mm := mulmod(a, b, not(0))
             r0 := mul(a, b)
             r1 := sub(sub(mm, r0), lt(mm, r0))
             r2 := mulmod(a, b, c)
         }
-    }
+    }*/
 
     /**
      * @notice Calculates the sum of two uint512
@@ -73,12 +73,12 @@ library Uint512 {
      * @return r0 The result as an uint512. r0 contains the lower bits
      * @return r1 The higher bits of the result
      */
-    function add512x512(uint256 a0, uint256 a1, uint256 b0, uint256 b1) internal pure returns (uint256 r0, uint256 r1) {
+    /*function add512x512(uint256 a0, uint256 a1, uint256 b0, uint256 b1) internal pure returns (uint256 r0, uint256 r1) {
         assembly {
             r0 := add(a0, b0)
             r1 := add(add(a1, b1), lt(r0, a0))
         }
-    }
+    }*/
 
     /**
      * @notice Calculates the difference of two uint512
@@ -90,12 +90,12 @@ library Uint512 {
      * @return r0 The result as an uint512. r0 contains the lower bits
      * @return r1 The higher bits of the result
      */
-    function sub512x512(uint256 a0, uint256 a1, uint256 b0, uint256 b1) internal pure returns (uint256 r0, uint256 r1) {
+    /*function sub512x512(uint256 a0, uint256 a1, uint256 b0, uint256 b1) internal pure returns (uint256 r0, uint256 r1) {
         assembly {
             r0 := sub(a0, b0)
             r1 := sub(sub(a1, b1), lt(a0, b0))
         }
-    }
+    }*/
 
     /**
      * @notice Calculates the division of a 512 bit unsigned integer by a 256 bit integer. It
@@ -110,7 +110,7 @@ library Uint512 {
      * The remainder often be retreived cheaply using the mulmod and addmod operations
      * @return r The result as an uint256. Result must have at most 256 bit
      */
-    function divRem512x256(uint256 a0, uint256 a1, uint256 b, uint256 rem) internal pure returns (uint256 r) {
+    /*function divRem512x256(uint256 a0, uint256 a1, uint256 b, uint256 rem) internal pure returns (uint256 r) {
         assembly {
             // subtract the remainder
             a1 := sub(a1, lt(a0, rem))
@@ -149,7 +149,7 @@ library Uint512 {
 
             r := mul(a0, inv)
         }
-    }
+    }*/
 
     /**
      * @notice Calculates the division of a 512 bit unsigned integer by a 256 bit integer. It
@@ -360,14 +360,14 @@ library Uint512 {
      * @param b A uint256 representing the second factor
      * @return rem The remainder of a/b
      */
-    function mod512x256(uint256 a0, uint256 a1, uint b) internal pure returns (uint256 rem) {
+    /*function mod512x256(uint256 a0, uint256 a1, uint b) internal pure returns (uint256 rem) {
         if (b == 0) revert("Uint512: mod 0 undefined");
         assembly {
             rem := mulmod(a1, not(0), b)
             rem := addmod(rem, a1, b)
             rem := addmod(rem, a0, b)
         }
-    }
+    }*/
 
     /**
      * @dev calculates the multiplicative inverse mod 2**256 of b.
@@ -375,7 +375,7 @@ library Uint512 {
      * @param b the number to calculate the multiplicative inverse mod 512
      * @return inv the multiplicative inverse mod 2**256 of b
      */
-    function mulInverseMod256(uint b) internal pure returns (uint inv) {
+    /*function mulInverseMod256(uint b) internal pure returns (uint inv) {
         assembly {
             // Calculate the multiplicative inverse mod 2**256 of b. See the paper for details.
             // slither-disable-start divide-before-multiply
@@ -389,5 +389,5 @@ library Uint512 {
             inv := mul(inv, sub(2, mul(b, inv))) // 256
             // slither-disable-end divide-before-multiply
         }
-    }
+    }*/
 }
