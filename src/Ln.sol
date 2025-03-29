@@ -102,12 +102,6 @@ library Ln {
             int exp_one_over_argument = 0 - int(Float128.MAX_DIGITS_M) - int(Float128.MAX_DIGITS_M_X_2) - exp;
 
             packedFloat a = packedFloat.wrap(0).sub(ln(Float128.toPackedFloat(int(one_over_arguments_76), 0 - int(m76))));
-
-            //result = sub(a, mul(toPackedFloat((exp_one_over_argument + int(m10)), 0), ln10));
-            //Float128.toPackedFloat((exp_one_over_argument + int(m10)), 0);
-
-            //Float128.toPackedFloat((exp_one_over_argument + int(m10)), 0).mul(ln10);
-
             result = a.sub(Float128.toPackedFloat((exp_one_over_argument + int(m10)), 0).mul(ln10));
         } else {
             int256 m10 = inputL ? int(Float128.MAX_DIGITS_L) + exp : int(Float128.MAX_DIGITS_M) + exp;
