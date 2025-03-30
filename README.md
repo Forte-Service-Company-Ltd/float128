@@ -4,7 +4,7 @@
 
 This is a signed floating-point library optimized for Solidity.
 
-#### General floating-point concepts
+### General floating-point concepts
 
 a floating point number is a way to represent numbers in an efficient way. It is composed of 3 elements:
 
@@ -28,20 +28,22 @@ Some examples:
 Floating point numbers can represent the same number in infinite ways by playing with the exponent. For instance, the first example could be also represented by -10 x $10^{-5}$, -100 x $10^{-6}$, -1000 x $10^{-7}$, etc.
 
 ### WARNING
+
 This library will only handle numbers with exponents within the range of **-3000** to **3000**. Larger or smaller numbers may result in precision loss and/or overflow/underflow.
 
 #### Library main features
 
 - Base: 10
-- Significant digits: 38
+- Significant digits: 38 or 72
 - Exponent range: -8192 and +8191
+- Maximum exponent for 38-digit mantissas: -18
 
 Available operations:
 
 - Addition (add)
 - Subtraction (sub)
 - Multiplication (mul)
-- Division (div)
+- Division (div/divL)
 - Square root (sqrt)
 - Natural Logarithm (ln)
 - Less Than (lt)
@@ -50,62 +52,61 @@ Available operations:
 - Greater Than Or Equal To (ge)
 - Equal (eq)
 
+### Types
 
-#### Types
+#### packedFloat:
 
-This library uses 2 types. Although their gas usage is very similar, one of them is optimized for storage, and the other one is optimized for operations:
-
-- **Float**: a struct that uses 2 256-bit words. Optimized for operations.
-- **packedFloat**: a 256-bit word. Optimized for storage.
+This type uses a `uint256` under the hood:
 
 ```Solidity
 type packedFloat is uint256;
-
-struct Float {
-    int mantissa;
-    int exponent;
-}
 ```
 
-All of the operations are available for both types. Their usages are exactly the same for both, and there are conversion functions to go back and forth between them:
+##### Bitmap:
+
+| Bit range | Reserved for    |
+| --------- | --------------- |
+| 255 - 242 | EXPONENT        |
+| 241       | L_MANTISSA_FLAG |
+| 240       | MANTISSA_SIGN   |
+| 239 - 0   | L_MANTISSA      |
+| 128 - 0   | M_MANTISSA      |
+
+#### Mantissa sizes:
+
+The packedFloat can handle 2 different lengths of mantissas:
+
+- **Medium-size mantissas (38 digits)**: This is the more gas efficient representation of a floating-point number when it comes to arithmetic since all the operations, including results, will fit inside a 256-bit word. This representation, however, offers a limited storage for the number which might not be enough for ocasions where very high precision is required.
+
+- **Large-size mantissas (72 digits)**: This is the more precise representation of a floatint-point number since it can store 72 significand digits of information. The trade-off is higher gas consumption as its arithmetic will require 512-bit multiplication and division which can be expensive operations.
+
+#### Maximum exponent and mantissa-size autoscaling
+
+The library counts with a `MAXIMUM_EXPONENT` constant to keep a minimum amount of decimals of precision before it autoscales to a large mantissa. This is done to guarantee a minimum precision level among operations.
+
+For example, if the result of an arithmetic operation results in a number big enough to have its exponent bigger than `MAXIMUM_EXPONENT`, then the result will be given in a large-mantissa format to make sure that we can store enough information about the resulting number with at least our minimum amount of decimals of precision. This also works the other way around where operations between large-mantissa numbers result in a value that has its exponent small enough to be stored as a medium-size mantissa number.
+
+In other words, the library down scales the size of the mantissa to make sure it is as gas efficient as possible, but it up scales to make sure it keeps a minimum level of precision. The library prioritizes precision over gas efficiency.
+
+#### Conversion methods:
+
+The library offers 2 functions for conversions. One to go from signed integer to _packedFloat_ and another one to go the other way around:
 
 ```Solidity
-function convertToPackedFloat(Float memory _float) internal pure returns(packedFloat float);
+function toPackedFloat(int mantissa, int exponent) internal pure returns (packedFloat float);
 
-function convertToUnpackedFloat(packedFloat _float) internal pure returns(Float memory float);
+function decode(packedFloat float) internal pure returns (int mantissa, int exponent);
 ```
 
 ## Usage
 
 Imagine you need to express a fractional number in Solidity such as 12345.678. The way to achieve that is:
 
-Float version:
-
 ```Solidity
 import "lib/Float128.sol"
 
 contract Mathing{
-    using Float128 for Float;
-
-    ...
-
-    int mantissa = 12345678;
-    int exponent = -3;
-    Float memory n = mantissa.toFloat(exponent);
-
-    ...
-
-}
-
-```
-
-packedFloat version:
-
-```Solidity
-import "lib/Float128.sol"
-
-contract Mathing{
-    using Float128 for packedFloat;
+    using Float128 for int256;
 
     ...
 
@@ -125,18 +126,13 @@ Once you have your floating-point numbers in the correct format, you can start u
 
     packedFloat E = m.mul(C.mul(C));
 
-    ...
-
-    Float memory c = (a.mul(a).add(b.mul(b))).sqrt();
 ```
 
 ## Normalization
 
-Normalization is a **vital** step to ensure the highest gas efficiency and precision in this library. Normalization in this context means that the number is always expressed using 38 significant digits without leading zeros. Never more, and never less. The way to achieve this is by playing with the exponent.
+Normalization is a **vital** step to ensure the highest gas efficiency and precision in this library. Normalization in this context means that the number is always expressed using 38 or 72 significant digits without leading zeros. Never more, and never less. The way to achieve this is by playing with the exponent.
 
 For example, the number 12345.678 will have only one proper representation in this library: 12345678000000000000000000000000000000 x $10^{-33}$
-
-For this reason, it is important to use the functions `toFloat()` and `toPackedFloat()` since these functions will normalize the numbers automatically.
 
 _Note: It is encouraged to store the numbers as floating-point values, and not to convert them to fixed-point numbers or any other conversion that might truncate the significant digits as this will mean nothing less than loss of precision._
 
@@ -156,22 +152,6 @@ forge test --ffi -vv --match-contract GasReport
 
 Here are the current Gas Results:
 
-#### Gas Report - functions using Float structs
-
-| Function (and scenario)                | Min  | Average | Max  |
-| -------------------------------------- | ---- | ------- | ---- |
-| Addition                               | 596  | 1174    | 1778 |
-| Addition (matching exponents)          | 499  | 941     | 1556 |
-| Addition (subtraction via addition)    | 609  | 1331    | 1791 |
-| Subtraction                            | 577  | 1175    | 1769 |
-| Subtraction (matching exponents)       | 491  | 928     | 1567 |
-| Subtraction (addition via subtraction) | 604  | 1018    | 1784 |
-| Multiplication                         | 295  | 575     | 856  |
-| Multiplication (by zero)               | 295  | 576     | 858  |
-| Division                               | 296  | 590     | 886  |
-| Division (numerator is zero)           | 295  | 577     | 860  |
-| Square Root                            | 1247 | 1416    | 1588 |
-
 #### Gas Report - functions using packedFloats
 
 | Function (and scenario)                | Min | Average | Max  |
@@ -187,13 +167,3 @@ Here are the current Gas Results:
 | Division                               | 269 | 283     | 299  |
 | Division (numerator is zero)           | 123 | 123     | 123  |
 | Square Root                            | 932 | 951     | 970  |
-
-#### Gas Report - Builder + Conversion functions
-
-| Function (and scenario)      | Min | Average | Max  |
-| ---------------------------- | --- | ------- | ---- |
-| toFloat                      | 456 | 1416    | 2749 |
-| toFloat (already normalized) | 458 | 1401    | 2353 |
-| convertToPackedFloat         | 281 | 343     | 764  |
-| convertToUnpackedFloat       | 307 | 596     | 886  |
-| Log10                        | 345 | 346     | 351  |

@@ -7,7 +7,7 @@ import {Float128} from "./Float128.sol";
 /**
  * @title Natural Logarithm Floating-Point Library
  * @dev the library uses the type packedFloat whih is a uint under the hood
- * @author Inspired by a Python proposal by @miguel-ot and refined/implemented in Solidity by @oscarsernarosero @Palmerg4
+ * @author Inspired by a Python proposal by @miguel-ot and @neel-thrackle, and refined/implemented in Solidity by @oscarsernarosero @PmpetersoCode55 @VoR0220
  */
 
 library Ln {
@@ -52,7 +52,8 @@ library Ln {
     /**
      * @dev determine the natural log of the input
      * @param input the number of which to derive the natural log.
-     * @return result log of the input
+     * @return result log of the input as a packedFloat
+     * @notice passing a large-mantissa input will have better precision results.
      */
     function ln(packedFloat input) public pure returns (packedFloat result) {
         uint mantissa;
@@ -283,16 +284,7 @@ library Ln {
                     updatedMantissa = mantissa + (4 * mantissa) / 10 + (6 * mantissa) / 100 + (4 * mantissa) / 1000 + mantissa / 10000;
                 } else {
                     q1 = 5;
-                    updatedMantissa =
-                        mantissa +
-                        (6 * mantissa) /
-                        10 +
-                        (1 * mantissa) /
-                        100 +
-                        (5 * mantissa) /
-                        10000 +
-                        (1 * mantissa) /
-                        100000;
+                    updatedMantissa = mantissa + (6 * mantissa) / 10 + (1 * mantissa) / 100 + (5 * mantissa) / 10000 + (1 * mantissa) / 100000;
                 }
             } else {
                 if (mantissa > (51200000 * 10 ** 68)) {
@@ -356,18 +348,7 @@ library Ln {
                 if (mantissa > (9591 * 10 ** 72)) {
                     q2 = 2;
                     // multiplier_q2 = 1.028196
-                    updatedMantissa =
-                        mantissa +
-                        (2 * mantissa) /
-                        100 +
-                        (8 * mantissa) /
-                        1000 +
-                        (1 * mantissa) /
-                        10000 +
-                        (9 * mantissa) /
-                        100000 +
-                        (6 * mantissa) /
-                        1000000;
+                    updatedMantissa = mantissa + (2 * mantissa) / 100 + (8 * mantissa) / 1000 + (1 * mantissa) / 10000 + (9 * mantissa) / 100000 + (6 * mantissa) / 1000000;
                 } else {
                     q2 = 3;
                     // multiplier_q2 = 1.042590744
@@ -635,18 +616,7 @@ library Ln {
                 if (mantissa > (992418035920 * 10 ** 64)) {
                     q3 = 2;
                     // multiplier_q3 = 1.00260169
-                    updatedMantissa =
-                        mantissa +
-                        (2 * mantissa) /
-                        1000 +
-                        (6 * mantissa) /
-                        10000 +
-                        (1 * mantissa) /
-                        1000000 +
-                        (6 * mantissa) /
-                        10000000 +
-                        (9 * mantissa) /
-                        100000000;
+                    updatedMantissa = mantissa + (2 * mantissa) / 1000 + (6 * mantissa) / 10000 + (1 * mantissa) / 1000000 + (6 * mantissa) / 10000000 + (9 * mantissa) / 100000000;
                 } else {
                     q3 = 3;
                     // multiplier_q3 = 1.003905072197
