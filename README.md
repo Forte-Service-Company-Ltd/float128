@@ -133,9 +133,11 @@ Normalization is a **vital** step to ensure the highest gas efficiency and preci
 
 For example, the number 12345.678 will have only one proper representation in this library: 12345678000000000000000000000000000000 x $10^{-33}$
 
-_Note: It is encouraged to store the numbers as floating-point values, and not to convert them to fixed-point numbers or any other conversion that might truncate the significant digits as this will mean nothing less than loss of precision._
+> [!NOTE] 
+> It is encouraged to store the numbers as floating-point values, and not to convert them to fixed-point numbers or any other conversion that might truncate the significant digits as this will mean nothing less than loss of precision._
 
-_Note: Additionally when using constants (i.e. multiplcation or division by 2) it is most efficient from a gas perspective to normalize beforehand._
+> [!NOTE]
+> Additionally when using constants (i.e. multiplcation or division by 2) it is most efficient from a gas perspective to normalize beforehand._
 
 ### Representation of zero
 
@@ -153,16 +155,16 @@ Here are the current Gas Results:
 
 #### Gas Report - functions using packedFloats
 
-| Function (and scenario)                | Min | Average | Max  |
-| -------------------------------------- | --- | ------- | ---- |
-| Addition                               | 472 | 841     | 1158 |
-| Addition (matching exponents)          | 437 | 581     | 1158 |
-| Addition (subtraction via addition)    | 481 | 982     | 1152 |
-| Subtraction                            | 469 | 840     | 1157 |
-| Subtraction (matching exponents)       | 434 | 589     | 1158 |
-| Subtraction (addition via subtraction) | 434 | 675     | 1149 |
-| Multiplication                         | 301 | 302     | 303  |
-| Multiplication (by zero)               | 118 | 118     | 118  |
-| Division                               | 269 | 283     | 299  |
-| Division (numerator is zero)           | 123 | 123     | 123  |
-| Square Root                            | 932 | 951     | 970  |
+| Function (and scenario)                | Min  | Average | Max  |
+| -------------------------------------- | ---- | ------- | ---- |
+| Addition                               | 596  | 1174    | 1778 |
+| Addition (matching exponents)          | 499  | 941     | 1556 |
+| Addition (subtraction via addition)    | 609  | 1331    | 1791 |
+| Subtraction                            | 577  | 1175    | 1769 |
+| Subtraction (matching exponents)       | 491  | 928     | 1567 |
+| Subtraction (addition via subtraction) | 604  | 1018    | 1784 |
+| Multiplication                         | 295  | 575     | 856  |
+| Multiplication (by zero)               | 295  | 576     | 858  |
+| Division                               | 296  | 590     | 886  |
+| Division (numerator is zero)           | 295  | 577     | 860  |
+| Square Root                            | 1247 | 1416    | 1588 |
