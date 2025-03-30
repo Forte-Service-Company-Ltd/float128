@@ -3,5 +3,5 @@
     "editor.formatOnSave": true
   },
   "semi": false,
-  "printWidth": 160
+  "printWidth": 180
 }
