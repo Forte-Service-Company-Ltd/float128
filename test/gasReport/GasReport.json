@@ -60,7 +60,7 @@
     "add": {
       "matchingexponents": {
         "min": 739,
-        "avg": 1049,
+        "avg": 1063,
         "max": 1457
       },
       "addsub": {
@@ -75,12 +75,12 @@
     "sub": {
       "matchingexponents": {
         "min": 736,
-        "avg": 1036,
+        "avg": 1029,
         "max": 1392
       },
       "subadd": {
         "min": 878,
-        "avg": 959,
+        "avg": 961,
         "max": 994
       },
       "min": 878,
@@ -94,7 +94,7 @@
         "max": 171
       },
       "min": 550,
-      "avg": 960,
+      "avg": 961,
       "max": 1124
     },
     "div": {
@@ -104,18 +104,18 @@
         "max": 189
       },
       "min": 585,
-      "avg": 1137,
+      "avg": 1133,
       "max": 1238
     },
     "sqrt": {
       "min": 1320,
-      "avg": 2182,
+      "avg": 2113,
       "max": 3108
     }
   },
   "Helpers": {
     "Log10": {
-      "min": 345,
+      "min": 328,
       "avg": 346,
       "max": 351
     },
