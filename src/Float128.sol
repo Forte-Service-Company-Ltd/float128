@@ -5,7 +5,7 @@ import {Uint512} from "../lib/Uint512.sol";
 import {packedFloat} from "./Types.sol";
 
 /**
- * @title Floating point Library base 10 with 38 digits signed
+ * @title Floating point Library base 10 with 38 or 72 digits signed
  * @dev the library uses the type packedFloat whih is a uint under the hood
  * @author Inspired by a Python proposal by @miguel-ot and refined/implemented in Solidity by @oscarsernarosero @Palmerg4
  */
@@ -55,7 +55,6 @@ library Float128 {
      * @param a the first addend
      * @param b the second addend
      * @return r the result of a + b
-     * @notice this version of the function uses only the packedFloat type
      */
     function add(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
         uint addition;
@@ -424,11 +423,10 @@ library Float128 {
     }
 
     /**
-     * @dev gets the multiplicative of 2 signed floating point numbers
-     * @param a the first factor
-     * @param b the second factor
+     * @dev gets the product of 2 signed floating point numbers
+     * @param a the multiplicand
+     * @param b the multiplier
      * @return r the result of a * b
-     * @notice this version of the function uses only the packedFloat type
      */
     function mul(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
         uint rMan;
@@ -531,22 +529,20 @@ library Float128 {
     }
 
     /**
-     * @dev gets the remainder of 2 signed floating point numbers
+     * @dev gets the quotient of 2 signed floating point numbers
      * @param a the numerator
      * @param b the denominator
      * @return r the result of a / b
-     * @notice this version of the function uses only the packedFloat type
      */
     function div(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
         r = div(a, b, false);
     }
 
     /**
-     * @dev gets the remainder of 2 signed floating point numbers which results in a large mantissa
+     * @dev gets the quotient of 2 signed floating point numbers which results in a large mantissa (72 digits) for better precision
      * @param a the numerator
      * @param b the denominator
      * @return r the result of a / b
-     * @notice this version of the function uses only the packedFloat type
      */
     function divL(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
         r = div(a, b, true);
@@ -556,8 +552,8 @@ library Float128 {
      * @dev gets the remainder of 2 signed floating point numbers
      * @param a the numerator
      * @param b the denominator
+     * @param rL Large mantissa flag for the result. If true, the result will be force to use 72 digits for the mansitssa
      * @return r the result of a / b
-     * @notice this version of the function uses only the packedFloat type
      */
     function div(packedFloat a, packedFloat b, bool rL) internal pure returns (packedFloat r) {
         assembly {
@@ -667,7 +663,6 @@ library Float128 {
      * @notice only positive numbers can have their square root calculated through this function
      * @param a the numerator to get the square root of
      * @return r the result of √a
-     * @notice this version of the function uses only the packedFloat type
      */
     function sqrt(packedFloat a) internal pure returns (packedFloat r) {
         uint s;
@@ -809,7 +804,6 @@ library Float128 {
      * @param a the first term
      * @param b the second term
      * @return retVal the result of a < b
-     * @notice this version of the function uses only the packedFloat type
      */
     function lt(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
         if (packedFloat.unwrap(a) == packedFloat.unwrap(b)) return false;
@@ -867,7 +861,6 @@ library Float128 {
      * @param a the first term
      * @param b the second term
      * @return retVal the result of a <= b
-     * @notice this version of the function uses only the packedFloat type
      */
     function le(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
         if (packedFloat.unwrap(a) == packedFloat.unwrap(b)) return true;
@@ -925,7 +918,6 @@ library Float128 {
      * @param a the first term
      * @param b the second term
      * @return retVal the result of a > b
-     * @notice this version of the function uses only the packedFloat type
      */
     function gt(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
         if (packedFloat.unwrap(a) == packedFloat.unwrap(b)) return false;
@@ -983,7 +975,6 @@ library Float128 {
      * @param a the first term
      * @param b the second term
      * @return retVal the result of a >= b
-     * @notice this version of the function uses only the packedFloat type
      */
     function ge(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
         if (packedFloat.unwrap(a) == packedFloat.unwrap(b)) return true;
@@ -1041,7 +1032,6 @@ library Float128 {
      * @param a the first term
      * @param b the second term
      * @return retVal the result of a == b
-     * @notice this version of the function uses only the packedFloat type
      */
     function eq(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
         retVal = packedFloat.unwrap(a) == packedFloat.unwrap(b);
@@ -1050,11 +1040,11 @@ library Float128 {
     /**
      * @dev encodes a pair of signed integer values describing a floating point number into a packedFloat
      * Examples: 1234.567 can be expressed as: 123456 x 10**(-3), or 1234560 x 10**(-4), or 12345600 x 10**(-5), etc.
-     * @notice the mantissa can hold a maximum of 38 digits. Any number with more digits will lose precision.
-     * @param mantissa the integer that holds the mantissa digits (38 digits max)
+     * @notice the mantissa can hold a maximum of 38 or 72 digits. Any number in between or more digits will lose precision.
+     * @param mantissa the integer that holds the mantissa digits (38 or 72 digits max)
      * @param exponent the exponent of the floating point number (between -8192 and +8191)
      * @return float the encoded number. This value will ocupy a single 256-bit word and will hold the normalized
-     * version of the floating-point number (shifts the exponent enough times to have exactly 38 significant digits)
+     * version of the floating-point number (shifts the exponent enough times to have exactly 38 or 72 significant digits)
      */
     function toPackedFloat(int mantissa, int exponent) internal pure returns (packedFloat float) {
         uint digitsMantissa;
