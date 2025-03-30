@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {Uint512} from "../lib/Uint512.sol";
 import {packedFloat} from "./Types.sol";
 import {Float128} from "./Float128.sol";
 
 /**
- * @title Floating point Library base 10 with 38 digits signed
+ * @title Natural Logarithm Floating-Point Library
  * @dev the library uses the type packedFloat whih is a uint under the hood
  * @author Inspired by a Python proposal by @miguel-ot and refined/implemented in Solidity by @oscarsernarosero @Palmerg4
  */
