@@ -180,6 +180,6 @@ Here are the current Gas Results:
 | Multiplication (by zero)               | 171  | 171     | 171  |
 | Division                               | 585  | 1125    | 1238 |
 | Division (numerator is zero)           | 189  | 189     | 189  |
-| Division Large                         | 190  | 190     | 190  |
-| Division Large (numerator is zero)     | 1149 | 1194    | 1239 |
-| Square Root                            | 1380 | 2178    | 3180 |
+| Division Large                         | 1149 | 1194    | 1239 |
+| Division Large (numerator is zero)     | 190  | 190     | 190  |
+| Square Root                            | 1380 | 2178    | 3108 |
