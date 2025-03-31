@@ -62,7 +62,7 @@ The library's arithmetic operations' error have been calculated against results 
 | Multiplication (mul)   | 0                |
 | Division (div/divL)    | 0                |
 | Square root (sqrt)     | 0                |
-| Natural Logarithm (ln) | 9                |
+| Natural Logarithm (ln) | 40               |
 
 ### Types
 
@@ -170,14 +170,16 @@ Here are the current Gas Results:
 
 | Function (and scenario)                | Min  | Average | Max  |
 | -------------------------------------- | ---- | ------- | ---- |
-| Addition                               | 596  | 1174    | 1778 |
-| Addition (matching exponents)          | 499  | 941     | 1556 |
-| Addition (subtraction via addition)    | 609  | 1331    | 1791 |
-| Subtraction                            | 577  | 1175    | 1769 |
-| Subtraction (matching exponents)       | 491  | 928     | 1567 |
-| Subtraction (addition via subtraction) | 604  | 1018    | 1784 |
-| Multiplication                         | 295  | 575     | 856  |
-| Multiplication (by zero)               | 295  | 576     | 858  |
-| Division                               | 296  | 590     | 886  |
-| Division (numerator is zero)           | 295  | 577     | 860  |
-| Square Root                            | 1247 | 1416    | 1588 |
+| Addition                               | 881  | 1237    | 1528 |
+| Addition (matching exponents)          | 739  | 1052    | 1457 |
+| Addition (subtraction via addition)    | 1354 | 1472    | 1528 |
+| Subtraction                            | 878  | 1230    | 1526 |
+| Subtraction (matching exponents)       | 736  | 1028    | 1392 |
+| Subtraction (addition via subtraction) | 878  | 962     | 994  |
+| Multiplication                         | 550  | 957     | 1124 |
+| Multiplication (by zero)               | 171  | 171     | 171  |
+| Division                               | 585  | 1125    | 1238 |
+| Division (numerator is zero)           | 189  | 189     | 189  |
+| Division Large                         | 190  | 190     | 190  |
+| Division Large (numerator is zero)     | 1149 | 1194    | 1239 |
+| Square Root                            | 1380 | 2178    | 3180 |
