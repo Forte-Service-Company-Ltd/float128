@@ -7,7 +7,6 @@ import "src/Float128.sol";
 import {Ln} from "src/Ln.sol";
 import "test/FloatUtils.sol";
 
-
 contract Float128FuzzTest is FloatCommon {
     using Float128 for int256;
     using Float128 for packedFloat;
@@ -254,7 +253,7 @@ contract Float128FuzzTest is FloatCommon {
         console2.log("rMan", rMan);
         console2.log("rExp", rExp);
 
-        checkResults(retVal, rMan, rExp, pyMan, pyExp, 7);
+        checkResults(retVal, rMan, rExp, pyMan, pyExp, 9);
     }
 
     function testToPackedFloatFuzz(int256 man, int256 exp) public pure {

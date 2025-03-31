@@ -28,7 +28,7 @@ Some examples:
 Floating point numbers can represent the same number in infinite ways by playing with the exponent. For instance, the first example could be also represented by -10 x $10^{-5}$, -100 x $10^{-6}$, -1000 x $10^{-7}$, etc.
 
 > [!CAUTION]
-This library will only handle numbers with exponents within the range of **-3000** to **3000**. Larger or smaller numbers may result in precision loss and/or overflow/underflow.
+> This library will only handle numbers with exponents within the range of **-3000** to **3000**. Larger or smaller numbers may result in precision loss and/or overflow/underflow.
 
 #### Library main features
 
@@ -50,6 +50,19 @@ Available operations:
 - Greater Than (gt)
 - Greater Than Or Equal To (ge)
 - Equal (eq)
+
+### Error in operations
+
+The library's arithmetic operations' error have been calculated against results from Python's Decimal library. The error appear in the Units of Least Precision (ulp):
+
+| Operation              | Max error (ulps) |
+| ---------------------- | ---------------- |
+| Addition (add)         | 1                |
+| Subtraction (sub)      | 1                |
+| Multiplication (mul)   | 0                |
+| Division (div/divL)    | 0                |
+| Square root (sqrt)     | 0                |
+| Natural Logarithm (ln) | 9                |
 
 ### Types
 
@@ -133,11 +146,11 @@ Normalization is a **vital** step to ensure the highest gas efficiency and preci
 
 For example, the number 12345.678 will have only one proper representation in this library: 12345678000000000000000000000000000000 x $10^{-33}$
 
-> [!NOTE] 
-> It is encouraged to store the numbers as floating-point values, and not to convert them to fixed-point numbers or any other conversion that might truncate the significant digits as this will mean nothing less than loss of precision._
+> [!NOTE]
+> It is encouraged to store the numbers as floating-point values, and not to convert them to fixed-point numbers or any other conversion that might truncate the significant digits as this will mean nothing less than loss of precision.\_
 
 > [!NOTE]
-> Additionally when using constants (i.e. multiplcation or division by 2) it is most efficient from a gas perspective to normalize beforehand._
+> Additionally when using constants (i.e. multiplcation or division by 2) it is most efficient from a gas perspective to normalize beforehand.\_
 
 ### Representation of zero
 
