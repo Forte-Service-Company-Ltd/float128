@@ -253,7 +253,7 @@ contract Float128FuzzTest is FloatCommon {
         console2.log("rMan", rMan);
         console2.log("rExp", rExp);
 
-        checkResults(retVal, rMan, rExp, pyMan, pyExp, 200);
+        checkResults(retVal, rMan, rExp, pyMan, pyExp, 40);
     }
 
     function testToPackedFloatFuzz(int256 man, int256 exp) public pure {

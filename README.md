@@ -62,7 +62,7 @@ The library's arithmetic operations' error have been calculated against results 
 | Multiplication (mul)   | 0                |
 | Division (div/divL)    | 0                |
 | Square root (sqrt)     | 0                |
-| Natural Logarithm (ln) | 500              |
+| Natural Logarithm (ln) | 100              |
 
 ### Types
 
