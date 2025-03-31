@@ -275,10 +275,13 @@ contract Float128FuzzTest is FloatCommon {
         uint256 comparison = 1;
         uint256 iter = 0;
         while (comparison <= man) {
+            console2.log("comparison", comparison);
             comparison *= 10;
+            console2.log("comparison", comparison);
             iter += 1;
             if (comparison == 1e77 && comparison <= man) {
                 iter += 1;
+                console2.log("iter", iter);
                 break;
             }
         }
