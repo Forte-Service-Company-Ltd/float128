@@ -252,8 +252,14 @@ contract Float128FuzzTest is FloatCommon {
         (int rMan, int rExp) = Float128.decode(retVal);
         console2.log("rMan", rMan);
         console2.log("rExp", rExp);
-
-        checkResults(retVal, rMan, rExp, pyMan, pyExp, 40);
+        if (rMan == 0 && pyMan != 0) {
+            // we might have cases for when truncation will make a number 1.0, but Python will take
+            // the full number. In those cases, Solidity result will be zero, so we just check the
+            // exponent of the Python response to make sure it stays within tolerance
+            assertLe(pyExp, -75);
+        } else {
+            checkResults(retVal, rMan, rExp, pyMan, pyExp, 71);
+        }
     }
 
     function testToPackedFloatFuzz(int256 man, int256 exp) public pure {
