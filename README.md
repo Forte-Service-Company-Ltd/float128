@@ -62,7 +62,7 @@ The library's arithmetic operations' error have been calculated against results 
 | Multiplication (mul)   | 0                |
 | Division (div/divL)    | 0                |
 | Square root (sqrt)     | 0                |
-| Natural Logarithm (ln) | 40               |
+| Natural Logarithm (ln) | 500              |
 
 ### Types
 
@@ -182,4 +182,4 @@ Here are the current Gas Results:
 | Division (numerator is zero)           | 189  | 189     | 189  |
 | Division Large                         | 1149 | 1194    | 1239 |
 | Division Large (numerator is zero)     | 190  | 190     | 190  |
-| Square Root                            | 1320 | 2178    | 3108 |
+| Square Root                            | 1320 | 2156    | 3108 |
