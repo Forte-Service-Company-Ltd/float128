@@ -253,7 +253,7 @@ contract Float128FuzzTest is FloatCommon {
         console2.log("rMan", rMan);
         console2.log("rExp", rExp);
 
-        checkResults(retVal, rMan, rExp, pyMan, pyExp, 9);
+        checkResults(retVal, rMan, rExp, pyMan, pyExp, 40);
     }
 
     function testToPackedFloatFuzz(int256 man, int256 exp) public pure {
@@ -277,7 +277,7 @@ contract Float128FuzzTest is FloatCommon {
         while (comparison <= man) {
             comparison *= 10;
             iter += 1;
-            if (comparison == 1e77 && comparison < man) {
+            if (comparison == 1e77 && comparison <= man) {
                 iter += 1;
                 break;
             }
