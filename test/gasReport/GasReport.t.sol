@@ -254,7 +254,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
     }
 
     function test_gasUsedPacked_divL() public {
-        vm.sleep(delay * 19);
+        vm.sleep(delay * 20);
         _primer();
         _resetGasUsed();
 
@@ -280,7 +280,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
     }
 
     function test_gasUsedPacked_div_numerator_zero() public {
-        vm.sleep(delay * 20);
+        vm.sleep(delay * 21);
         _primer();
         _resetGasUsed();
 
@@ -303,7 +303,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
     }
 
     function test_gasUsedPacked_divL_numerator_zero() public {
-        vm.sleep(delay * 20);
+        vm.sleep(delay * 22);
         _primer();
         _resetGasUsed();
 
@@ -326,7 +326,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
     }
 
     function test_gasUsedPacked_sqrt() public {
-        vm.sleep(delay * 22);
+        vm.sleep(delay * 23);
         _primer();
         _resetGasUsed();
 
@@ -352,7 +352,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
     }
 
     function test_gasUsedPacked_ln() public {
-        vm.sleep(delay * 22);
+        vm.sleep(delay * 24);
         _primer();
         _resetGasUsed();
 
@@ -381,7 +381,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
     /*********************  HELPERS ************************/
     /*******************************************************/
     function test_gasUsedLog10() public {
-        vm.sleep(delay * 22);
+        vm.sleep(delay * 25);
         _primer();
         _resetGasUsed();
 
