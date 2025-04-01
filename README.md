@@ -36,6 +36,7 @@ Floating point numbers can represent the same number in infinite ways by playing
 - Significant digits: 38 or 72
 - Exponent range: -8192 and +8191
 - Maximum exponent for 38-digit mantissas: -18
+- Maximum digits that can be handled accurately: 72
 
 Available operations:
 
