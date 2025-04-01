@@ -237,7 +237,7 @@ contract Float128FuzzTest is FloatCommon {
     }
 
     function testLnpackedFloatFuzzRange1To1Point2(int aMan, int aExp) public {
-        aMan = bound(aMan, 100000000000000000000000000000000000000000000000000000000000000000000000, 102000000000000000000000000000000000000000000000000000000000000000000000);
+        aMan = bound(aMan, 10000000000000000000000000000000000000, 10200000000000000000000000000000000000);
         console2.log("aMan", aMan);
         uint digits = findNumberOfDigits(aMan < 0 ? uint(aMan * -1) : uint(aMan));
         aExp = 1 - int(digits);
@@ -263,7 +263,7 @@ contract Float128FuzzTest is FloatCommon {
             // exponent of the Python response to make sure it stays within tolerance
             assertLe(pyExp, -75);
         } else {
-            checkResults(retVal, rMan, rExp, pyMan, pyExp, 1e37);
+            checkResults(retVal, rMan, rExp, pyMan, pyExp, 105);
         }
     }
 

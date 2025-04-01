@@ -64,7 +64,7 @@ The library's arithmetic operations' error have been calculated against results 
 | Square root (sqrt)       | 0                |
 | Natural Logarithm (ln)\* | 99               |
 
-\* WARNING: the precision for `ln` is not guaranteed for numbers with more than 38 significand digits (mantissas with more than 38 digits) that are between 1.0 and 1.1 exclusive.
+\* WARNING: the precision for `ln` is not guaranteed for numbers that are between 1.0 and 1.1 exclusive which can have an error of 10000000 ulps for numbers with 38 digits or less, and specially for numbers with more than 38 significand digits (mantissas with more than 38 digits) which can have a huge relative error even above 50% in some extreme cases.
 
 ### Types
 
