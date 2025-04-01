@@ -6,7 +6,7 @@ import {packedFloat} from "./Types.sol";
 
 /**
  * @title Floating point Library base 10 with 38 or 72 digits signed
- * @dev the library uses the type packedFloat whih is a uint under the hood
+ * @dev the library uses the type packedFloat which is a uint under the hood
  * @author Inspired by a Python proposal by @miguel-ot and refined/implemented in Solidity by @oscarsernarosero @Palmerg4
  */
 
