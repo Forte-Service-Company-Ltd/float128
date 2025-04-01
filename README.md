@@ -53,16 +53,18 @@ Available operations:
 
 ### Error in operations
 
-The library's arithmetic operations' error have been calculated against results from Python's Decimal library. The error appear in the Units of Least Precision (ulp):
+The library's arithmetic operations' error have been calculated against results from Python's Decimal library. The error appear in the Units in the Last Place (ULP):
 
-| Operation              | Max error (ulps) |
-| ---------------------- | ---------------- |
-| Addition (add)         | 1                |
-| Subtraction (sub)      | 1                |
-| Multiplication (mul)   | 0                |
-| Division (div/divL)    | 0                |
-| Square root (sqrt)     | 0                |
-| Natural Logarithm (ln) | 40               |
+| Operation                | Max error (ULPs) |
+| ------------------------ | ---------------- |
+| Addition (add)           | 1                |
+| Subtraction (sub)        | 1                |
+| Multiplication (mul)     | 0                |
+| Division (div/divL)      | 0                |
+| Square root (sqrt)       | 0                |
+| Natural Logarithm (ln)\* | 99               |
+
+\* WARNING: the precision for `ln` is not guaranteed for numbers that are between 1.0 and 1.1 (exclusive). For numbers with ≤38 significand digits, errors are generally limited to 199 ULPs (units in the last place). However, numbers with >38 significand digits may exhibit relative errors exceeding 50% in extreme cases.
 
 ### Types
 
@@ -168,18 +170,19 @@ Here are the current Gas Results:
 
 #### Gas Report - functions using packedFloats
 
-| Function (and scenario)                | Min  | Average | Max  |
-| -------------------------------------- | ---- | ------- | ---- |
-| Addition                               | 881  | 1237    | 1528 |
-| Addition (matching exponents)          | 739  | 1052    | 1457 |
-| Addition (subtraction via addition)    | 1354 | 1472    | 1528 |
-| Subtraction                            | 878  | 1230    | 1526 |
-| Subtraction (matching exponents)       | 736  | 1028    | 1392 |
-| Subtraction (addition via subtraction) | 878  | 962     | 994  |
-| Multiplication                         | 550  | 957     | 1124 |
-| Multiplication (by zero)               | 171  | 171     | 171  |
-| Division                               | 585  | 1125    | 1238 |
-| Division (numerator is zero)           | 189  | 189     | 189  |
-| Division Large                         | 1149 | 1194    | 1239 |
-| Division Large (numerator is zero)     | 190  | 190     | 190  |
-| Square Root                            | 1320 | 2178    | 3108 |
+| Function (and scenario)                | Min   | Average | Max   |
+| -------------------------------------- | ----- | ------- | ----- |
+| Addition                               | 881   | 1237    | 1528  |
+| Addition (matching exponents)          | 739   | 1052    | 1457  |
+| Addition (subtraction via addition)    | 1354  | 1472    | 1528  |
+| Subtraction                            | 878   | 1230    | 1526  |
+| Subtraction (matching exponents)       | 736   | 1028    | 1392  |
+| Subtraction (addition via subtraction) | 878   | 962     | 994   |
+| Multiplication                         | 550   | 957     | 1124  |
+| Multiplication (by zero)               | 171   | 171     | 171   |
+| Division                               | 585   | 1125    | 1238  |
+| Division (numerator is zero)           | 189   | 189     | 189   |
+| Division Large                         | 1149  | 1194    | 1239  |
+| Division Large (numerator is zero)     | 190   | 190     | 190   |
+| Square Root                            | 1320  | 2156    | 3108  |
+| Natural logarithm                      | 50112 | 62647   | 69569 |

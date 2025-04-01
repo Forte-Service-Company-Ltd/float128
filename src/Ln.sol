@@ -64,7 +64,6 @@ library Ln {
             mantissa := and(input, MANTISSA_MASK)
             exponent := sub(shr(EXPONENT_BIT, and(input, EXPONENT_MASK)), ZERO_OFFSET)
         }
-
         if (
             exponent == 0 - int(inputL ? Float128.MAX_DIGITS_L_MINUS_1 : Float128.MAX_DIGITS_M_MINUS_1) &&
             mantissa == (inputL ? Float128.MIN_L_DIGIT_NUMBER : Float128.MIN_M_DIGIT_NUMBER)
@@ -95,12 +94,13 @@ library Ln {
 
             uint one_over_arguments_76 = one_over_argument_in_long_int;
             uint m76 = m10;
-            if (m76 > Float128.MAX_DIGITS_M_X_2) {
+            m76 -= Float128.DIGIT_DIFF_76_L;
+            one_over_arguments_76 /= Float128.BASE_TO_THE_DIFF_76_L;
+            if (m76 > Float128.MAX_DIGITS_L) {
                 --m76;
-                one_over_arguments_76 = one_over_argument_in_long_int / Float128.BASE;
+                one_over_arguments_76 /= Float128.BASE;
             }
             int exp_one_over_argument = 0 - int(Float128.MAX_DIGITS_M) - int(Float128.MAX_DIGITS_M_X_2) - exp;
-
             packedFloat a = packedFloat.wrap(0).sub(ln(Float128.toPackedFloat(int(one_over_arguments_76), 0 - int(m76))));
             result = a.sub(Float128.toPackedFloat((exp_one_over_argument + int(m10)), 0).mul(ln10));
         } else {

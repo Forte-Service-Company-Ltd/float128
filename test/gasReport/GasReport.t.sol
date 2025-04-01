@@ -4,12 +4,14 @@ pragma solidity 0.8.24;
 import {Test} from "forge-std/Test.sol";
 import {GasHelpers} from "test/gasReport/GasHelpers.sol";
 import {packedFloat, Float128} from "src/Float128.sol";
+import {Ln} from "src/Ln.sol";
 import "test/FloatUtils.sol";
 import "forge-std/console2.sol";
 
 contract GasReport is Test, GasHelpers, FloatUtils {
     using Float128 for packedFloat;
     using Float128 for int256;
+    using Ln for packedFloat;
 
     uint256 runs = 1_000;
     string path = "test/gasReport/GasReport.json";
@@ -252,7 +254,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
     }
 
     function test_gasUsedPacked_divL() public {
-        vm.sleep(delay * 19);
+        vm.sleep(delay * 20);
         _primer();
         _resetGasUsed();
 
@@ -278,7 +280,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
     }
 
     function test_gasUsedPacked_div_numerator_zero() public {
-        vm.sleep(delay * 20);
+        vm.sleep(delay * 21);
         _primer();
         _resetGasUsed();
 
@@ -301,7 +303,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
     }
 
     function test_gasUsedPacked_divL_numerator_zero() public {
-        vm.sleep(delay * 20);
+        vm.sleep(delay * 22);
         _primer();
         _resetGasUsed();
 
@@ -324,7 +326,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
     }
 
     function test_gasUsedPacked_sqrt() public {
-        vm.sleep(delay * 21);
+        vm.sleep(delay * 23);
         _primer();
         _resetGasUsed();
 
@@ -349,11 +351,37 @@ contract GasReport is Test, GasHelpers, FloatUtils {
         _writeJson(".Packed.sqrt.", min, avg / runs, max);
     }
 
+    function test_gasUsedPacked_ln() public {
+        vm.sleep(delay * 24);
+        _primer();
+        _resetGasUsed();
+
+        for (uint i = 0; i < runs; ++i) {
+            (int aMan, int aExp) = setBoundsSqrt(vm.randomInt(), vm.randomInt());
+            // This is to circumvent sqrt of negative revert scenario
+            if (aMan < 0) {
+                aMan *= -1;
+            }
+
+            packedFloat a = Float128.toPackedFloat(aMan, aExp);
+
+            startMeasuringGas("Packed - ln");
+            Ln.ln(a);
+
+            gasUsed = stopMeasuringGas();
+            if (gasUsed > max) max = gasUsed;
+            if (gasUsed < min) min = gasUsed;
+            avg += gasUsed;
+        }
+
+        _writeJson(".Packed.ln.", min, avg / runs, max);
+    }
+
     /*******************************************************/
     /*********************  HELPERS ************************/
     /*******************************************************/
     function test_gasUsedLog10() public {
-        vm.sleep(delay * 22);
+        vm.sleep(delay * 25);
         _primer();
         _resetGasUsed();
 
