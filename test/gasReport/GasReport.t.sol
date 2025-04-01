@@ -352,7 +352,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
     }
 
     function test_gasUsedPacked_ln() public {
-        vm.sleep(delay * 21);
+        vm.sleep(delay * 22);
         _primer();
         _resetGasUsed();
 
