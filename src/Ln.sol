@@ -3,7 +3,6 @@ pragma solidity ^0.8.24;
 
 import {packedFloat} from "./Types.sol";
 import {Float128} from "./Float128.sol";
-import "forge-std/console2.sol";
 
 /**
  * @title Natural Logarithm Floating-Point Library
@@ -65,8 +64,6 @@ library Ln {
             mantissa := and(input, MANTISSA_MASK)
             exponent := sub(shr(EXPONENT_BIT, and(input, EXPONENT_MASK)), ZERO_OFFSET)
         }
-        console2.log("mantissa", mantissa);
-        console2.log("exponent", exponent);
         if (
             exponent == 0 - int(inputL ? Float128.MAX_DIGITS_L_MINUS_1 : Float128.MAX_DIGITS_M_MINUS_1) &&
             mantissa == (inputL ? Float128.MIN_L_DIGIT_NUMBER : Float128.MIN_M_DIGIT_NUMBER)
@@ -99,14 +96,11 @@ library Ln {
             uint m76 = m10;
             m76 -= Float128.DIGIT_DIFF_76_L;
             one_over_arguments_76 /= Float128.BASE_TO_THE_DIFF_76_L;
-            console2.log("one_over_arguments_76 after going from 76 to 72", one_over_arguments_76);
             if (m76 > Float128.MAX_DIGITS_L) {
                 --m76;
                 one_over_arguments_76 /= Float128.BASE;
-                console2.log("one_over_arguments_76 removing extra digit", one_over_arguments_76);
             }
             int exp_one_over_argument = 0 - int(Float128.MAX_DIGITS_M) - int(Float128.MAX_DIGITS_M_X_2) - exp;
-            console2.log("one_over_arguments_76", one_over_arguments_76);
             packedFloat a = packedFloat.wrap(0).sub(ln(Float128.toPackedFloat(int(one_over_arguments_76), 0 - int(m76))));
             result = a.sub(Float128.toPackedFloat((exp_one_over_argument + int(m10)), 0).mul(ln10));
         } else {

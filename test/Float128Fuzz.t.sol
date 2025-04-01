@@ -360,12 +360,7 @@ contract Float128FuzzTest is FloatCommon {
         }
     }
 
-    function testLnpackedFloatUnit(int aMan, int aExp) public {
-        // aMan = bound(aMan, 200000000000000000000000000000000000000000000000000000000000000000000000, 9999999999999999999999999999999999999999999999999999999999999999999999999999);
-        // console2.log("aMan", aMan);
-        // uint digits = findNumberOfDigits(aMan < 0 ? uint(aMan * -1) : uint(aMan));
-        // aExp = bound(aExp, 1 - int(digits), 3000);
-        // console2.log("aExp", aExp);
+    function testLnpackedFloatUnit() public {
         aMan = 9951;
         aExp = -4;
 
