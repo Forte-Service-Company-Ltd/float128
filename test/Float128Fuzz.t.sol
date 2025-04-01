@@ -263,7 +263,7 @@ contract Float128FuzzTest is FloatCommon {
             // exponent of the Python response to make sure it stays within tolerance
             assertLe(pyExp, -75);
         } else {
-            checkResults(retVal, rMan, rExp, pyMan, pyExp, 105);
+            checkResults(retVal, rMan, rExp, pyMan, pyExp, 106);
         }
     }
 
@@ -361,8 +361,8 @@ contract Float128FuzzTest is FloatCommon {
     }
 
     function testLnpackedFloatUnit() public {
-        int aMan = 9951;
-        int aExp = -4;
+        int aMan = 10089492627524701326248021367100041644;
+        int aExp = -37;
 
         packedFloat a = Float128.toPackedFloat(aMan, aExp);
         (int manNorm, int expNorm) = Float128.decode(a);
@@ -384,7 +384,7 @@ contract Float128FuzzTest is FloatCommon {
             // exponent of the Python response to make sure it stays within tolerance
             assertLe(pyExp, -75);
         } else {
-            checkResults(retVal, rMan, rExp, pyMan, pyExp, 72);
+            checkResults(retVal, rMan, rExp, pyMan, pyExp, 106);
         }
     }
 

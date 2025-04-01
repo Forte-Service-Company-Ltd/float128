@@ -53,9 +53,9 @@ Available operations:
 
 ### Error in operations
 
-The library's arithmetic operations' error have been calculated against results from Python's Decimal library. The error appear in the Units of Least Precision (ulp):
+The library's arithmetic operations' error have been calculated against results from Python's Decimal library. The error appear in the Units in the Last Place (ULP):
 
-| Operation                | Max error (ulps) |
+| Operation                | Max error (ULPs) |
 | ------------------------ | ---------------- |
 | Addition (add)           | 1                |
 | Subtraction (sub)        | 1                |
@@ -64,7 +64,7 @@ The library's arithmetic operations' error have been calculated against results 
 | Square root (sqrt)       | 0                |
 | Natural Logarithm (ln)\* | 99               |
 
-\* WARNING: the precision for `ln` is not guaranteed for numbers that are between 1.0 and 1.1 exclusive which can have an error of 10000000 ulps for numbers with 38 digits or less, and specially for numbers with more than 38 significand digits (mantissas with more than 38 digits) which can have a huge relative error even above 50% in some extreme cases.
+\* WARNING: the precision for `ln` is not guaranteed for numbers that are between 1.0 and 1.1 (exclusive). For numbers with ≤38 significand digits, errors are generally limited to 199 ULPs (units in the last place). However, numbers with >38 significand digits may exhibit relative errors exceeding 50% in extreme cases.
 
 ### Types
 
