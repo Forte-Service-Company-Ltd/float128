@@ -159,7 +159,6 @@ contract Float128FuzzTest is FloatCommon {
     /// forge-config: default.allow_internal_expect_revert = true
     function testEncoded_sqrt(int aMan, int aExp) public {
         (aMan, aExp, , ) = setBounds(aMan, aExp, 0, 0);
-        aExp = bound(aExp, -74, 1); // TODO increse this when finishing sqrt
         string[] memory inputs = _buildFFIMul128(aMan < 0 ? aMan * -1 : aMan, aExp, 0, 0, "sqrt", 0);
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
