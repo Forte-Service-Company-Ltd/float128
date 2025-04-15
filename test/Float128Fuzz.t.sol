@@ -12,6 +12,8 @@ contract Float128FuzzTest is FloatCommon {
     using Float128 for packedFloat;
     using Ln for packedFloat;
 
+    error DangerOfOverflow(uint);
+
     function checkResults(int rMan, int rExp, int pyMan, int pyExp) internal pure {
         checkResults(packedFloat.wrap(0), rMan, rExp, pyMan, pyExp, 0);
     }
@@ -534,5 +536,30 @@ contract Float128FuzzTest is FloatCommon {
 
         bool retVal = Float128.eq(a, b);
         assertFalse(retVal);
+    }
+
+    function testExponentiationOverflow_DivisionOfLNumberByOverflowedExpReturnsZero() public pure {
+        uint r;
+        uint BASE = Float128.BASE;
+        uint MAX_L_DIGIT_NUMBER = Float128.MAX_L_DIGIT_NUMBER;
+        // we test the whole range of overflowed exponentiation which goes from 10**77 to 10**(exponent whole range)
+        for (uint i = 77; i < Float128.ZERO_OFFSET * 2; i++) {
+            // since all the overflowed exponentiations are greater than MAX_L_DIGIT_NUMBER, the result will always be zero
+            assembly {
+                r := div(MAX_L_DIGIT_NUMBER, exp(BASE, i))
+            }
+            assertEq(r, 0, "dividing an L number by an overflowed power of BASE does not return zero");
+        }
+    }
+
+    function testExponentiationOverflow_ExpReturnsZeroForExponentsGreaterThan255() public pure {
+        uint r;
+        uint BASE = Float128.BASE;
+        for (uint i = 256; i < Float128.ZERO_OFFSET * 2; i++) {
+            assembly {
+                r := exp(BASE, i)
+            }
+            assertEq(r, 0, "BASE to a power greater than 256 is not 0");
+        }
     }
 }
