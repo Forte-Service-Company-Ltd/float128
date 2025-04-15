@@ -510,4 +510,30 @@ contract Float128FuzzTest is FloatCommon {
         assertEq(mantissaF, expectedResultMantissa);
         assertEq(exponentF, expectedResultExp);
     }
+
+    function testEqDifferentRepresentationsPositive(int aMan, int aExp) public pure {
+        // Case positive a:
+        aMan = bound(aMan, 10000000000000000000000000000000000000, 99999999999999999999999999999999999999);
+        aExp = bound(aExp, -8000, 8000);
+        int bMan = aMan * int(Float128.BASE_TO_THE_DIGIT_DIFF);
+        int bExp = aExp - int(Float128.DIGIT_DIFF_L_M);
+        packedFloat a = Float128.toPackedFloat(aMan, aExp);
+        packedFloat b = Float128.toPackedFloat(bMan, bExp);
+
+        bool retVal = Float128.eq(a, b);
+        assertTrue(retVal);
+    }
+
+    function testEqDifferentRepresentationsNegative(int aMan, int aExp) public pure {
+        // Case negative b:
+        aMan = bound(aMan, 10000000000000000000000000000000000000, 99999999999999999999999999999999999999);
+        aExp = bound(aExp, -8000, 8000);
+        int bMan = -aMan * int(Float128.BASE_TO_THE_DIGIT_DIFF);
+        int bExp = aExp - int(Float128.DIGIT_DIFF_L_M);
+        packedFloat a = Float128.toPackedFloat(aMan, aExp);
+        packedFloat b = Float128.toPackedFloat(bMan, bExp);
+
+        bool retVal = Float128.eq(a, b);
+        assertFalse(retVal);
+    }
 }
