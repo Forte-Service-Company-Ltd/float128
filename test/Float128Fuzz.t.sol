@@ -12,8 +12,6 @@ contract Float128FuzzTest is FloatCommon {
     using Float128 for packedFloat;
     using Ln for packedFloat;
 
-    error DangerOfOverflow(uint);
-
     function checkResults(int rMan, int rExp, int pyMan, int pyExp) internal pure {
         checkResults(packedFloat.wrap(0), rMan, rExp, pyMan, pyExp, 0);
     }
