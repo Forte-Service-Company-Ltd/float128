@@ -40,7 +40,7 @@ def calculate_float(args):
     elif(operation == "ge"):
         result_float = 1 if a >= b else 0
     elif(operation == "ln"):
-        result_float = a.ln()
+        result_float = a.ln() if a > 0 else 0
 
     # print(result_float)
     log_10 = 0 if result_float == 0 else Decimal(abs(result_float)).log10()
