@@ -159,7 +159,6 @@ contract Float128FuzzTest is FloatCommon {
     /// forge-config: default.allow_internal_expect_revert = true
     function testEncoded_sqrt(int aMan, int aExp) public {
         (aMan, aExp, , ) = setBounds(aMan, aExp, 0, 0);
-        aExp = bound(aExp, -74, 1); // TODO increse this when finishing sqrt
         string[] memory inputs = _buildFFIMul128(aMan < 0 ? aMan * -1 : aMan, aExp, 0, 0, "sqrt", 0);
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
@@ -509,5 +508,31 @@ contract Float128FuzzTest is FloatCommon {
         (int mantissaF, int exponentF) = Float128.decode(retVal);
         assertEq(mantissaF, expectedResultMantissa);
         assertEq(exponentF, expectedResultExp);
+    }
+
+    function testEqDifferentRepresentationsPositive(int aMan, int aExp) public pure {
+        // Case positive a:
+        aMan = bound(aMan, 10000000000000000000000000000000000000, 99999999999999999999999999999999999999);
+        aExp = bound(aExp, -8000, 8000);
+        int bMan = aMan * int(Float128.BASE_TO_THE_DIGIT_DIFF);
+        int bExp = aExp - int(Float128.DIGIT_DIFF_L_M);
+        packedFloat a = Float128.toPackedFloat(aMan, aExp);
+        packedFloat b = Float128.toPackedFloat(bMan, bExp);
+
+        bool retVal = Float128.eq(a, b);
+        assertTrue(retVal);
+    }
+
+    function testEqDifferentRepresentationsNegative(int aMan, int aExp) public pure {
+        // Case negative b:
+        aMan = bound(aMan, 10000000000000000000000000000000000000, 99999999999999999999999999999999999999);
+        aExp = bound(aExp, -8000, 8000);
+        int bMan = -aMan * int(Float128.BASE_TO_THE_DIGIT_DIFF);
+        int bExp = aExp - int(Float128.DIGIT_DIFF_L_M);
+        packedFloat a = Float128.toPackedFloat(aMan, aExp);
+        packedFloat b = Float128.toPackedFloat(bMan, bExp);
+
+        bool retVal = Float128.eq(a, b);
+        assertFalse(retVal);
     }
 }

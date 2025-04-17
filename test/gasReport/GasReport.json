@@ -3,12 +3,13 @@
     "add": {
       "matchingexponents": {
         "min": 739,
+
         "avg": 1054,
         "max": 1457
       },
       "addsub": {
         "min": 1354,
-        "avg": 1474,
+        "avg": 1473,
         "max": 1528
       },
       "min": 862,
@@ -57,7 +58,7 @@
         "max": 190
       },
       "min": 1149,
-      "avg": 1193,
+      "avg": 1194,
       "max": 1239
     },
     "sqrt": {
@@ -73,7 +74,7 @@
   },
   "Helpers": {
     "Log10": {
-      "min": 328,
+      "min": 345,
       "avg": 346,
       "max": 351
     },
