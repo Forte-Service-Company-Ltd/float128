@@ -1035,6 +1035,26 @@ library Float128 {
      */
     function eq(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
         retVal = packedFloat.unwrap(a) == packedFloat.unwrap(b);
+        assembly {
+            let aL := and(a, MANTISSA_L_FLAG_MASK)
+            let bL := and(b, MANTISSA_L_FLAG_MASK)
+            // we check again for equality of numbers with different sizes as long as they have same sign and first equality check failed
+            if and(eq(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK)), and(iszero(retVal), iszero(eq(aL, bL)))) {
+                let aExp := and(a, EXPONENT_MASK)
+                let bExp := and(b, EXPONENT_MASK)
+                let aMan := and(a, MANTISSA_MASK)
+                let bMan := and(b, MANTISSA_MASK)
+                if iszero(aL) {
+                    aMan := mul(aMan, BASE_TO_THE_DIGIT_DIFF)
+                    aExp := sub(aExp, shl(EXPONENT_BIT, DIGIT_DIFF_L_M))
+                }
+                if iszero(bL) {
+                    bMan := mul(bMan, BASE_TO_THE_DIGIT_DIFF)
+                    bExp := sub(bExp, shl(EXPONENT_BIT, DIGIT_DIFF_L_M))
+                }
+                retVal := and(eq(aMan, bMan), eq(aExp, bExp))
+            }
+        }
     }
 
     /**
