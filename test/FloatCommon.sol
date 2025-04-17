@@ -152,11 +152,11 @@ abstract contract FloatCommon is FloatUtils {
 
     /// forge-config: default.allow_internal_expect_revert = true
     function testEncoded_sqrt_0() public {
-        vm.skip(true);
         packedFloat a = Float128.toPackedFloat(0, ZERO_OFFSET_NEG);
 
         // we initialize result to a different number to make sure the test doesn't lie to us
         packedFloat result = packedFloat.wrap(666); // 666 x 10**-8192
+
         // sqrt of 0 = 0
         result = Float128.sqrt(a);
         (int rMan, int rExp) = Float128.decode(result);

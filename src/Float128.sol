@@ -671,6 +671,7 @@ library Float128 {
         uint aMan;
         uint256 roundedDownResult;
         bool aL;
+        if (packedFloat.unwrap(a) == 0) return a;
         assembly {
             if and(a, MANTISSA_SIGN_MASK) {
                 let ptr := mload(0x40) // Get free memory pointer
@@ -679,9 +680,6 @@ library Float128 {
                 mstore(add(ptr, 0x24), 32) // Revert reason length
                 mstore(add(ptr, 0x44), "float128: squareroot of negative")
                 revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
-            }
-            if iszero(a) {
-                stop()
             }
             aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
             aMan := and(a, MANTISSA_MASK)
