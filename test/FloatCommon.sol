@@ -22,8 +22,8 @@ contract FloatCommon is FloatUtils {
 
         packedFloat result = Float128.mul(a, b);
         (int rMan, int rExp) = Float128.decode(result);
-        assertEq(rMan,0,"Solidity result is not zero");
-        assertEq(rExp, ZERO_OFFSET_NEG,"Solidity result is not zero");
+        assertEq(rMan, 0, "Solidity result is not zero");
+        assertEq(rExp, ZERO_OFFSET_NEG, "Solidity result is not zero");
 
         // check when b == 0
         a = Float128.toPackedFloat(aMan, aExp);
@@ -31,14 +31,14 @@ contract FloatCommon is FloatUtils {
 
         result = Float128.mul(b, a);
         (rMan, rExp) = Float128.decode(result);
-        assertEq(rMan,0,"Solidity result is not zero");
-        assertEq(rExp, ZERO_OFFSET_NEG,"Solidity result is not zero");
+        assertEq(rMan, 0, "Solidity result is not zero");
+        assertEq(rExp, ZERO_OFFSET_NEG, "Solidity result is not zero");
 
         // check when a and b == 0
         result = Float128.mul(a, a);
         (rMan, rExp) = Float128.decode(result);
-        assertEq(rMan,0,"Solidity result is not zero");
-        assertEq(rExp, ZERO_OFFSET_NEG,"Solidity result is not zero");
+        assertEq(rMan, 0, "Solidity result is not zero");
+        assertEq(rExp, ZERO_OFFSET_NEG, "Solidity result is not zero");
     }
 
     /// forge-config: default.allow_internal_expect_revert = true
@@ -56,8 +56,8 @@ contract FloatCommon is FloatUtils {
         }
         packedFloat result = Float128.div(a, b);
         (int rMan, int rExp) = Float128.decode(result);
-        assertEq(rMan,0,"Solidity result is not zero");
-        assertEq(rExp, ZERO_OFFSET_NEG,"Solidity result is not zero");
+        assertEq(rMan, 0, "Solidity result is not zero");
+        assertEq(rExp, ZERO_OFFSET_NEG, "Solidity result is not zero");
     }
 
     /// forge-config: default.allow_internal_expect_revert = true
@@ -75,8 +75,8 @@ contract FloatCommon is FloatUtils {
         }
         packedFloat result = Float128.divL(a, b);
         (int rMan, int rExp) = Float128.decode(result);
-        assertEq(rMan,0,"Solidity result is not zero");
-        assertEq(rExp, ZERO_OFFSET_NEG,"Solidity result is not zero");
+        assertEq(rMan, 0, "Solidity result is not zero");
+        assertEq(rExp, ZERO_OFFSET_NEG, "Solidity result is not zero");
     }
 
     function testEncoded_add_zero(int bMan, int bExp) public pure {
@@ -93,8 +93,8 @@ contract FloatCommon is FloatUtils {
         (bMan, bExp) = Float128.decode(result);
         console2.log("rExp", rExp);
 
-        assertEq(rMan, bMan,"Solidity result is not consistent with zero rules");
-        assertEq(rExp, bExp,"Solidity result is not consistent with zero rules");
+        assertEq(rMan, bMan, "Solidity result is not consistent with zero rules");
+        assertEq(rExp, bExp, "Solidity result is not consistent with zero rules");
 
         // b + 0 = b
         result = Float128.add(b, a);
@@ -103,8 +103,8 @@ contract FloatCommon is FloatUtils {
         (bMan, bExp) = Float128.decode(result);
         console2.log("rExp", rExp);
 
-        assertEq(rMan, bMan,"Solidity result is not consistent with zero rules");
-        assertEq(rExp, bExp,"Solidity result is not consistent with zero rules");
+        assertEq(rMan, bMan, "Solidity result is not consistent with zero rules");
+        assertEq(rExp, bExp, "Solidity result is not consistent with zero rules");
 
         // 0 + 0 = 0
         result = Float128.add(a, a);
@@ -113,8 +113,8 @@ contract FloatCommon is FloatUtils {
         (aMan, aExp) = Float128.decode(result);
         console2.log("rExp", rExp);
 
-        assertEq(rMan, aMan,"Solidity result is not consistent with zero rules");
-        assertEq(rExp, aExp,"Solidity result is not consistent with zero rules");
+        assertEq(rMan, aMan, "Solidity result is not consistent with zero rules");
+        assertEq(rExp, aExp, "Solidity result is not consistent with zero rules");
     }
 
     function testEncoded_sub_zero(int bMan, int bExp) public pure {
@@ -130,34 +130,36 @@ contract FloatCommon is FloatUtils {
         (int rMan, int rExp) = Float128.decode(result);
         // b must be decoded in the same way to account for the 38 digits in the return value mantissa
         (bMan, bExp) = Float128.decode(b);
-        assertEq(rMan, int(bMan * -1),"Solidity result is not consistent with zero rules");
-        assertEq(rExp, bExp,"Solidity result is not consistent with zero rules");
+        assertEq(rMan, int(bMan * -1), "Solidity result is not consistent with zero rules");
+        assertEq(rExp, bExp, "Solidity result is not consistent with zero rules");
 
         // b - 0 should equal b
         result = Float128.sub(b, a);
         (rMan, rExp) = Float128.decode(result);
         // b must be decoded in the same way to account for the 38 digits in the return value mantissa
         (bMan, bExp) = Float128.decode(b);
-        assertEq(rMan, bMan,"Solidity result is not consistent with zero rules");
-        assertEq(rExp, bExp,"Solidity result is not consistent with zero rules");
+        assertEq(rMan, bMan, "Solidity result is not consistent with zero rules");
+        assertEq(rExp, bExp, "Solidity result is not consistent with zero rules");
 
         // 0 - 0 should equal 0
         result = Float128.sub(a, a);
         (rMan, rExp) = Float128.decode(result);
         // b must be decoded in the same way to account for the 38 digits in the return value mantissa
         (bMan, bExp) = Float128.decode(a);
-        assertEq(rMan, bMan,"Solidity result is not consistent with zero rules");
-        assertEq(rExp, bExp,"Solidity result is not consistent with zero rules");
+        assertEq(rMan, bMan, "Solidity result is not consistent with zero rules");
+        assertEq(rExp, bExp, "Solidity result is not consistent with zero rules");
     }
 
     /// forge-config: default.allow_internal_expect_revert = true
     function testEncoded_sqrt_0() public pure {
         packedFloat a = Float128.toPackedFloat(0, ZERO_OFFSET_NEG);
 
+        // we initialize result to a different number to make sure the test doesn't lie to us
+        packedFloat result = packedFloat.wrap(1337); // 666 x 10**-8192
         // sqrt of 0 = 0
-        packedFloat result = Float128.sqrt(a);
+        result = Float128.sqrt(a);
         (int rMan, int rExp) = Float128.decode(result);
-        assertEq(rMan, 0,"Solidity result is not consistent with zero rules");
-        assertEq(rExp, ZERO_OFFSET_NEG,"Solidity result is not consistent with zero rules");
+        assertEq(rMan, 0, "Solidity result is not consistent with zero rules");
+        assertEq(rExp, ZERO_OFFSET_NEG, "Solidity result is not consistent with zero rules");
     }
 }
