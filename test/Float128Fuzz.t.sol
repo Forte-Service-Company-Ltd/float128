@@ -182,7 +182,6 @@ contract Float128FuzzTest is FloatCommon {
         bool retVal = Float128.le(pA, pB);
         console2.log("retVal", retVal);
 
-        // Creating the float struct to normalize the mantissas and exponents before doing the comparison
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "le", 0);
         bytes memory res = vm.ffi(inputs);
         (int pyMan, ) = abi.decode((res), (int256, int256));
@@ -197,7 +196,6 @@ contract Float128FuzzTest is FloatCommon {
         bool retVal = Float128.lt(pA, pB);
         console2.log("retVal", retVal);
 
-        // Creating the float struct to normalize the mantissas and exponents before doing the comparison
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "lt", 0);
         bytes memory res = vm.ffi(inputs);
         (int pyMan, ) = abi.decode((res), (int256, int256));
@@ -212,7 +210,6 @@ contract Float128FuzzTest is FloatCommon {
         bool retVal = Float128.gt(pA, pB);
         console2.log("retVal", retVal);
 
-        // Creating the float struct to normalize the mantissas and exponents before doing the comparison
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "gt", 0);
         bytes memory res = vm.ffi(inputs);
         (int pyMan, ) = abi.decode((res), (int256, int256));
@@ -227,7 +224,6 @@ contract Float128FuzzTest is FloatCommon {
         bool retVal = Float128.ge(pA, pB);
         console2.log("retVal", retVal);
 
-        // Creating the float struct to normalize the mantissas and exponents before doing the comparison
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "ge", 0);
         bytes memory res = vm.ffi(inputs);
         (int pyMan, ) = abi.decode((res), (int256, int256));
@@ -249,7 +245,6 @@ contract Float128FuzzTest is FloatCommon {
 
         packedFloat retVal = Ln.ln(a);
 
-        // Creating the float struct to normalize the mantissas and exponents before doing the comparison
         string[] memory inputs = _buildFFIMul128(aMan, aExp, 0, 0, "ln", 0);
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
@@ -280,7 +275,6 @@ contract Float128FuzzTest is FloatCommon {
 
         packedFloat retVal = Ln.ln(a);
 
-        // Creating the float struct to normalize the mantissas and exponents before doing the comparison
         string[] memory inputs = _buildFFIMul128(aMan, aExp, 0, 0, "ln", 0);
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
@@ -311,7 +305,6 @@ contract Float128FuzzTest is FloatCommon {
 
         packedFloat retVal = Ln.ln(a);
 
-        // Creating the float struct to normalize the mantissas and exponents before doing the comparison
         string[] memory inputs = _buildFFIMul128(aMan, aExp, 0, 0, "ln", 0);
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
@@ -342,7 +335,6 @@ contract Float128FuzzTest is FloatCommon {
 
         packedFloat retVal = Ln.ln(a);
 
-        // Creating the float struct to normalize the mantissas and exponents before doing the comparison
         string[] memory inputs = _buildFFIMul128(aMan, aExp, 0, 0, "ln", 0);
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
@@ -371,7 +363,6 @@ contract Float128FuzzTest is FloatCommon {
         if (a.le(int(0).toPackedFloat(0))) vm.expectRevert("float128: ln undefined");
         packedFloat retVal = Ln.ln(a);
 
-        // Creating the float struct to normalize the mantissas and exponents before doing the comparison
         string[] memory inputs = _buildFFIMul128(aMan, aExp, 0, 0, "ln", 0);
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
@@ -399,7 +390,6 @@ contract Float128FuzzTest is FloatCommon {
 
         packedFloat retVal = Ln.ln(a);
 
-        // Creating the float struct to normalize the mantissas and exponents before doing the comparison
         string[] memory inputs = _buildFFIMul128(aMan, aExp, 0, 0, "ln", 0);
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
