@@ -359,6 +359,35 @@ contract Float128FuzzTest is FloatCommon {
         }
     }
 
+    function testLnpackedFloatFuzzAllRanges(int aMan, int aExp) public {
+        (aMan, aExp, , ) = setBounds(aMan, aExp, 0, 0);
+        console2.log("aMan", aMan);
+
+        packedFloat a = Float128.toPackedFloat(aMan, aExp);
+        (int manNorm, int expNorm) = Float128.decode(a);
+        console2.log("manNorm", manNorm);
+        console2.log("expNorm", expNorm);
+
+        if (a.le(int(0).toPackedFloat(0))) vm.expectRevert("float128: ln undefined");
+        packedFloat retVal = Ln.ln(a);
+
+        // Creating the float struct to normalize the mantissas and exponents before doing the comparison
+        string[] memory inputs = _buildFFIMul128(aMan, aExp, 0, 0, "ln", 0);
+        bytes memory res = vm.ffi(inputs);
+        (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
+        (int rMan, int rExp) = Float128.decode(retVal);
+        console2.log("rMan", rMan);
+        console2.log("rExp", rExp);
+        if (rMan == 0 && pyMan != 0) {
+            // we might have cases for when truncation will make a number 1.0, but Python will take
+            // the full number. In those cases, Solidity result will be zero, so we just check the
+            // exponent of the Python response to make sure it stays within tolerance
+            assertLe(pyExp, -75);
+        } else {
+            checkResults(retVal, rMan, rExp, pyMan, pyExp, 72);
+        }
+    }
+
     function testLnpackedFloatUnit() public {
         int aMan = 10089492627524701326248021367100041644;
         int aExp = -37;

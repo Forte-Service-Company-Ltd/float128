@@ -15,6 +15,7 @@ library Ln {
 
     // These constants are used in an inline assembly block and must direct number constants
     uint constant MANTISSA_MASK = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+    uint constant MANTISSA_SIGN_MASK = 0x1000000000000000000000000000000000000000000000000000000000000;
     uint constant MANTISSA_L_FLAG_MASK = 0x2000000000000000000000000000000000000000000000000000000000000;
     uint constant EXPONENT_MASK = 0xfffc000000000000000000000000000000000000000000000000000000000000;
     uint constant ZERO_OFFSET = 8192;
@@ -60,6 +61,14 @@ library Ln {
         int exponent;
         bool inputL;
         assembly {
+            if or(iszero(input), and(input, MANTISSA_SIGN_MASK)) {
+                let ptr := mload(0x40) // Get free memory pointer
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                mstore(add(ptr, 0x04), 0x20) // String offset
+                mstore(add(ptr, 0x24), 22) // Revert reason length
+                mstore(add(ptr, 0x44), "float128: ln undefined")
+                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+            }
             inputL := gt(and(input, MANTISSA_L_FLAG_MASK), 0)
             mantissa := and(input, MANTISSA_MASK)
             exponent := sub(shr(EXPONENT_BIT, and(input, EXPONENT_MASK)), ZERO_OFFSET)
