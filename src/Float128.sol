@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import {Uint512} from "../lib/Uint512.sol";
 import {packedFloat} from "./Types.sol";
+import "forge-std/console2.sol";
 
 /**
  * @title Floating point Library base 10 with 38 or 72 digits signed
@@ -71,7 +72,7 @@ library Float128 {
             let bExp := shr(EXPONENT_BIT, b)
             let aMan := and(a, MANTISSA_MASK)
             let bMan := and(b, MANTISSA_MASK)
-            // we check exponents cannot maliciously underflow while expanding
+            // we check exponents cannot maliciously underflow while expanding, or underflow on a similar result
             if or(lt(aExp, MAX_DIGITS_M_X_2), lt(aExp, MAX_DIGITS_M_X_2)) {
                 let ptr := mload(0x40) // Get free memory pointer
                 mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
@@ -80,6 +81,22 @@ library Float128 {
                 mstore(add(ptr, 0x44), "float128: underflow")
                 revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
             }
+            // we check that the result of an addition won't overflow while normalizing
+            if and(
+                iszero(isSubtraction),
+                or(
+                    and(or(gt(aExp, bExp), eq(aExp, bExp)), gt(aExp, sub(shl(1, ZERO_OFFSET), MAX_DIGITS_M_X_2))),
+                    and(gt(bExp, aExp), gt(bExp, sub(shl(1, ZERO_OFFSET), MAX_DIGITS_M_X_2)))
+                )
+            ) {
+                let ptr := mload(0x40) // Get free memory pointer
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                mstore(add(ptr, 0x04), 0x20) // String offset
+                mstore(add(ptr, 0x24), 18) // Revert reason length
+                mstore(add(ptr, 0x44), "float128: overflow")
+                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+            }
+
             if iszero(or(aL, bL)) {
                 // we add 38 digits of precision in the case of subtraction
                 if gt(aExp, bExp) {
@@ -185,6 +202,7 @@ library Float128 {
             assembly {
                 rExp := shr(EXPONENT_BIT, r)
             }
+            console2.log("rExp", rExp);
             if (isSubtraction) {
                 // subtraction case can have a number of digits anywhere from 1 to 76
                 // we might get a normalized result, so we only normalize if necessary
@@ -214,12 +232,15 @@ library Float128 {
                     }
                 }
             } else {
+                uint maxExp;
+                bool _isM;
+                console2.log("addition", addition);
                 // addition case is simpler since it can only have 2 possibilities: same digits as its addends,
                 // or + 1 digits due to an "overflow"
                 assembly {
                     let isGreaterThan76Digits := gt(addition, MAX_76_DIGIT_NUMBER)
-                    let maxExp := sub(sub(sub(add(ZERO_OFFSET, MAXIMUM_EXPONENT), DIGIT_DIFF_L_M), DIGIT_DIFF_76_L), isGreaterThan76Digits)
-                    let _isM := or(eq(rExp, maxExp), lt(rExp, maxExp))
+                    maxExp := sub(sub(add(ZERO_OFFSET, MAXIMUM_EXPONENT), MAX_DIGITS_M), isGreaterThan76Digits)
+                    _isM := or(eq(rExp, maxExp), lt(rExp, maxExp))
                     if _isM {
                         addition := div(addition, BASE_TO_THE_MAX_DIGITS_M)
                         r := add(r, shl(EXPONENT_BIT, MAX_DIGITS_M))
@@ -234,6 +255,8 @@ library Float128 {
                         r := add(r, shl(EXPONENT_BIT, 1))
                     }
                 }
+                console2.log("maxExp", maxExp);
+                console2.log("_isM", _isM);
             }
             assembly {
                 r := or(r, addition)
