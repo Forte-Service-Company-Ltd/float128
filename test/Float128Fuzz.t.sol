@@ -107,9 +107,6 @@ contract Float128FuzzTest is FloatCommon {
     }
 
     function testEncoded_sub_maliciousEncoding(uint8 distanceFromExpBound) public {
-        int bExp = 0;
-        int bMan = 1;
-        packedFloat b = bMan.toPackedFloat(bExp);
         {
             // very negative exponent
             uint encodedNegativeExp = uint(distanceFromExpBound) << Float128.EXPONENT_BIT;
@@ -117,12 +114,11 @@ contract Float128FuzzTest is FloatCommon {
             int aMan = int(maliciousMantissa);
             uint maliciousFloatEncoded = encodedNegativeExp | maliciousMantissa;
             int aExp = int(uint(distanceFromExpBound)) - int(Float128.ZERO_OFFSET);
-            bExp = aExp;
             packedFloat a = packedFloat.wrap(maliciousFloatEncoded);
             packedFloat b = packedFloat.wrap(maliciousFloatEncoded - 1);
             if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2) vm.expectRevert("float128: underflow");
             packedFloat result = a.sub(b);
-            string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "sub", 0);
+            string[] memory inputs = _buildFFIMul128(aMan, aExp, aMan - 1, aExp, "sub", 0);
             bytes memory res = vm.ffi(inputs);
             (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
             (int rMan, int rExp) = Float128.decode(result);
@@ -131,15 +127,15 @@ contract Float128FuzzTest is FloatCommon {
         }
         {
             // very positive exponent
-            /// @notice there is no overflow risk since normalization can only make the exponent smaller. Never bigger.
             uint encodedPositiveExp = ((2 ** 14 - 1) - uint(distanceFromExpBound)) << Float128.EXPONENT_BIT;
-            int aMan = int(1e71);
+            int aMan = int(1e72) - 1;
             uint maliciousFloatEncoded = encodedPositiveExp | uint(aMan) | Float128.MANTISSA_L_FLAG_MASK;
             int aExp = int(Float128.ZERO_OFFSET) - int(uint(distanceFromExpBound)) - 1;
             packedFloat a = packedFloat.wrap(maliciousFloatEncoded);
-
+            packedFloat b = packedFloat.wrap(maliciousFloatEncoded - 1);
+            if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2 - 1) vm.expectRevert("float128: overflow");
             packedFloat result = a.sub(b);
-            string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "sub", 1);
+            string[] memory inputs = _buildFFIMul128(aMan, aExp, aMan - 1, aExp, "sub", 1);
             bytes memory res = vm.ffi(inputs);
             (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
             (int rMan, int rExp) = Float128.decode(result);

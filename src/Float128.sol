@@ -301,6 +301,22 @@ library Float128 {
                 mstore(add(ptr, 0x44), "float128: underflow")
                 revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
             }
+            // we check that the result of an addition won't overflow while normalizing
+            if and(
+                iszero(isSubtraction),
+                or(
+                    and(or(gt(aExp, bExp), eq(aExp, bExp)), gt(aExp, sub(shl(1, ZERO_OFFSET), MAX_DIGITS_M_X_2))),
+                    and(gt(bExp, aExp), gt(bExp, sub(shl(1, ZERO_OFFSET), MAX_DIGITS_M_X_2)))
+                )
+            ) {
+                let ptr := mload(0x40) // Get free memory pointer
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                mstore(add(ptr, 0x04), 0x20) // String offset
+                mstore(add(ptr, 0x24), 18) // Revert reason length
+                mstore(add(ptr, 0x44), "float128: overflow")
+                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+            }
+
             if iszero(or(aL, bL)) {
                 // we add 38 digits of precision in the case of subtraction
                 if gt(aExp, bExp) {
