@@ -14,6 +14,37 @@ contract Float128FuzzTest is FloatCommon {
 
     uint LN_MAX_ERROR_ULPS = 99;
 
+    function getPythonValue(int aMan, int aExp, int bMan, int bExp, string memory operation, bool isL) internal returns (int pyMan, int pyExp) {
+        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, operation, isL ? int(1) : int(0));
+        bytes memory res = vm.ffi(inputs);
+        (pyMan, pyExp) = abi.decode((res), (int256, int256));
+    }
+
+    function getPackedFloatInputs(int aMan, int aExp, int bMan, int bExp) internal pure returns (packedFloat a, packedFloat b) {
+        a = Float128.toPackedFloat(aMan, aExp);
+        b = Float128.toPackedFloat(bMan, bExp);
+    }
+
+    function getPackedFloatInputsAndPythonValues(
+        int aMan,
+        int aExp,
+        int bMan,
+        int bExp,
+        string memory operation,
+        bool isL
+    ) internal returns (packedFloat a, packedFloat b, int pyMan, int pyExp) {
+        (pyMan, pyExp) = getPythonValue(aMan, aExp, bMan, bExp, operation, isL);
+        (a, b) = getPackedFloatInputs(aMan, aExp, bMan, bExp);
+    }
+
+    function encodeManually(int xMan, int xExp, bool isL) internal pure returns (packedFloat x) {
+        uint manuallyEncodedFloat = ((uint(xExp + int(Float128.ZERO_OFFSET)) << Float128.EXPONENT_BIT)) |
+            (xMan < 0 ? Float128.MANTISSA_SIGN_MASK : 0) |
+            (xMan < 0 ? uint(xMan * -1) : uint(xMan)) |
+            (isL ? Float128.MANTISSA_L_FLAG_MASK : 0);
+        x = packedFloat.wrap(manuallyEncodedFloat);
+    }
+
     function checkResults(int rMan, int rExp, int pyMan, int pyExp) internal pure {
         checkResults(packedFloat.wrap(0), rMan, rExp, pyMan, pyExp, 0);
     }
@@ -70,17 +101,12 @@ contract Float128FuzzTest is FloatCommon {
             int bExp = 0;
             int bMan = 1;
             packedFloat b = bMan.toPackedFloat(bExp);
-            uint encodedNegativeExp = uint(distanceFromExpBound) << Float128.EXPONENT_BIT;
-            uint maliciousMantissa = 1;
-            int aMan = int(maliciousMantissa);
-            uint maliciousFloatEncoded = encodedNegativeExp | maliciousMantissa;
+            int aMan = int(1);
             int aExp = int(uint(distanceFromExpBound)) - int(Float128.ZERO_OFFSET);
-            packedFloat a = packedFloat.wrap(maliciousFloatEncoded);
+            packedFloat a = encodeManually(aMan, aExp, false);
             if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2) vm.expectRevert("float128: underflow");
             packedFloat result = a.add(b);
-            string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "add", 0);
-            bytes memory res = vm.ffi(inputs);
-            (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
+            (int pyMan, int pyExp) = getPythonValue(aMan, aExp, bMan, bExp, "add", false);
             (int rMan, int rExp) = Float128.decode(result);
 
             checkResults(result, rMan, rExp, pyMan, pyExp, 1);
@@ -390,15 +416,9 @@ contract Float128FuzzTest is FloatCommon {
         }
     }
 
-    function testEncoded_add(int aMan, int aExp, int bMan, int bExp) public {
+    function testEncoded_add_regular(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
-
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "add", 0);
-        bytes memory res = vm.ffi(inputs);
-        (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
-
-        packedFloat a = Float128.toPackedFloat(aMan, aExp);
-        packedFloat b = Float128.toPackedFloat(bMan, bExp);
+        (packedFloat a, packedFloat b, int pyMan, int pyExp) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "add", false);
 
         packedFloat result = Float128.add(a, b);
         (int rMan, int rExp) = Float128.decode(result);
