@@ -313,7 +313,11 @@ contract Float128FuzzTest is FloatCommon {
     }
 
     function testEncoded_mul(int aMan, int aExp, int bMan, int bExp) public {
-        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
+        //(aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp); //TODO fix in the actual setBounds function
+        aExp = bound(aExp, -8192, 8191); //TODO fix in the actual setBounds function
+        bExp = bound(bExp, -8192, 8191); //TODO fix in the actual setBounds function
+        aMan = bound(aMan, -999999999999999999999999999999999999999999999999999999999999999999999999, 999999999999999999999999999999999999999999999999999999999999999999999999); //TODO fix in the actual setBounds function
+        bMan = bound(bMan, -999999999999999999999999999999999999999999999999999999999999999999999999, 999999999999999999999999999999999999999999999999999999999999999999999999); //TODO fix in the actual setBounds function
 
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "mul", 0);
         bytes memory res = vm.ffi(inputs);
@@ -321,7 +325,11 @@ contract Float128FuzzTest is FloatCommon {
 
         packedFloat a = Float128.toPackedFloat(aMan, aExp);
         packedFloat b = Float128.toPackedFloat(bMan, bExp);
+        (, int realAExp) = a.decode();
+        (, int realBExp) = a.decode();
 
+        if (aMan != 0 && bMan != 0 && realAExp + realBExp < -int(Float128.ZERO_OFFSET)) vm.expectRevert("float128: underflow");
+        else if (aMan != 0 && bMan != 0 && realAExp + realBExp > int(Float128.ZERO_OFFSET) - 1) vm.expectRevert("float128: overflow");
         packedFloat result = Float128.mul(a, b);
         (int rMan, int rExp) = Float128.decode(result);
 

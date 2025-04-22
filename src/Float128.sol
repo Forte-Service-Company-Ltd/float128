@@ -500,12 +500,22 @@ library Float128 {
             let bExp := shr(EXPONENT_BIT, b)
             let aMan := and(a, MANTISSA_MASK)
             let bMan := and(b, MANTISSA_MASK)
-            if or(lt(aExp, MAX_DIGITS_M_X_2), lt(aExp, MAX_DIGITS_M_X_2)) {
+            // underflow can happen due to malicious encoding, or product of very negative exponents
+            if or(or(lt(aExp, MAX_DIGITS_M_X_2), lt(aExp, MAX_DIGITS_M_X_2)), lt(add(aExp, bExp), ZERO_OFFSET)) {
                 let ptr := mload(0x40) // Get free memory pointer
                 mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
                 mstore(add(ptr, 0x04), 0x20) // String offset
                 mstore(add(ptr, 0x24), 19) // Revert reason length
                 mstore(add(ptr, 0x44), "float128: underflow")
+                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+            }
+            // overflow can happen if exponents can go over 2*ZERO_OFFSET - 1: aExp - Z + bExp - Z > Z - 1 --> aExp + bExp > 3Z - 1
+            if gt(add(aExp, bExp), sub(mul(3, ZERO_OFFSET), 1)) {
+                let ptr := mload(0x40) // Get free memory pointer
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                mstore(add(ptr, 0x04), 0x20) // String offset
+                mstore(add(ptr, 0x24), 18) // Revert reason length
+                mstore(add(ptr, 0x44), "float128: overflow")
                 revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
             }
             if Loperation {
