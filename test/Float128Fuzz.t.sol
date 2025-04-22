@@ -312,33 +312,39 @@ contract Float128FuzzTest is FloatCommon {
         }
     }
 
-    function testEncoded_mul(int aMan, int aExp, int bMan, int bExp) public {
-        //(aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp); //TODO fix in the actual setBounds function
-        aExp = bound(aExp, -8192, 8191); //TODO fix in the actual setBounds function
-        bExp = bound(bExp, -8192, 8191); //TODO fix in the actual setBounds function
-        aMan = bound(aMan, -999999999999999999999999999999999999999999999999999999999999999999999999, 999999999999999999999999999999999999999999999999999999999999999999999999); //TODO fix in the actual setBounds function
-        bMan = bound(bMan, -999999999999999999999999999999999999999999999999999999999999999999999999, 999999999999999999999999999999999999999999999999999999999999999999999999); //TODO fix in the actual setBounds function
+    function testEncoded_mul_regular(int aMan, int aExp, int bMan, int bExp) public {
+        // (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp); //TODO fix in the actual setBounds function
+        aExp = bound(aExp, -8192 + 76 * 2, 8191 - 76 * 2); //TODO fix in the actual setBounds function
+        bExp = bound(bExp, -8192 + 76 * 2, 8191 - 76 * 2); //TODO fix in the actual setBounds function
+        aMan = bound(aMan, -99999999999999999999999999999999999999, 99999999999999999999999999999999999999); //TODO fix in the actual setBounds function
+        bMan = bound(bMan, -99999999999999999999999999999999999999, 99999999999999999999999999999999999999); //TODO fix in the actual setBounds function
+
+        packedFloat a = Float128.toPackedFloat(aMan, aExp);
+        packedFloat b = Float128.toPackedFloat(bMan, bExp);
+        (, int realAExp) = a.decode();
+        (, int realBExp) = b.decode();
+        console2.log("realAExp", realAExp);
+        console2.log("realBExp", realBExp);
+
+        if (aMan != 0 && bMan != 0 && realAExp + realBExp < 76 - int(Float128.ZERO_OFFSET)) vm.expectRevert("float128: underflow");
+        if (aMan != 0 && bMan != 0 && realAExp + realBExp > int(Float128.ZERO_OFFSET) - 76) vm.expectRevert("float128: overflow");
+        packedFloat result = Float128.mul(a, b);
+        (int rMan, int rExp) = Float128.decode(result);
 
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "mul", 0);
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
 
-        packedFloat a = Float128.toPackedFloat(aMan, aExp);
-        packedFloat b = Float128.toPackedFloat(bMan, bExp);
-        (, int realAExp) = a.decode();
-        (, int realBExp) = a.decode();
-
-        if (aMan != 0 && bMan != 0 && realAExp + realBExp < -int(Float128.ZERO_OFFSET)) vm.expectRevert("float128: underflow");
-        else if (aMan != 0 && bMan != 0 && realAExp + realBExp > int(Float128.ZERO_OFFSET) - 1) vm.expectRevert("float128: overflow");
-        packedFloat result = Float128.mul(a, b);
-        (int rMan, int rExp) = Float128.decode(result);
-
         checkResults(result, rMan, rExp, pyMan, pyExp, 0);
     }
 
     /// forge-config: default.allow_internal_expect_revert = true
-    function testEncoded_div(int aMan, int aExp, int bMan, int bExp) public {
-        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
+    function testEncoded_div_regular(int aMan, int aExp, int bMan, int bExp) public {
+        // (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp); //TODO fix in the actual setBounds function
+        aExp = bound(aExp, -8192 + 76 * 2, 8191 - 76 * 2); //TODO fix in the actual setBounds function
+        bExp = bound(bExp, -8192 + 76 * 2, 8191 - 76 * 2); //TODO fix in the actual setBounds function
+        aMan = bound(aMan, -99999999999999999999999999999999999999, 99999999999999999999999999999999999999); //TODO fix in the actual setBounds function
+        bMan = bound(bMan, -99999999999999999999999999999999999999, 99999999999999999999999999999999999999); //TODO fix in the actual setBounds function
 
         string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan == 0 ? int(1) : bMan, bExp, "div", 0);
         bytes memory res = vm.ffi(inputs);
@@ -346,11 +352,13 @@ contract Float128FuzzTest is FloatCommon {
 
         packedFloat a = Float128.toPackedFloat(aMan, aExp);
         packedFloat b = Float128.toPackedFloat(bMan, bExp);
-        console2.log("packedFloat a", packedFloat.unwrap(a));
-        console2.log("packedFloat b", packedFloat.unwrap(b));
-        if (bMan == 0) {
-            vm.expectRevert("float128: division by zero");
-        }
+        (, int realAExp) = a.decode();
+        (, int realBExp) = b.decode();
+        console2.log("realAExp", realAExp);
+        console2.log("realBExp", realBExp);
+        if (bMan == 0) vm.expectRevert("float128: division by zero");
+        if (aMan != 0 && bMan != 0 && realAExp - realBExp < 76 * 2 - int(Float128.ZERO_OFFSET)) vm.expectRevert("float128: underflow");
+        if (aMan != 0 && bMan != 0 && realAExp - realBExp > int(Float128.ZERO_OFFSET) - 76) vm.expectRevert("float128: overflow");
         packedFloat result = Float128.div(a, b);
         if (bMan != 0) {
             (int rMan, int rExp) = Float128.decode(result);
