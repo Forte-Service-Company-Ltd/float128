@@ -102,6 +102,73 @@ contract Float128FuzzTest is FloatCommon {
         if (pyMan != 0) assertEq(pyExp, rExp);
     }
 
+    /**
+     * @dev pure Solidity implementation of the normalization procedure that takes place in toPackedFloat function.
+     */
+    function emulateNormalization(int man, int exp) internal pure returns (int mantissa, int exponent) {
+        if (man == 0) return (0, -8192);
+        mantissa = man;
+        exponent = exp;
+        uint nDigits = findNumberOfDigits(uint(man < 0 ? -1 * man : man));
+        if (nDigits != 38 && nDigits != 72) {
+            int adj = int(Float128.MAX_DIGITS_M) - int(nDigits);
+            exponent = exp - adj;
+            if (exponent > Float128.MAXIMUM_EXPONENT) {
+                if (adj > 0) {
+                    exponent -= int(Float128.DIGIT_DIFF_L_M);
+                    mantissa *= (int(Float128.BASE_TO_THE_DIGIT_DIFF * Float128.BASE ** uint(adj)));
+                } else {
+                    exponent += int(Float128.DIGIT_DIFF_L_M);
+                    mantissa /= (int(Float128.BASE_TO_THE_DIGIT_DIFF) / int(Float128.BASE ** uint(-adj)));
+                }
+            } else {
+                if (adj > 0) {
+                    mantissa *= int(Float128.BASE ** uint(adj));
+                } else {
+                    mantissa /= int(Float128.BASE ** uint(-adj));
+                }
+            }
+        } else if (nDigits == 38 && exponent > Float128.MAXIMUM_EXPONENT) {
+            exponent -= int(Float128.DIGIT_DIFF_L_M);
+            mantissa *= (int(Float128.BASE_TO_THE_DIGIT_DIFF));
+        }
+    }
+
+    function findNumberOfDigits(uint x) internal pure returns (uint log) {
+        assembly {
+            if gt(x, 0) {
+                if gt(x, 9999999999999999999999999999999999999999999999999999999999999999) {
+                    log := 64
+                    x := div(x, 10000000000000000000000000000000000000000000000000000000000000000)
+                }
+                if gt(x, 99999999999999999999999999999999) {
+                    log := add(log, 32)
+                    x := div(x, 100000000000000000000000000000000)
+                }
+                if gt(x, 9999999999999999) {
+                    log := add(log, 16)
+                    x := div(x, 10000000000000000)
+                }
+                if gt(x, 99999999) {
+                    log := add(log, 8)
+                    x := div(x, 100000000)
+                }
+                if gt(x, 9999) {
+                    log := add(log, 4)
+                    x := div(x, 10000)
+                }
+                if gt(x, 99) {
+                    log := add(log, 2)
+                    x := div(x, 100)
+                }
+                if gt(x, 9) {
+                    log := add(log, 1)
+                }
+                log := add(log, 1)
+            }
+        }
+    }
+
     function testEncoded_add_maliciousEncoding(uint8 distanceFromExpBound) public {
         {
             // very negative exponent
@@ -238,38 +305,6 @@ contract Float128FuzzTest is FloatCommon {
             (aMan, aExp) = emulateNormalization(aMan, aExp);
             assertEq(rMan, aMan, "different mantissas");
             assertEq(rExp, aExp, "different exponents");
-        }
-    }
-
-    /**
-     * @dev pure Solidity implementation of the normalization procedure that takes place in toPackedFloat function.
-     */
-    function emulateNormalization(int man, int exp) internal pure returns (int mantissa, int exponent) {
-        if (man == 0) return (0, -8192);
-        mantissa = man;
-        exponent = exp;
-        uint nDigits = findNumberOfDigits(uint(man < 0 ? -1 * man : man));
-        if (nDigits != 38 && nDigits != 72) {
-            int adj = int(Float128.MAX_DIGITS_M) - int(nDigits);
-            exponent = exp - adj;
-            if (exponent > Float128.MAXIMUM_EXPONENT) {
-                if (adj > 0) {
-                    exponent -= int(Float128.DIGIT_DIFF_L_M);
-                    mantissa *= (int(Float128.BASE_TO_THE_DIGIT_DIFF * Float128.BASE ** uint(adj)));
-                } else {
-                    exponent += int(Float128.DIGIT_DIFF_L_M);
-                    mantissa /= (int(Float128.BASE_TO_THE_DIGIT_DIFF) / int(Float128.BASE ** uint(-adj)));
-                }
-            } else {
-                if (adj > 0) {
-                    mantissa *= int(Float128.BASE ** uint(adj));
-                } else {
-                    mantissa /= int(Float128.BASE ** uint(-adj));
-                }
-            }
-        } else if (nDigits == 38 && exponent > Float128.MAXIMUM_EXPONENT) {
-            exponent -= int(Float128.DIGIT_DIFF_L_M);
-            mantissa *= (int(Float128.BASE_TO_THE_DIGIT_DIFF));
         }
     }
 
@@ -657,41 +692,6 @@ contract Float128FuzzTest is FloatCommon {
         uint256 retVal = Float128.findNumberOfDigits(man);
 
         assertEq(iter, retVal);
-    }
-
-    function findNumberOfDigits(uint x) internal pure returns (uint log) {
-        assembly {
-            if gt(x, 0) {
-                if gt(x, 9999999999999999999999999999999999999999999999999999999999999999) {
-                    log := 64
-                    x := div(x, 10000000000000000000000000000000000000000000000000000000000000000)
-                }
-                if gt(x, 99999999999999999999999999999999) {
-                    log := add(log, 32)
-                    x := div(x, 100000000000000000000000000000000)
-                }
-                if gt(x, 9999999999999999) {
-                    log := add(log, 16)
-                    x := div(x, 10000000000000000)
-                }
-                if gt(x, 99999999) {
-                    log := add(log, 8)
-                    x := div(x, 100000000)
-                }
-                if gt(x, 9999) {
-                    log := add(log, 4)
-                    x := div(x, 10000)
-                }
-                if gt(x, 99) {
-                    log := add(log, 2)
-                    x := div(x, 100)
-                }
-                if gt(x, 9) {
-                    log := add(log, 1)
-                }
-                log := add(log, 1)
-            }
-        }
     }
 
     function testLNCaseOne() public pure {
