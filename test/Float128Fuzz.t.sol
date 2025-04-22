@@ -45,6 +45,12 @@ contract Float128FuzzTest is FloatCommon {
         x = packedFloat.wrap(manuallyEncodedFloat);
     }
 
+    function decodeAndCheckResults(int aMan, int aExp, int bMan, int bExp, string memory operation, bool isL, packedFloat result, uint _ulpsOfTolerance) internal {
+        (int pyMan, int pyExp) = getPythonValue(aMan, aExp, bMan, bExp, operation, isL);
+        (int rMan, int rExp) = Float128.decode(result);
+        checkResults(result, rMan, rExp, pyMan, pyExp, _ulpsOfTolerance);
+    }
+
     function checkResults(int rMan, int rExp, int pyMan, int pyExp) internal pure {
         checkResults(packedFloat.wrap(0), rMan, rExp, pyMan, pyExp, 0);
     }
@@ -60,8 +66,10 @@ contract Float128FuzzTest is FloatCommon {
         console2.log("rExp", rExp);
         console2.log("pyMan", pyMan);
         console2.log("pyExp", pyExp);
+
         bool isLarge = packedFloat.unwrap(r) & Float128.MANTISSA_L_FLAG_MASK > 0;
         console2.log("isLarge", isLarge);
+
         // we always check that the result is normalized since this is vital for the library. Only exception is when the result is zero
         uint nDigits = findNumberOfDigits(uint(rMan < 0 ? rMan * -1 : rMan));
         console2.log("nDigits", nDigits);
@@ -89,9 +97,8 @@ contract Float128FuzzTest is FloatCommon {
                 if (pyMan > rMan) assertLe(pyMan, rMan + ulpsOfTolerance);
                 else assertGe(pyMan + ulpsOfTolerance, rMan);
             }
-        } else {
-            assertEq(pyMan, rMan);
-        }
+        } else assertEq(pyMan, rMan);
+
         if (pyMan != 0) assertEq(pyExp, rExp);
     }
 
@@ -106,66 +113,42 @@ contract Float128FuzzTest is FloatCommon {
             packedFloat a = encodeManually(aMan, aExp, false);
             if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2) vm.expectRevert("float128: underflow");
             packedFloat result = a.add(b);
-            (int pyMan, int pyExp) = getPythonValue(aMan, aExp, bMan, bExp, "add", false);
-            (int rMan, int rExp) = Float128.decode(result);
-
-            checkResults(result, rMan, rExp, pyMan, pyExp, 1);
+            decodeAndCheckResults(aMan, aExp, bMan, bExp, "add", false, result, 1);
         }
         {
             // very positive exponent
-            uint encodedPositiveExp = ((2 ** 14 - 1) - uint(distanceFromExpBound)) << Float128.EXPONENT_BIT;
             int aMan = int(9e71);
-            uint maliciousFloatEncoded = encodedPositiveExp | uint(aMan) | Float128.MANTISSA_L_FLAG_MASK;
             int aExp = int(Float128.ZERO_OFFSET) - int(uint(distanceFromExpBound)) - 1;
-            packedFloat a = packedFloat.wrap(maliciousFloatEncoded);
-
+            packedFloat a = encodeManually(aMan, aExp, true);
             int bExp = aExp;
             int bMan = 9e71;
             packedFloat b = bMan.toPackedFloat(bExp);
             if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2 - 1) vm.expectRevert("float128: overflow");
             packedFloat result = a.add(b);
-            string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "add", 0);
-            bytes memory res = vm.ffi(inputs);
-            (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
-            (int rMan, int rExp) = Float128.decode(result);
-            checkResults(result, rMan, rExp, pyMan, pyExp, 1);
+            decodeAndCheckResults(aMan, aExp, bMan, bExp, "add", false, result, 1);
         }
     }
 
     function testEncoded_sub_maliciousEncoding(uint8 distanceFromExpBound) public {
         {
             // very negative exponent
-            uint encodedNegativeExp = uint(distanceFromExpBound) << Float128.EXPONENT_BIT;
-            uint maliciousMantissa = 2;
-            int aMan = int(maliciousMantissa);
-            uint maliciousFloatEncoded = encodedNegativeExp | maliciousMantissa;
+            int aMan = int(2);
             int aExp = int(uint(distanceFromExpBound)) - int(Float128.ZERO_OFFSET);
-            packedFloat a = packedFloat.wrap(maliciousFloatEncoded);
-            packedFloat b = packedFloat.wrap(maliciousFloatEncoded - 1);
+            packedFloat a = encodeManually(aMan, aExp, false);
+            packedFloat b = encodeManually(aMan - 1, aExp, false);
             if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2) vm.expectRevert("float128: underflow");
             packedFloat result = a.sub(b);
-            string[] memory inputs = _buildFFIMul128(aMan, aExp, aMan - 1, aExp, "sub", 0);
-            bytes memory res = vm.ffi(inputs);
-            (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
-            (int rMan, int rExp) = Float128.decode(result);
-
-            checkResults(result, rMan, rExp, pyMan, pyExp, 1);
+            decodeAndCheckResults(aMan, aExp, bMan, bExp, "sub", false, result, 1);
         }
         {
             // very positive exponent
-            uint encodedPositiveExp = ((2 ** 14 - 1) - uint(distanceFromExpBound)) << Float128.EXPONENT_BIT;
-            int aMan = int(1e72) - 1;
-            uint maliciousFloatEncoded = encodedPositiveExp | uint(aMan) | Float128.MANTISSA_L_FLAG_MASK;
+            int aMan = Float128.MAX_L_DIGIT_NUMBER;
             int aExp = int(Float128.ZERO_OFFSET) - int(uint(distanceFromExpBound)) - 1;
-            packedFloat a = packedFloat.wrap(maliciousFloatEncoded);
-            packedFloat b = packedFloat.wrap(maliciousFloatEncoded - 1);
+            packedFloat a = encodeManually(aMan, aExp, true);
+            packedFloat b = encodeManually(aMan / 2, aExp, true);
             if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2 - 1) vm.expectRevert("float128: overflow");
             packedFloat result = a.sub(b);
-            string[] memory inputs = _buildFFIMul128(aMan, aExp, aMan - 1, aExp, "sub", 1);
-            bytes memory res = vm.ffi(inputs);
-            (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
-            (int rMan, int rExp) = Float128.decode(result);
-            checkResults(result, rMan, rExp, pyMan, pyExp, 1);
+            decodeAndCheckResults(aMan, aExp, bMan, bExp, "sub", false, result, 1);
         }
     }
 
@@ -175,36 +158,20 @@ contract Float128FuzzTest is FloatCommon {
         packedFloat b = bMan.toPackedFloat(bExp);
         {
             // very negative exponent
-            uint encodedNegativeExp = uint(distanceFromExpBound) << Float128.EXPONENT_BIT;
-            uint maliciousMantissa = 1e37;
-            int aMan = int(maliciousMantissa);
-            uint maliciousFloatEncoded = encodedNegativeExp | maliciousMantissa;
+            int aMan = int(1e37);
             int aExp = int(uint(distanceFromExpBound)) - int(Float128.ZERO_OFFSET);
-            packedFloat a = packedFloat.wrap(maliciousFloatEncoded);
+            packedFloat a = encodeManually(aMan, aExp, false);
             if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2) vm.expectRevert("float128: underflow");
             packedFloat result = a.mul(b);
-            string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "mul", 0);
-            bytes memory res = vm.ffi(inputs);
-            (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
-            (int rMan, int rExp) = Float128.decode(result);
-
-            checkResults(result, rMan, rExp, pyMan, pyExp, 1);
+            decodeAndCheckResults(aMan, aExp, bMan, bExp, "mul", false, result, 1);
         }
         {
             // very positive exponent
-            /// @notice there is no overflow risk since normalization can only make the exponent smaller. Never bigger.
-            uint encodedPositiveExp = ((2 ** 14 - 1) - uint(distanceFromExpBound)) << Float128.EXPONENT_BIT;
             int aMan = int(1e71);
-            uint maliciousFloatEncoded = encodedPositiveExp | uint(aMan) | Float128.MANTISSA_L_FLAG_MASK;
             int aExp = int(Float128.ZERO_OFFSET) - int(uint(distanceFromExpBound)) - 1;
-            packedFloat a = packedFloat.wrap(maliciousFloatEncoded);
-
+            packedFloat a = encodeManually(aMan, aExp, true);
             packedFloat result = a.mul(b);
-            string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "mul", 0);
-            bytes memory res = vm.ffi(inputs);
-            (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
-            (int rMan, int rExp) = Float128.decode(result);
-            checkResults(result, rMan, rExp, pyMan, pyExp, 1);
+            decodeAndCheckResults(aMan, aExp, bMan, bExp, "mul", false, result, 1);
         }
     }
 
@@ -214,71 +181,39 @@ contract Float128FuzzTest is FloatCommon {
         packedFloat b = bMan.toPackedFloat(bExp);
         {
             // very negative exponent
-            uint encodedNegativeExp = uint(distanceFromExpBound) << Float128.EXPONENT_BIT;
-            uint maliciousMantissa = 1e37;
-            int aMan = int(maliciousMantissa);
-            uint maliciousFloatEncoded = encodedNegativeExp | maliciousMantissa;
+            int aMan = int(1e37);
             int aExp = int(uint(distanceFromExpBound)) - int(Float128.ZERO_OFFSET);
-            packedFloat a = packedFloat.wrap(maliciousFloatEncoded);
+            packedFloat a = encodeManually(aMan, aExp, false);
             if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2) vm.expectRevert("float128: underflow");
             packedFloat result = a.div(b);
-            string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "div", 0);
-            bytes memory res = vm.ffi(inputs);
-            (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
-            (int rMan, int rExp) = Float128.decode(result);
-
-            checkResults(result, rMan, rExp, pyMan, pyExp, 1);
+            decodeAndCheckResults(aMan, aExp, bMan, bExp, "div", false, result, 1);
         }
         {
             // very positive exponent
-            /// @notice there is no overflow risk since normalization can only make the exponent smaller. Never bigger.
-            uint encodedPositiveExp = ((2 ** 14 - 1) - uint(distanceFromExpBound)) << Float128.EXPONENT_BIT;
             int aMan = int(1e71);
-            uint maliciousFloatEncoded = encodedPositiveExp | uint(aMan) | Float128.MANTISSA_L_FLAG_MASK;
             int aExp = int(Float128.ZERO_OFFSET) - int(uint(distanceFromExpBound)) - 1;
-            packedFloat a = packedFloat.wrap(maliciousFloatEncoded);
-
+            packedFloat a = encodeManually(aMan, aExp, true);
             packedFloat result = a.div(b);
-            string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "div", 0);
-            bytes memory res = vm.ffi(inputs);
-            (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
-            (int rMan, int rExp) = Float128.decode(result);
-            checkResults(result, rMan, rExp, pyMan, pyExp, 1);
+            decodeAndCheckResults(aMan, aExp, bMan, bExp, "div", false, result, 1);
         }
     }
 
     function testEncoded_sqrt_maliciousEncoding(uint8 distanceFromExpBound) public {
         {
             // very negative exponent
-            /// @notice the way sqrt handles the exponent makes it impossible for it to underflow
-            uint encodedNegativeExp = uint(distanceFromExpBound) << Float128.EXPONENT_BIT;
-            uint maliciousMantissa = 1e37;
-            int aMan = int(maliciousMantissa);
-            uint maliciousFloatEncoded = encodedNegativeExp | maliciousMantissa;
+            int aMan = int(1e37);
             int aExp = int(uint(distanceFromExpBound)) - int(Float128.ZERO_OFFSET);
-            packedFloat a = packedFloat.wrap(maliciousFloatEncoded);
+            packedFloat a = encodeManually(aMan, aExp, false);
             packedFloat result = a.sqrt();
-            string[] memory inputs = _buildFFIMul128(aMan, aExp, 0, 0, "sqrt", 0);
-            bytes memory res = vm.ffi(inputs);
-            (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
-            (int rMan, int rExp) = Float128.decode(result);
-            checkResults(result, rMan, rExp, pyMan, pyExp, 0);
+            decodeAndCheckResults(aMan, aExp, 0, 0, "sqrt", false, result, 0);
         }
         {
             // very positive exponent
-            /// @notice there is no overflow risk since normalization can only make the exponent smaller. Never bigger.
-            uint encodedPositiveExp = ((2 ** 14 - 1) - uint(distanceFromExpBound)) << Float128.EXPONENT_BIT;
             int aMan = int(1e71);
-            uint maliciousFloatEncoded = encodedPositiveExp | uint(aMan) | Float128.MANTISSA_L_FLAG_MASK;
             int aExp = int(Float128.ZERO_OFFSET) - int(uint(distanceFromExpBound)) - 1;
-            packedFloat a = packedFloat.wrap(maliciousFloatEncoded);
-
+            packedFloat a = encodeManually(aMan, aExp, true);
             packedFloat result = a.sqrt();
-            string[] memory inputs = _buildFFIMul128(aMan, aExp, 0, 0, "sqrt", 0);
-            bytes memory res = vm.ffi(inputs);
-            (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
-            (int rMan, int rExp) = Float128.decode(result);
-            checkResults(result, rMan, rExp, pyMan, pyExp, 1);
+            decodeAndCheckResults(aMan, aExp, 0, 0, "sqrt", false, result, 0);
         }
     }
 
