@@ -205,17 +205,17 @@ contract Float128FuzzTest is FloatCommon {
             packedFloat b = encodeManually(aMan - 1, aExp, false);
             if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2) vm.expectRevert("float128: underflow");
             packedFloat result = a.sub(b);
-            decodeAndCheckResults(aMan, aExp, bMan, bExp, "sub", false, result, 1);
+            decodeAndCheckResults(aMan, aExp, aMan - 1, aExp, "sub", false, result, 1);
         }
         {
             // very positive exponent
-            int aMan = Float128.MAX_L_DIGIT_NUMBER;
+            int aMan = int(Float128.MAX_L_DIGIT_NUMBER);
             int aExp = int(Float128.ZERO_OFFSET) - int(uint(distanceFromExpBound)) - 1;
             packedFloat a = encodeManually(aMan, aExp, true);
             packedFloat b = encodeManually(aMan / 2, aExp, true);
             if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2 - 1) vm.expectRevert("float128: overflow");
             packedFloat result = a.sub(b);
-            decodeAndCheckResults(aMan, aExp, bMan, bExp, "sub", false, result, 1);
+            decodeAndCheckResults(aMan, aExp, aMan - 1, aExp, "sub", false, result, 1);
         }
     }
 
@@ -298,7 +298,6 @@ contract Float128FuzzTest is FloatCommon {
         }
         {
             // very positive exponent
-            /// @notice there is no overflow risk since normalization can only make the exponent smaller. Never bigger.
             int aExp = int(Float128.ZERO_OFFSET) - int(uint(distanceFromExpBound)) - 1;
             packedFloat a = aMan.toPackedFloat(aExp);
             (int rMan, int rExp) = a.decode();
@@ -309,56 +308,32 @@ contract Float128FuzzTest is FloatCommon {
     }
 
     function testEncoded_mul_regular(int aMan, int aExp, int bMan, int bExp) public {
-        // (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp); //TODO fix in the actual setBounds function
-        aExp = bound(aExp, -8192 + 76 * 2, 8191 - 76 * 2); //TODO fix in the actual setBounds function
-        bExp = bound(bExp, -8192 + 76 * 2, 8191 - 76 * 2); //TODO fix in the actual setBounds function
-        aMan = bound(aMan, -99999999999999999999999999999999999999, 99999999999999999999999999999999999999); //TODO fix in the actual setBounds function
-        bMan = bound(bMan, -99999999999999999999999999999999999999, 99999999999999999999999999999999999999); //TODO fix in the actual setBounds function
-
-        packedFloat a = Float128.toPackedFloat(aMan, aExp);
-        packedFloat b = Float128.toPackedFloat(bMan, bExp);
+        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
+        (packedFloat a, packedFloat b, int pyMan, int pyExp) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "mul", false);
         (, int realAExp) = a.decode();
         (, int realBExp) = b.decode();
-        console2.log("realAExp", realAExp);
-        console2.log("realBExp", realBExp);
 
         if (aMan != 0 && bMan != 0 && realAExp + realBExp < 76 - int(Float128.ZERO_OFFSET)) vm.expectRevert("float128: underflow");
         if (aMan != 0 && bMan != 0 && realAExp + realBExp > int(Float128.ZERO_OFFSET) - 76) vm.expectRevert("float128: overflow");
         packedFloat result = Float128.mul(a, b);
         (int rMan, int rExp) = Float128.decode(result);
-
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "mul", 0);
-        bytes memory res = vm.ffi(inputs);
-        (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
-
         checkResults(result, rMan, rExp, pyMan, pyExp, 0);
     }
 
     /// forge-config: default.allow_internal_expect_revert = true
     function testEncoded_div_regular(int aMan, int aExp, int bMan, int bExp) public {
-        // (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp); //TODO fix in the actual setBounds function
-        aExp = bound(aExp, -8192 + 76 * 2, 8191 - 76 * 2); //TODO fix in the actual setBounds function
-        bExp = bound(bExp, -8192 + 76 * 2, 8191 - 76 * 2); //TODO fix in the actual setBounds function
-        aMan = bound(aMan, -99999999999999999999999999999999999999, 99999999999999999999999999999999999999); //TODO fix in the actual setBounds function
-        bMan = bound(bMan, -99999999999999999999999999999999999999, 99999999999999999999999999999999999999); //TODO fix in the actual setBounds function
-
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan == 0 ? int(1) : bMan, bExp, "div", 0);
-        bytes memory res = vm.ffi(inputs);
-        (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
-
-        packedFloat a = Float128.toPackedFloat(aMan, aExp);
-        packedFloat b = Float128.toPackedFloat(bMan, bExp);
+        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
+        (packedFloat a, packedFloat b, int pyMan, int pyExp) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "div", false);
         (, int realAExp) = a.decode();
         (, int realBExp) = b.decode();
-        console2.log("realAExp", realAExp);
-        console2.log("realBExp", realBExp);
+
         if (bMan == 0) vm.expectRevert("float128: division by zero");
         if (aMan != 0 && bMan != 0 && realAExp - realBExp < 76 * 2 - int(Float128.ZERO_OFFSET)) vm.expectRevert("float128: underflow");
         if (aMan != 0 && bMan != 0 && realAExp - realBExp > int(Float128.ZERO_OFFSET) - 76) vm.expectRevert("float128: overflow");
         packedFloat result = Float128.div(a, b);
+
         if (bMan != 0) {
             (int rMan, int rExp) = Float128.decode(result);
-
             checkResults(result, rMan, rExp, pyMan, pyExp, 0);
         }
     }
@@ -366,22 +341,17 @@ contract Float128FuzzTest is FloatCommon {
     /// forge-config: default.allow_internal_expect_revert = true
     function testEncoded_divL(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
+        (packedFloat a, packedFloat b, int pyMan, int pyExp) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "div", true);
+        (, int realAExp) = a.decode();
+        (, int realBExp) = b.decode();
 
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan == 0 ? int(1) : bMan, bExp, "div", 1);
-        bytes memory res = vm.ffi(inputs);
-        (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
-
-        packedFloat a = Float128.toPackedFloat(aMan, aExp);
-        packedFloat b = Float128.toPackedFloat(bMan, bExp);
-        console2.log("packedFloat a", packedFloat.unwrap(a));
-        console2.log("packedFloat b", packedFloat.unwrap(b));
-        if (bMan == 0) {
-            vm.expectRevert("float128: division by zero");
-        }
+        if (bMan == 0) vm.expectRevert("float128: division by zero");
+        if (aMan != 0 && bMan != 0 && realAExp - realBExp < 76 * 2 - int(Float128.ZERO_OFFSET)) vm.expectRevert("float128: underflow");
+        if (aMan != 0 && bMan != 0 && realAExp - realBExp > int(Float128.ZERO_OFFSET) - 76) vm.expectRevert("float128: overflow");
         packedFloat result = Float128.divL(a, b);
+
         if (bMan != 0) {
             (int rMan, int rExp) = Float128.decode(result);
-
             checkResults(result, rMan, rExp, pyMan, pyExp, 0);
         }
     }
@@ -389,102 +359,55 @@ contract Float128FuzzTest is FloatCommon {
     function testEncoded_add_regular(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
         (packedFloat a, packedFloat b, int pyMan, int pyExp) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "add", false);
-
         packedFloat result = Float128.add(a, b);
         (int rMan, int rExp) = Float128.decode(result);
-
         checkResults(result, rMan, rExp, pyMan, pyExp, 1);
     }
 
     function testEncoded_sub(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
-
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "sub", 0);
-        bytes memory res = vm.ffi(inputs);
-        (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
-
-        packedFloat a = Float128.toPackedFloat(aMan, aExp);
-        packedFloat b = Float128.toPackedFloat(bMan, bExp);
-
+        (packedFloat a, packedFloat b, int pyMan, int pyExp) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "sub", false);
         packedFloat result = Float128.sub(a, b);
         (int rMan, int rExp) = Float128.decode(result);
-
         checkResults(result, rMan, rExp, pyMan, pyExp, 1);
     }
 
     /// forge-config: default.allow_internal_expect_revert = true
     function testEncoded_sqrt(int aMan, int aExp) public {
         (aMan, aExp, , ) = setBounds(aMan, aExp, 0, 0);
-        string[] memory inputs = _buildFFIMul128(aMan < 0 ? aMan * -1 : aMan, aExp, 0, 0, "sqrt", 0);
-        bytes memory res = vm.ffi(inputs);
-        (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
-        packedFloat a = Float128.toPackedFloat(aMan, aExp);
-
-        if (aMan < 0) {
-            vm.expectRevert("float128: squareroot of negative");
-        }
+        (packedFloat a, , int pyMan, int pyExp) = getPackedFloatInputsAndPythonValues(aMan, aExp, 0, 0, "sqrt", false);
+        if (aMan < 0) vm.expectRevert("float128: squareroot of negative");
         packedFloat result = Float128.sqrt(a);
-        if (aMan >= 0) {
-            (int rMan, int rExp) = Float128.decode(result);
-
-            checkResults(result, rMan, rExp, pyMan, pyExp, 0);
-        }
+        (int rMan, int rExp) = Float128.decode(result);
+        checkResults(result, rMan, rExp, pyMan, pyExp, 0);
     }
 
     function testLEpackedFloatFuzz(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
-        packedFloat pA = Float128.toPackedFloat(aMan, aExp);
-        packedFloat pB = Float128.toPackedFloat(bMan, bExp);
-        bool retVal = Float128.le(pA, pB);
-        console2.log("retVal", retVal);
-
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "le", 0);
-        bytes memory res = vm.ffi(inputs);
-        (int pyMan, ) = abi.decode((res), (int256, int256));
-        bool pyRes = pyMan > 0;
-        assertEq(retVal, pyRes);
+        (packedFloat a, packedFloat b, int pyMan, ) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "le", false);
+        bool result = Float128.le(a, b);
+        assertEq(retVal, pyMan > 0);
     }
 
     function testLTpackedFloatFuzz(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
-        packedFloat pA = Float128.toPackedFloat(aMan, aExp);
-        packedFloat pB = Float128.toPackedFloat(bMan, bExp);
-        bool retVal = Float128.lt(pA, pB);
-        console2.log("retVal", retVal);
-
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "lt", 0);
-        bytes memory res = vm.ffi(inputs);
-        (int pyMan, ) = abi.decode((res), (int256, int256));
-        bool pyRes = pyMan > 0;
-        assertEq(retVal, pyRes);
+        (packedFloat a, packedFloat b, int pyMan, ) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "lt", false);
+        bool result = Float128.le(a, b);
+        assertEq(retVal, pyMan > 0);
     }
 
     function testGTpackedFloatFuzz(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
-        packedFloat pA = Float128.toPackedFloat(aMan, aExp);
-        packedFloat pB = Float128.toPackedFloat(bMan, bExp);
-        bool retVal = Float128.gt(pA, pB);
-        console2.log("retVal", retVal);
-
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "gt", 0);
-        bytes memory res = vm.ffi(inputs);
-        (int pyMan, ) = abi.decode((res), (int256, int256));
-        bool pyRes = pyMan > 0;
-        assertEq(retVal, pyRes);
+        (packedFloat a, packedFloat b, int pyMan, ) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "gt", false);
+        bool result = Float128.le(a, b);
+        assertEq(retVal, pyMan > 0);
     }
 
     function testGEpackedFloatFuzz(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
-        packedFloat pA = Float128.toPackedFloat(aMan, aExp);
-        packedFloat pB = Float128.toPackedFloat(bMan, bExp);
-        bool retVal = Float128.ge(pA, pB);
-        console2.log("retVal", retVal);
-
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "ge", 0);
-        bytes memory res = vm.ffi(inputs);
-        (int pyMan, ) = abi.decode((res), (int256, int256));
-        bool pyRes = pyMan > 0;
-        assertEq(retVal, pyRes);
+        (packedFloat a, packedFloat b, int pyMan, ) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "ge", false);
+        bool result = Float128.le(a, b);
+        assertEq(retVal, pyMan > 0);
     }
 
     function testLnpackedFloatFuzzRange1To1Point2(int aMan, int aExp) public {

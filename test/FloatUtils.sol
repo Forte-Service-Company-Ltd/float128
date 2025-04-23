@@ -7,17 +7,10 @@ import "src/Float128.sol";
 contract FloatUtils is Test {
     using Float128 for packedFloat;
 
-    int256 constant BOUNDS_LOW = -3000;
-    int256 constant BOUNDS_HIGH = 3000;
+    int256 constant BOUNDS_LOW = -int(Float128.ZERO_OFFSET) + int(Float128.MAX_DIGITS_M_X_2) * 2;
+    int256 constant BOUNDS_HIGH = int(Float128.ZERO_OFFSET) - int(Float128.MAX_DIGITS_M_X_2) * 2;
 
-    function _buildFFIMul128(
-        int aMan,
-        int aExp,
-        int bMan,
-        int bExp,
-        string memory operation,
-        int largeResult
-    ) internal pure returns (string[] memory) {
+    function _buildFFIMul128(int aMan, int aExp, int bMan, int bExp, string memory operation, int largeResult) internal pure returns (string[] memory) {
         string[] memory inputs = new string[](8);
         inputs[0] = "python3";
         inputs[1] = "script/float128_test.py";
