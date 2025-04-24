@@ -109,9 +109,35 @@ contract Float128MaliciousEncodingTest is FloatUtils {
         }
     }
 
+    function test_divL_MaliciousEncoding(uint8 distanceFromExpBound) public {
+        int bExp = 0;
+        int bMan = 1;
+        packedFloat b = bMan.toPackedFloat(bExp);
+        {
+            // very negative exponent
+            int aMan = int(1e37);
+            int aExp = int(uint(distanceFromExpBound)) - int(Float128.ZERO_OFFSET);
+            packedFloat a = encodeManually(aMan, aExp, false);
+            // -37 is the exponent of b after normalization
+            if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2 * 2 - 37) vm.expectRevert("float128: underflow");
+            packedFloat result = a.divL(b);
+            decodeAndCheckResults(aMan, aExp, bMan, bExp, "div", true, result, 1);
+        }
+        {
+            // very positive exponent
+            int aMan = int(1e71);
+            int aExp = int(Float128.ZERO_OFFSET) - int(uint(distanceFromExpBound)) - 1;
+            packedFloat a = encodeManually(aMan, aExp, true);
+            packedFloat result = a.divL(b);
+            decodeAndCheckResults(aMan, aExp, bMan, bExp, "div", true, result, 1);
+        }
+    }
+
     function test_sqrt_MaliciousEncoding(uint8 distanceFromExpBound) public {
         {
             // very negative exponent
+            /// @notice sqrt can't underflow due to the way the exponent is handled, and because of the reductionist nature
+            /// of a square-root operation over the exponent of a number (it divides it by 2)
             int aMan = int(1e37);
             int aExp = int(uint(distanceFromExpBound)) - int(Float128.ZERO_OFFSET);
             packedFloat a = encodeManually(aMan, aExp, false);
@@ -120,11 +146,36 @@ contract Float128MaliciousEncodingTest is FloatUtils {
         }
         {
             // very positive exponent
+            /// @notice sqrt can't overflow due to the way the exponent is handled, and because of the reductionist nature
+            /// of a square-root operation over the exponent of a number (it divides it by 2)
             int aMan = int(1e71);
             int aExp = int(Float128.ZERO_OFFSET) - int(uint(distanceFromExpBound)) - 1;
             packedFloat a = encodeManually(aMan, aExp, true);
             packedFloat result = a.sqrt();
             decodeAndCheckResults(aMan, aExp, 0, 0, "sqrt", false, result, 0);
+        }
+    }
+
+    function test_ln_MaliciousEncoding(uint8 distanceFromExpBound) public {
+        {
+            // very negative exponent
+            /// @notice ln can't underflow due to the way the exponent is handled, and because of the reductionist nature
+            /// of a square-root operation over the exponent of a number (ln results with an exponent close to 0)
+            int aMan = int(1e37);
+            int aExp = int(uint(distanceFromExpBound)) - int(Float128.ZERO_OFFSET);
+            packedFloat a = encodeManually(aMan, aExp, false);
+            packedFloat result = a.ln();
+            decodeAndCheckResults(aMan, aExp, 0, 0, "ln", false, result, 99);
+        }
+        {
+            // very positive exponent
+            /// @notice ln can't overflow due to the way the exponent is handled, and because of the reductionist nature
+            /// of a square-root operation over the exponent of a number (ln results with an exponent close to 0)
+            int aMan = int(1e71);
+            int aExp = int(Float128.ZERO_OFFSET) - int(uint(distanceFromExpBound)) - 1;
+            packedFloat a = encodeManually(aMan, aExp, true);
+            packedFloat result = a.ln();
+            decodeAndCheckResults(aMan, aExp, 0, 0, "ln", false, result, 99);
         }
     }
 
