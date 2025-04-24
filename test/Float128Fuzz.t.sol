@@ -11,7 +11,7 @@ contract Float128FuzzTest is FloatUtils {
     using Float128 for packedFloat;
     using Ln for packedFloat;
 
-    function testEncoded_mul_regular(int aMan, int aExp, int bMan, int bExp) public {
+    function test_mul_Fuzz(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
         (packedFloat a, packedFloat b, int pyMan, int pyExp) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "mul", false);
         (, int realAExp) = a.decode();
@@ -25,7 +25,7 @@ contract Float128FuzzTest is FloatUtils {
     }
 
     /// forge-config: default.allow_internal_expect_revert = true
-    function testEncoded_div_regular(int aMan, int aExp, int bMan, int bExp) public {
+    function test_div_Fuzz(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
         (packedFloat a, packedFloat b, int pyMan, int pyExp) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "div", false);
         (, int realAExp) = a.decode();
@@ -43,7 +43,7 @@ contract Float128FuzzTest is FloatUtils {
     }
 
     /// forge-config: default.allow_internal_expect_revert = true
-    function testEncoded_divL(int aMan, int aExp, int bMan, int bExp) public {
+    function test_divL_Fuzz(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
         (packedFloat a, packedFloat b, int pyMan, int pyExp) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "div", true);
         (, int realAExp) = a.decode();
@@ -60,7 +60,7 @@ contract Float128FuzzTest is FloatUtils {
         }
     }
 
-    function testEncoded_add_regular(int aMan, int aExp, int bMan, int bExp) public {
+    function test_add_Fuzz(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
         (packedFloat a, packedFloat b, int pyMan, int pyExp) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "add", false);
         packedFloat result = Float128.add(a, b);
@@ -68,7 +68,7 @@ contract Float128FuzzTest is FloatUtils {
         checkResults(result, rMan, rExp, pyMan, pyExp, 1);
     }
 
-    function testEncoded_sub(int aMan, int aExp, int bMan, int bExp) public {
+    function test_sub_Fuzz(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
         (packedFloat a, packedFloat b, int pyMan, int pyExp) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "sub", false);
         packedFloat result = Float128.sub(a, b);
@@ -77,7 +77,7 @@ contract Float128FuzzTest is FloatUtils {
     }
 
     /// forge-config: default.allow_internal_expect_revert = true
-    function testEncoded_sqrt(int aMan, int aExp) public {
+    function test_sqrt_Fuzz(int aMan, int aExp) public {
         (aMan, aExp, , ) = setBounds(aMan, aExp, 0, 0);
         (packedFloat a, , int pyMan, int pyExp) = getPackedFloatInputsAndPythonValues(aMan, aExp, 0, 0, "sqrt", false);
         if (aMan < 0) vm.expectRevert("float128: squareroot of negative");

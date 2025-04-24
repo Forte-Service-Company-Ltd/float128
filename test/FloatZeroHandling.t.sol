@@ -10,7 +10,7 @@ contract FloatZeroHandlingTest is FloatUtils {
     using Float128 for int256;
     using Float128 for packedFloat;
 
-    function testEncoded_mul_zero(int bMan, int bExp) public pure {
+    function test_mul_ZeroHandling(int bMan, int bExp) public pure {
         (bMan, bExp) = setBounds(bMan, bExp);
         // check when a == 0
         int aMan = 0;
@@ -41,7 +41,7 @@ contract FloatZeroHandlingTest is FloatUtils {
     }
 
     /// forge-config: default.allow_internal_expect_revert = true
-    function testEncoded_div_zero(int bMan, int bExp) public {
+    function test_div_ZeroHandling(int bMan, int bExp) public {
         (bMan, bExp) = setBounds(bMan, bExp);
         int aMan = 0;
         int aExp = ZERO_OFFSET_NEG;
@@ -60,7 +60,7 @@ contract FloatZeroHandlingTest is FloatUtils {
     }
 
     /// forge-config: default.allow_internal_expect_revert = true
-    function testEncoded_divL_zero(int bMan, int bExp) public {
+    function test_divL_ZeroHandling(int bMan, int bExp) public {
         (bMan, bExp) = setBounds(bMan, bExp);
         int aMan = 0;
         int aExp = ZERO_OFFSET_NEG;
@@ -78,7 +78,7 @@ contract FloatZeroHandlingTest is FloatUtils {
         assertEq(rExp, ZERO_OFFSET_NEG, "Solidity result is not zero");
     }
 
-    function testEncoded_add_zero(int bMan, int bExp) public pure {
+    function test_add_ZeroHandling(int bMan, int bExp) public pure {
         (bMan, bExp) = setBounds(bMan, bExp);
         int aMan = 0;
         int aExp = ZERO_OFFSET_NEG;
@@ -116,7 +116,7 @@ contract FloatZeroHandlingTest is FloatUtils {
         assertEq(rExp, aExp, "Solidity result is not consistent with zero rules");
     }
 
-    function testEncoded_sub_zero(int bMan, int bExp) public pure {
+    function test_sub_ZeroHandling(int bMan, int bExp) public pure {
         (bMan, bExp) = setBounds(bMan, bExp);
         int aMan = 0;
         int aExp = ZERO_OFFSET_NEG;
@@ -149,7 +149,8 @@ contract FloatZeroHandlingTest is FloatUtils {
         assertEq(rExp, bExp, "Solidity result is not consistent with zero rules");
     }
 
-    function testEncoded_sqrt_0() public pure {
+    /// forge-config: default.allow_internal_expect_revert = true
+    function test_sqrt_ZeroHandling() public {
         packedFloat a = Float128.toPackedFloat(0, ZERO_OFFSET_NEG);
 
         // we initialize result to a different number to make sure the test doesn't lie to us

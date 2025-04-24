@@ -6,12 +6,12 @@ import "src/Float128.sol";
 import {Ln} from "src/Ln.sol";
 import "test/FloatUtils.sol";
 
-contract Float128FuzzTest is FloatUtils {
+contract Float128MaliciousEncodingTest is FloatUtils {
     using Float128 for int256;
     using Float128 for packedFloat;
     using Ln for packedFloat;
 
-    function testEncoded_add_maliciousEncoding(uint8 distanceFromExpBound) public {
+    function test_add_MaliciousEncoding(uint8 distanceFromExpBound) public {
         {
             // very negative exponent
             int bExp = 0;
@@ -38,7 +38,7 @@ contract Float128FuzzTest is FloatUtils {
         }
     }
 
-    function testEncoded_sub_maliciousEncoding(uint8 distanceFromExpBound) public {
+    function test_sub_MaliciousEncoding(uint8 distanceFromExpBound) public {
         {
             // very negative exponent
             int aMan = int(2);
@@ -61,7 +61,7 @@ contract Float128FuzzTest is FloatUtils {
         }
     }
 
-    function testEncoded_mul_maliciousEncoding(uint8 distanceFromExpBound) public {
+    function test_mul_MaliciousEncoding(uint8 distanceFromExpBound) public {
         int bExp = 0;
         int bMan = 1;
         packedFloat b = bMan.toPackedFloat(bExp);
@@ -85,7 +85,7 @@ contract Float128FuzzTest is FloatUtils {
         }
     }
 
-    function testEncoded_div_maliciousEncoding(uint8 distanceFromExpBound) public {
+    function test_div_MaliciousEncoding(uint8 distanceFromExpBound) public {
         int bExp = 0;
         int bMan = 1;
         packedFloat b = bMan.toPackedFloat(bExp);
@@ -109,7 +109,7 @@ contract Float128FuzzTest is FloatUtils {
         }
     }
 
-    function testEncoded_sqrt_maliciousEncoding(uint8 distanceFromExpBound) public {
+    function test_sqrt_MaliciousEncoding(uint8 distanceFromExpBound) public {
         {
             // very negative exponent
             int aMan = int(1e37);
@@ -128,7 +128,7 @@ contract Float128FuzzTest is FloatUtils {
         }
     }
 
-    function testEncoded_toPackedFloat_maliciousEncoding(uint8 distanceFromExpBound, int aMan) public {
+    function test_toPackedFloat_MaliciousEncoding(uint8 distanceFromExpBound, int aMan) public {
         aMan = bound(aMan, -int(Float128.MAX_76_DIGIT_NUMBER), int(Float128.MAX_76_DIGIT_NUMBER));
         {
             // very negative exponent
