@@ -57,6 +57,8 @@ library Float128 {
      * @return r the result of a + b
      */
     function add(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
+        validate(a);
+        validate(b);
         uint addition;
         bool isSubtraction;
         bool sameExponent;
@@ -265,6 +267,8 @@ library Float128 {
      * @notice this version of the function uses only the packedFloat type
      */
     function sub(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
+        validate(a);
+        validate(b);
         uint addition;
         bool isSubtraction;
         bool sameExponent;
@@ -478,6 +482,8 @@ library Float128 {
      * @return r the result of a * b
      */
     function mul(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
+        validate(a);
+        validate(b);
         uint rMan;
         uint rExp;
         uint r0;
@@ -622,6 +628,8 @@ library Float128 {
      * @return r the result of a / b
      */
     function div(packedFloat a, packedFloat b, bool rL) internal pure returns (packedFloat r) {
+        validate(a);
+        validate(b);
         assembly {
             if eq(and(b, MANTISSA_MASK), 0) {
                 let ptr := mload(0x40) // Get free memory pointer
@@ -750,7 +758,8 @@ library Float128 {
      * @param a the numerator to get the square root of
      * @return r the result of √a
      */
-    function sqrt(packedFloat a) internal pure returns (packedFloat r) {
+    function sqrt(packedFloat a) internal pure tester returns (packedFloat r) {
+        validate(a);
         uint s;
         int aExp;
         uint x;
@@ -890,6 +899,8 @@ library Float128 {
      * @return retVal the result of a < b
      */
     function lt(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
+        validate(a);
+        validate(b);
         if (packedFloat.unwrap(a) == packedFloat.unwrap(b)) return false;
         assembly {
             let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
@@ -947,6 +958,8 @@ library Float128 {
      * @return retVal the result of a <= b
      */
     function le(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
+        validate(a);
+        validate(b);
         if (packedFloat.unwrap(a) == packedFloat.unwrap(b)) return true;
         assembly {
             let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
@@ -1004,6 +1017,8 @@ library Float128 {
      * @return retVal the result of a > b
      */
     function gt(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
+        validate(a);
+        validate(b);
         if (packedFloat.unwrap(a) == packedFloat.unwrap(b)) return false;
         assembly {
             let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
@@ -1061,6 +1076,8 @@ library Float128 {
      * @return retVal the result of a >= b
      */
     function ge(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
+        validate(a);
+        validate(b);
         if (packedFloat.unwrap(a) == packedFloat.unwrap(b)) return true;
         assembly {
             let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
@@ -1221,6 +1238,7 @@ library Float128 {
      * @return exponent the exponent of the floating-point number
      */
     function decode(packedFloat float) internal pure returns (int mantissa, int exponent) {
+        validate(float);
         assembly {
             // exponent
             let _exp := shr(EXPONENT_BIT, float)
@@ -1275,6 +1293,44 @@ library Float128 {
                     log := add(log, 1)
                 }
                 log := add(log, 1)
+            }
+        }
+    }
+
+    /**
+     * @dev Validates if a packedFloat has correct encoding
+     * @param float The packedFloat to validate
+     * @return isValid True if the packedFloat is valid, false otherwise
+     */
+    function validate(packedFloat float) internal pure returns (bool isValid) {
+        // Return true for zero values
+        if (packedFloat.unwrap(float) == 0) {
+            return true;
+        }
+
+        assembly {
+            let mantissa := and(float, MANTISSA_MASK)
+            let exponent := shr(EXPONENT_BIT, and(float, EXPONENT_MASK))
+            let isLarge := gt(and(float, MANTISSA_L_FLAG_MASK), 0)
+
+            // Check if mantissa is within valid range
+            if isLarge {
+                // For large mantissas (72 digits)
+                isValid := and(and(gt(mantissa, 0), iszero(gt(mantissa, MAX_L_DIGIT_NUMBER))), iszero(gt(mantissa, MAX_L_DIGIT_NUMBER)))
+            }
+            if iszero(isLarge) {
+                // For medium mantissas (38 digits)
+                isValid := and(and(gt(mantissa, 0), iszero(gt(mantissa, MAX_M_DIGIT_NUMBER))), iszero(gt(mantissa, MAX_M_DIGIT_NUMBER)))
+            }
+
+            // Revert if validation fails
+            if iszero(isValid) {
+                let ptr := mload(0x40) // Get free memory pointer
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for Error(string)
+                mstore(add(ptr, 0x04), 0x20) // String offset
+                mstore(add(ptr, 0x24), 23) // Revert reason length
+                mstore(add(ptr, 0x44), "float128: invalid float")
+                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
             }
         }
     }
