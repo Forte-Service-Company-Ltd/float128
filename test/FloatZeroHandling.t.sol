@@ -150,7 +150,7 @@ contract FloatZeroHandlingTest is FloatUtils {
     }
 
     /// forge-config: default.allow_internal_expect_revert = true
-    function test_sqrt_ZeroHandling() public {
+    function test_sqrt_ZeroHandling() public pure {
         packedFloat a = Float128.toPackedFloat(0, ZERO_OFFSET_NEG);
 
         // we initialize result to a different number to make sure the test doesn't lie to us
