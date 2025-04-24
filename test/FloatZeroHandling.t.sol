@@ -162,4 +162,13 @@ contract FloatZeroHandlingTest is FloatUtils {
         assertEq(rMan, 0, "Solidity result is not consistent with zero rules");
         assertEq(rExp, ZERO_OFFSET_NEG, "Solidity result is not consistent with zero rules");
     }
+
+    /// forge-config: default.allow_internal_expect_revert = true
+    function test_ln_ZeroHandling() public {
+        int aMan = 0;
+        int aExp = ZERO_OFFSET_NEG;
+        packedFloat a = Float128.toPackedFloat(aMan, aExp);
+        vm.expectRevert("float128: ln undefined");
+        Ln.ln(a);
+    }
 }

@@ -114,6 +114,13 @@ contract Float128FuzzTest is FloatUtils {
         assertEq(result, pyMan > 0);
     }
 
+    function test_eq_Fuzz(int aMan, int aExp, int bMan, int bExp) public {
+        (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
+        (packedFloat a, packedFloat b, int pyMan, ) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "eq", false);
+        bool result = Float128.eq(a, b);
+        assertEq(result, pyMan > 0);
+    }
+
     function test_ln_Fuzz_Range1To1Point2(int aMan, int aExp) public {
         aMan = bound(aMan, 10000000000000000000000000000000000000, 10200000000000000000000000000000000000);
         uint digits = findNumberOfDigits(aMan < 0 ? uint(aMan * -1) : uint(aMan));
