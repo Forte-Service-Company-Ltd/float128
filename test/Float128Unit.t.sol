@@ -11,7 +11,7 @@ contract Float128UnitTest is FloatUtils {
     using Float128 for packedFloat;
     using Ln for packedFloat;
 
-    function testL_ln_Unit_Custom() public {
+    function test_ln_Unit_Custom() public {
         int aMan = 10089492627524701326248021367100041644;
         int aExp = -37;
 
