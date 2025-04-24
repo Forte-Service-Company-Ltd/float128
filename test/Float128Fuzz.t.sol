@@ -215,7 +215,7 @@ contract Float128FuzzTest is FloatCommon {
             packedFloat b = encodeManually(aMan / 2, aExp, true);
             if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2 - 1) vm.expectRevert("float128: overflow");
             packedFloat result = a.sub(b);
-            decodeAndCheckResults(aMan, aExp, aMan - 1, aExp, "sub", false, result, 1);
+            decodeAndCheckResults(aMan, aExp, aMan / 2, aExp, "sub", false, result, 1);
         }
     }
 
@@ -228,7 +228,8 @@ contract Float128FuzzTest is FloatCommon {
             int aMan = int(1e37);
             int aExp = int(uint(distanceFromExpBound)) - int(Float128.ZERO_OFFSET);
             packedFloat a = encodeManually(aMan, aExp, false);
-            if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2) vm.expectRevert("float128: underflow");
+            // -37 is the exponent of b after normalization
+            if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2 + 37) vm.expectRevert("float128: underflow");
             packedFloat result = a.mul(b);
             decodeAndCheckResults(aMan, aExp, bMan, bExp, "mul", false, result, 1);
         }
@@ -251,7 +252,8 @@ contract Float128FuzzTest is FloatCommon {
             int aMan = int(1e37);
             int aExp = int(uint(distanceFromExpBound)) - int(Float128.ZERO_OFFSET);
             packedFloat a = encodeManually(aMan, aExp, false);
-            if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2) vm.expectRevert("float128: underflow");
+            // -37 is the exponent of b after normalization
+            if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2 * 2 - 37) vm.expectRevert("float128: underflow");
             packedFloat result = a.div(b);
             decodeAndCheckResults(aMan, aExp, bMan, bExp, "div", false, result, 1);
         }
@@ -386,50 +388,41 @@ contract Float128FuzzTest is FloatCommon {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
         (packedFloat a, packedFloat b, int pyMan, ) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "le", false);
         bool result = Float128.le(a, b);
-        assertEq(retVal, pyMan > 0);
+        assertEq(result, pyMan > 0);
     }
 
     function testLTpackedFloatFuzz(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
         (packedFloat a, packedFloat b, int pyMan, ) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "lt", false);
         bool result = Float128.le(a, b);
-        assertEq(retVal, pyMan > 0);
+        assertEq(result, pyMan > 0);
     }
 
     function testGTpackedFloatFuzz(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
         (packedFloat a, packedFloat b, int pyMan, ) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "gt", false);
-        bool result = Float128.le(a, b);
-        assertEq(retVal, pyMan > 0);
+        bool result = Float128.gt(a, b);
+        assertEq(result, pyMan > 0);
     }
 
     function testGEpackedFloatFuzz(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
         (packedFloat a, packedFloat b, int pyMan, ) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "ge", false);
-        bool result = Float128.le(a, b);
-        assertEq(retVal, pyMan > 0);
+        bool result = Float128.ge(a, b);
+        assertEq(result, pyMan > 0);
     }
 
     function testLnpackedFloatFuzzRange1To1Point2(int aMan, int aExp) public {
         aMan = bound(aMan, 10000000000000000000000000000000000000, 10200000000000000000000000000000000000);
-        console2.log("aMan", aMan);
         uint digits = findNumberOfDigits(aMan < 0 ? uint(aMan * -1) : uint(aMan));
         aExp = 1 - int(digits);
-        console2.log("aExp", aExp);
 
         packedFloat a = Float128.toPackedFloat(aMan, aExp);
         (int manNorm, int expNorm) = Float128.decode(a);
-        console2.log("manNorm", manNorm);
-        console2.log("expNorm", expNorm);
-
         packedFloat retVal = Ln.ln(a);
 
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, 0, 0, "ln", 0);
-        bytes memory res = vm.ffi(inputs);
-        (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
+        (int pyMan, int pyExp) = getPythonValue(aMan, aExp, 0, 0, "ln", false);
         (int rMan, int rExp) = Float128.decode(retVal);
-        console2.log("rMan", rMan);
-        console2.log("rExp", rExp);
         if (rMan == 0 && pyMan != 0) {
             // we might have cases for when truncation will make a number 1.0, but Python will take
             // the full number. In those cases, Solidity result will be zero, so we just check the
@@ -442,24 +435,15 @@ contract Float128FuzzTest is FloatCommon {
 
     function testLnpackedFloatFuzzRange1Point2To3(int aMan, int aExp) public {
         aMan = bound(aMan, 102000000000000000000000000000000000000000000000000000000000000000000000, 300000000000000000000000000000000000000000000000000000000000000000000000);
-        console2.log("aMan", aMan);
         uint digits = findNumberOfDigits(aMan < 0 ? uint(aMan * -1) : uint(aMan));
         aExp = 1 - int(digits);
-        console2.log("aExp", aExp);
 
         packedFloat a = Float128.toPackedFloat(aMan, aExp);
         (int manNorm, int expNorm) = Float128.decode(a);
-        console2.log("manNorm", manNorm);
-        console2.log("expNorm", expNorm);
-
         packedFloat retVal = Ln.ln(a);
 
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, 0, 0, "ln", 0);
-        bytes memory res = vm.ffi(inputs);
-        (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
+        (int pyMan, int pyExp) = getPythonValue(aMan, aExp, 0, 0, "ln", false);
         (int rMan, int rExp) = Float128.decode(retVal);
-        console2.log("rMan", rMan);
-        console2.log("rExp", rExp);
         if (rMan == 0 && pyMan != 0) {
             // we might have cases for when truncation will make a number 1.0, but Python will take
             // the full number. In those cases, Solidity result will be zero, so we just check the
@@ -472,24 +456,15 @@ contract Float128FuzzTest is FloatCommon {
 
     function testLnpackedFloatFuzzRange0To1(int aMan, int aExp) public {
         aMan = bound(aMan, 1, 999999999999999999999999999999999999999999999999999999999999999999999999);
-        console2.log("aMan", aMan);
         uint digits = findNumberOfDigits(aMan < 0 ? uint(aMan * -1) : uint(aMan));
         aExp = bound(aExp, -3000, 0 - int(digits));
-        console2.log("aExp", aExp);
 
         packedFloat a = Float128.toPackedFloat(aMan, aExp);
         (int manNorm, int expNorm) = Float128.decode(a);
-        console2.log("manNorm", manNorm);
-        console2.log("expNorm", expNorm);
-
         packedFloat retVal = Ln.ln(a);
 
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, 0, 0, "ln", 0);
-        bytes memory res = vm.ffi(inputs);
-        (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
+        (int pyMan, int pyExp) = getPythonValue(aMan, aExp, 0, 0, "ln", false);
         (int rMan, int rExp) = Float128.decode(retVal);
-        console2.log("rMan", rMan);
-        console2.log("rExp", rExp);
         if (rMan == 0 && pyMan != 0) {
             // we might have cases for when truncation will make a number 1.0, but Python will take
             // the full number. In those cases, Solidity result will be zero, so we just check the
@@ -502,24 +477,15 @@ contract Float128FuzzTest is FloatCommon {
 
     function testLnpackedFloatFuzzRange2ToInfinity(int aMan, int aExp) public {
         aMan = bound(aMan, 200000000000000000000000000000000000000000000000000000000000000000000000, 9999999999999999999999999999999999999999999999999999999999999999999999999999);
-        console2.log("aMan", aMan);
         uint digits = findNumberOfDigits(aMan < 0 ? uint(aMan * -1) : uint(aMan));
         aExp = bound(aExp, 1 - int(digits), 3000);
-        console2.log("aExp", aExp);
 
         packedFloat a = Float128.toPackedFloat(aMan, aExp);
         (int manNorm, int expNorm) = Float128.decode(a);
-        console2.log("manNorm", manNorm);
-        console2.log("expNorm", expNorm);
-
         packedFloat retVal = Ln.ln(a);
 
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, 0, 0, "ln", 0);
-        bytes memory res = vm.ffi(inputs);
-        (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
+        (int pyMan, int pyExp) = getPythonValue(aMan, aExp, 0, 0, "ln", false);
         (int rMan, int rExp) = Float128.decode(retVal);
-        console2.log("rMan", rMan);
-        console2.log("rExp", rExp);
         if (rMan == 0 && pyMan != 0) {
             // we might have cases for when truncation will make a number 1.0, but Python will take
             // the full number. In those cases, Solidity result will be zero, so we just check the
@@ -532,22 +498,14 @@ contract Float128FuzzTest is FloatCommon {
 
     function testLnpackedFloatFuzzAllRanges(int aMan, int aExp) public {
         (aMan, aExp, , ) = setBounds(aMan, aExp, 0, 0);
-        console2.log("aMan", aMan);
-
         packedFloat a = Float128.toPackedFloat(aMan, aExp);
         (int manNorm, int expNorm) = Float128.decode(a);
-        console2.log("manNorm", manNorm);
-        console2.log("expNorm", expNorm);
 
         if (a.le(int(0).toPackedFloat(0))) vm.expectRevert("float128: ln undefined");
         packedFloat retVal = Ln.ln(a);
 
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, 0, 0, "ln", 0);
-        bytes memory res = vm.ffi(inputs);
-        (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
+        (int pyMan, int pyExp) = getPythonValue(aMan, aExp, 0, 0, "ln", false);
         (int rMan, int rExp) = Float128.decode(retVal);
-        console2.log("rMan", rMan);
-        console2.log("rExp", rExp);
         if (rMan == 0 && pyMan != 0) {
             // we might have cases for when truncation will make a number 1.0, but Python will take
             // the full number. In those cases, Solidity result will be zero, so we just check the
@@ -564,17 +522,10 @@ contract Float128FuzzTest is FloatCommon {
 
         packedFloat a = Float128.toPackedFloat(aMan, aExp);
         (int manNorm, int expNorm) = Float128.decode(a);
-        console2.log("manNorm", manNorm);
-        console2.log("expNorm", expNorm);
-
         packedFloat retVal = Ln.ln(a);
 
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, 0, 0, "ln", 0);
-        bytes memory res = vm.ffi(inputs);
-        (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
+        (int pyMan, int pyExp) = getPythonValue(aMan, aExp, 0, 0, "ln", false);
         (int rMan, int rExp) = Float128.decode(retVal);
-        console2.log("rMan", rMan);
-        console2.log("rExp", rExp);
         if (rMan == 0 && pyMan != 0) {
             // we might have cases for when truncation will make a number 1.0, but Python will take
             // the full number. In those cases, Solidity result will be zero, so we just check the

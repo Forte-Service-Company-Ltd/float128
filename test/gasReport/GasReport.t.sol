@@ -189,8 +189,8 @@ contract GasReport is Test, GasHelpers, FloatUtils {
 
         for (uint i = 0; i < runs; ++i) {
             (int aMan, int aExp, int bMan, int bExp) = setBounds(vm.randomInt(), vm.randomInt(), vm.randomInt(), vm.randomInt());
-            packedFloat a = Float128.toPackedFloat(aMan, aExp);
-            packedFloat b = Float128.toPackedFloat(bMan, bExp);
+            packedFloat a = Float128.toPackedFloat(aMan, aExp / 2);
+            packedFloat b = Float128.toPackedFloat(bMan, bExp / 2);
 
             startMeasuringGas("Packed - Mul");
             Float128.mul(a, b);
@@ -238,8 +238,8 @@ contract GasReport is Test, GasHelpers, FloatUtils {
             if (bMan == 0) {
                 bMan = 1;
             }
-            packedFloat a = Float128.toPackedFloat(aMan, aExp);
-            packedFloat b = Float128.toPackedFloat(bMan, bExp);
+            packedFloat a = Float128.toPackedFloat(aMan, aExp / 2);
+            packedFloat b = Float128.toPackedFloat(bMan, bExp / 2);
 
             startMeasuringGas("Packed - Div");
             Float128.div(a, b);
@@ -264,8 +264,8 @@ contract GasReport is Test, GasHelpers, FloatUtils {
             if (bMan == 0) {
                 bMan = 1;
             }
-            packedFloat a = Float128.toPackedFloat(aMan, aExp);
-            packedFloat b = Float128.toPackedFloat(bMan, bExp);
+            packedFloat a = Float128.toPackedFloat(aMan, aExp / 2);
+            packedFloat b = Float128.toPackedFloat(bMan, bExp / 2);
 
             startMeasuringGas("Packed - Div");
             Float128.divL(a, b);
@@ -288,7 +288,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
 
         for (uint i = 0; i < runs; ++i) {
             (, , int bMan, int bExp) = setBounds(vm.randomInt(), vm.randomInt(), vm.randomInt(), vm.randomInt());
-            packedFloat b = Float128.toPackedFloat(bMan, bExp);
+            packedFloat b = Float128.toPackedFloat(bMan, bExp / 2);
 
             startMeasuringGas("Packed - Div - Numerator Zero");
             Float128.div(a, b);
@@ -311,7 +311,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
 
         for (uint i = 0; i < runs; ++i) {
             (, , int bMan, int bExp) = setBounds(vm.randomInt(), vm.randomInt(), vm.randomInt(), vm.randomInt());
-            packedFloat b = Float128.toPackedFloat(bMan, bExp);
+            packedFloat b = Float128.toPackedFloat(bMan, bExp / 2);
 
             startMeasuringGas("Packed - Div - Numerator Zero");
             Float128.divL(a, b);

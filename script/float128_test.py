@@ -24,13 +24,13 @@ def calculate_float(args):
     if(operation == "mul"): 
         result_float = a * b
     elif(operation == "div"):
-        result_float = a / b
+        result_float = a / b if b != 0 else 0
     elif(operation == "add"):
         result_float = a + b
     elif(operation == "sub"):
         result_float = a - b
     elif(operation == "sqrt"):
-        result_float = a.sqrt()
+        result_float = a.sqrt() if a >= 0 else 0
     elif(operation == "le"):
         result_float = 1 if a <= b else 0
     elif(operation == "lt"):
