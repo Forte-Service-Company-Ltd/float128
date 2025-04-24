@@ -17,8 +17,8 @@ contract Float128FuzzTest is FloatUtils {
         (, int realAExp) = a.decode();
         (, int realBExp) = b.decode();
 
-        if (aMan != 0 && bMan != 0 && realAExp + realBExp < 76 - int(Float128.ZERO_OFFSET)) vm.expectRevert("float128: underflow");
-        if (aMan != 0 && bMan != 0 && realAExp + realBExp > int(Float128.ZERO_OFFSET) - 76) vm.expectRevert("float128: overflow");
+        if (aMan != 0 && bMan != 0 && realAExp + realBExp < int(Float128.MAX_DIGITS_M_X_2) - int(Float128.ZERO_OFFSET)) vm.expectRevert("float128: underflow");
+        if (aMan != 0 && bMan != 0 && realAExp + realBExp > int(Float128.ZERO_OFFSET) - int(Float128.MAX_DIGITS_M_X_2)) vm.expectRevert("float128: overflow");
         packedFloat result = Float128.mul(a, b);
         (int rMan, int rExp) = Float128.decode(result);
         checkResults(result, rMan, rExp, pyMan, pyExp, 0);
@@ -32,8 +32,8 @@ contract Float128FuzzTest is FloatUtils {
         (, int realBExp) = b.decode();
 
         if (bMan == 0) vm.expectRevert("float128: division by zero");
-        if (aMan != 0 && bMan != 0 && realAExp - realBExp < 76 * 2 - int(Float128.ZERO_OFFSET)) vm.expectRevert("float128: underflow");
-        if (aMan != 0 && bMan != 0 && realAExp - realBExp > int(Float128.ZERO_OFFSET) - 76) vm.expectRevert("float128: overflow");
+        if (aMan != 0 && bMan != 0 && realAExp - realBExp < int(Float128.MAX_DIGITS_M_X_2) * 2 - int(Float128.ZERO_OFFSET)) vm.expectRevert("float128: underflow");
+        if (aMan != 0 && bMan != 0 && realAExp - realBExp > int(Float128.ZERO_OFFSET) - int(Float128.MAX_DIGITS_M_X_2)) vm.expectRevert("float128: overflow");
         packedFloat result = Float128.div(a, b);
 
         if (bMan != 0) {
@@ -50,8 +50,8 @@ contract Float128FuzzTest is FloatUtils {
         (, int realBExp) = b.decode();
 
         if (bMan == 0) vm.expectRevert("float128: division by zero");
-        if (aMan != 0 && bMan != 0 && realAExp - realBExp < 76 * 2 - int(Float128.ZERO_OFFSET)) vm.expectRevert("float128: underflow");
-        if (aMan != 0 && bMan != 0 && realAExp - realBExp > int(Float128.ZERO_OFFSET) - 76) vm.expectRevert("float128: overflow");
+        if (aMan != 0 && bMan != 0 && realAExp - realBExp < int(Float128.MAX_DIGITS_M_X_2) * 2 - int(Float128.ZERO_OFFSET)) vm.expectRevert("float128: underflow");
+        if (aMan != 0 && bMan != 0 && realAExp - realBExp > int(Float128.ZERO_OFFSET) - int(Float128.MAX_DIGITS_M_X_2)) vm.expectRevert("float128: overflow");
         packedFloat result = Float128.divL(a, b);
 
         if (bMan != 0) {

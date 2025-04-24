@@ -8,6 +8,7 @@ contract FloatUtils is Test {
     using Float128 for packedFloat;
 
     int constant ZERO_OFFSET_NEG = -8192;
+    uint LN_MAX_ERROR_ULPS = 99;
     int256 constant BOUNDS_LOW = -int(Float128.ZERO_OFFSET) + int(Float128.MAX_DIGITS_M_X_2) * 2;
     int256 constant BOUNDS_HIGH = int(Float128.ZERO_OFFSET) - int(Float128.MAX_DIGITS_M_X_2) * 2;
 
@@ -56,8 +57,6 @@ contract FloatUtils is Test {
         _aMan = bound(aMan, -99999999999999999999999999999999999999, 99999999999999999999999999999999999999);
         _aExp = bound(aExp, BOUNDS_LOW, BOUNDS_HIGH);
     }
-
-    uint LN_MAX_ERROR_ULPS = 99;
 
     function getPythonValue(int aMan, int aExp, int bMan, int bExp, string memory operation, bool isL) internal returns (int pyMan, int pyExp) {
         string[] memory inputs = _buildFFIFloat128Python(aMan, aExp, bMan, bExp, operation, isL ? int(1) : int(0));

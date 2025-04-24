@@ -165,7 +165,7 @@ contract Float128MaliciousEncodingTest is FloatUtils {
             int aExp = int(uint(distanceFromExpBound)) - int(Float128.ZERO_OFFSET);
             packedFloat a = encodeManually(aMan, aExp, false);
             packedFloat result = a.ln();
-            decodeAndCheckResults(aMan, aExp, 0, 0, "ln", false, result, 99);
+            decodeAndCheckResults(aMan, aExp, 0, 0, "ln", false, result, LN_MAX_ERROR_ULPS);
         }
         {
             // very positive exponent
@@ -175,7 +175,7 @@ contract Float128MaliciousEncodingTest is FloatUtils {
             int aExp = int(Float128.ZERO_OFFSET) - int(uint(distanceFromExpBound)) - 1;
             packedFloat a = encodeManually(aMan, aExp, true);
             packedFloat result = a.ln();
-            decodeAndCheckResults(aMan, aExp, 0, 0, "ln", false, result, 99);
+            decodeAndCheckResults(aMan, aExp, 0, 0, "ln", false, result, LN_MAX_ERROR_ULPS);
         }
     }
 

@@ -3,7 +3,6 @@ pragma solidity ^0.8.24;
 
 import {Uint512} from "../lib/Uint512.sol";
 import {packedFloat} from "./Types.sol";
-import "forge-std/console2.sol";
 
 /**
  * @title Floating point Library base 10 with 38 or 72 digits signed
@@ -202,7 +201,6 @@ library Float128 {
             assembly {
                 rExp := shr(EXPONENT_BIT, r)
             }
-            console2.log("rExp", rExp);
             if (isSubtraction) {
                 // subtraction case can have a number of digits anywhere from 1 to 76
                 // we might get a normalized result, so we only normalize if necessary
@@ -232,15 +230,12 @@ library Float128 {
                     }
                 }
             } else {
-                uint maxExp;
-                bool _isM;
-                console2.log("addition", addition);
                 // addition case is simpler since it can only have 2 possibilities: same digits as its addends,
                 // or + 1 digits due to an "overflow"
                 assembly {
                     let isGreaterThan76Digits := gt(addition, MAX_76_DIGIT_NUMBER)
-                    maxExp := sub(sub(add(ZERO_OFFSET, MAXIMUM_EXPONENT), MAX_DIGITS_M), isGreaterThan76Digits)
-                    _isM := or(eq(rExp, maxExp), lt(rExp, maxExp))
+                    let maxExp := sub(sub(add(ZERO_OFFSET, MAXIMUM_EXPONENT), MAX_DIGITS_M), isGreaterThan76Digits)
+                    let _isM := or(eq(rExp, maxExp), lt(rExp, maxExp))
                     if _isM {
                         addition := div(addition, BASE_TO_THE_MAX_DIGITS_M)
                         r := add(r, shl(EXPONENT_BIT, MAX_DIGITS_M))
@@ -255,8 +250,6 @@ library Float128 {
                         r := add(r, shl(EXPONENT_BIT, 1))
                     }
                 }
-                console2.log("maxExp", maxExp);
-                console2.log("_isM", _isM);
             }
             assembly {
                 r := or(r, addition)
@@ -659,7 +652,7 @@ library Float128 {
             bMan := and(b, MANTISSA_MASK)
             // underflow can happen due to malicious encoding, or division of a very negative exponent by a very positive exponent
             // large-mantissa operations makes it riskier for division to underflow. A skewed lower bound of 2 * MAX_DIGITS_M_X_2 is necessary
-            if or(or(lt(aExp, MAX_DIGITS_M_X_2), lt(aExp, MAX_DIGITS_M_X_2)), slt(sub(aExp, bExp), sub(shl(1, MAX_DIGITS_M_X_2), ZERO_OFFSET))) {
+            if or(or(lt(aExp, MAX_DIGITS_M_X_2), lt(bExp, MAX_DIGITS_M_X_2)), slt(sub(aExp, bExp), sub(shl(1, MAX_DIGITS_M_X_2), ZERO_OFFSET))) {
                 let ptr := mload(0x40) // Get free memory pointer
                 mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
                 mstore(add(ptr, 0x04), 0x20) // String offset
