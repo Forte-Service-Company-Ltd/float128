@@ -72,7 +72,7 @@ library Float128 {
             let aMan := and(a, MANTISSA_MASK)
             let bMan := and(b, MANTISSA_MASK)
             // we check exponents cannot maliciously underflow while expanding, or underflow on a similar result
-            if or(lt(aExp, MAX_DIGITS_M_X_2), lt(aExp, MAX_DIGITS_M_X_2)) {
+            if or(lt(aExp, MAX_DIGITS_M_X_2), lt(bExp, MAX_DIGITS_M_X_2)) {
                 let ptr := mload(0x40) // Get free memory pointer
                 mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
                 mstore(add(ptr, 0x04), 0x20) // String offset
@@ -286,7 +286,7 @@ library Float128 {
             let bExp := shr(EXPONENT_BIT, b)
             let aMan := and(a, MANTISSA_MASK)
             let bMan := and(b, MANTISSA_MASK)
-            if or(lt(aExp, MAX_DIGITS_M_X_2), lt(aExp, MAX_DIGITS_M_X_2)) {
+            if or(lt(aExp, MAX_DIGITS_M_X_2), lt(bExp, MAX_DIGITS_M_X_2)) {
                 let ptr := mload(0x40) // Get free memory pointer
                 mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
                 mstore(add(ptr, 0x04), 0x20) // String offset
@@ -494,7 +494,7 @@ library Float128 {
             let aMan := and(a, MANTISSA_MASK)
             let bMan := and(b, MANTISSA_MASK)
             // underflow can happen due to malicious encoding, or product of very negative exponents
-            if or(or(lt(aExp, MAX_DIGITS_M_X_2), lt(aExp, MAX_DIGITS_M_X_2)), lt(add(aExp, bExp), add(ZERO_OFFSET, MAX_DIGITS_M_X_2))) {
+            if or(or(lt(aExp, MAX_DIGITS_M_X_2), lt(bExp, MAX_DIGITS_M_X_2)), lt(add(aExp, bExp), add(ZERO_OFFSET, MAX_DIGITS_M_X_2))) {
                 let ptr := mload(0x40) // Get free memory pointer
                 mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
                 mstore(add(ptr, 0x04), 0x20) // String offset
