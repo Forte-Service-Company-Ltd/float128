@@ -1,313 +1,15 @@
 /// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "test/FloatCommon.sol";
 import "forge-std/console2.sol";
 import "src/Float128.sol";
 import {Ln} from "src/Ln.sol";
 import "test/FloatUtils.sol";
 
-contract Float128FuzzTest is FloatCommon {
+contract Float128FuzzTest is FloatUtils {
     using Float128 for int256;
     using Float128 for packedFloat;
     using Ln for packedFloat;
-
-    uint LN_MAX_ERROR_ULPS = 99;
-
-    function getPythonValue(int aMan, int aExp, int bMan, int bExp, string memory operation, bool isL) internal returns (int pyMan, int pyExp) {
-        string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, operation, isL ? int(1) : int(0));
-        bytes memory res = vm.ffi(inputs);
-        (pyMan, pyExp) = abi.decode((res), (int256, int256));
-    }
-
-    function getPackedFloatInputs(int aMan, int aExp, int bMan, int bExp) internal pure returns (packedFloat a, packedFloat b) {
-        a = Float128.toPackedFloat(aMan, aExp);
-        b = Float128.toPackedFloat(bMan, bExp);
-    }
-
-    function getPackedFloatInputsAndPythonValues(
-        int aMan,
-        int aExp,
-        int bMan,
-        int bExp,
-        string memory operation,
-        bool isL
-    ) internal returns (packedFloat a, packedFloat b, int pyMan, int pyExp) {
-        (pyMan, pyExp) = getPythonValue(aMan, aExp, bMan, bExp, operation, isL);
-        (a, b) = getPackedFloatInputs(aMan, aExp, bMan, bExp);
-    }
-
-    function encodeManually(int xMan, int xExp, bool isL) internal pure returns (packedFloat x) {
-        uint manuallyEncodedFloat = ((uint(xExp + int(Float128.ZERO_OFFSET)) << Float128.EXPONENT_BIT)) |
-            (xMan < 0 ? Float128.MANTISSA_SIGN_MASK : 0) |
-            (xMan < 0 ? uint(xMan * -1) : uint(xMan)) |
-            (isL ? Float128.MANTISSA_L_FLAG_MASK : 0);
-        x = packedFloat.wrap(manuallyEncodedFloat);
-    }
-
-    function decodeAndCheckResults(int aMan, int aExp, int bMan, int bExp, string memory operation, bool isL, packedFloat result, uint _ulpsOfTolerance) internal {
-        (int pyMan, int pyExp) = getPythonValue(aMan, aExp, bMan, bExp, operation, isL);
-        (int rMan, int rExp) = Float128.decode(result);
-        checkResults(result, rMan, rExp, pyMan, pyExp, _ulpsOfTolerance);
-    }
-
-    function checkResults(int rMan, int rExp, int pyMan, int pyExp) internal pure {
-        checkResults(packedFloat.wrap(0), rMan, rExp, pyMan, pyExp, 0);
-    }
-
-    function checkResults(int rMan, int rExp, int pyMan, int pyExp, uint _ulpsOfTolerance) internal pure {
-        checkResults(packedFloat.wrap(0), rMan, rExp, pyMan, pyExp, _ulpsOfTolerance);
-    }
-
-    function checkResults(packedFloat r, int rMan, int rExp, int pyMan, int pyExp, uint _ulpsOfTolerance) internal pure {
-        int ulpsOfTolerance = int(_ulpsOfTolerance);
-        console2.log("solResult", packedFloat.unwrap(r));
-        console2.log("rMan", rMan);
-        console2.log("rExp", rExp);
-        console2.log("pyMan", pyMan);
-        console2.log("pyExp", pyExp);
-
-        bool isLarge = packedFloat.unwrap(r) & Float128.MANTISSA_L_FLAG_MASK > 0;
-        console2.log("isLarge", isLarge);
-
-        // we always check that the result is normalized since this is vital for the library. Only exception is when the result is zero
-        uint nDigits = findNumberOfDigits(uint(rMan < 0 ? rMan * -1 : rMan));
-        console2.log("nDigits", nDigits);
-        if (pyMan != 0) assertTrue(((nDigits == 38) || (nDigits == 72)), "Solidity result is not normalized");
-        if (pyMan == 0) {
-            assertEq(rMan, 0, "Solidity result is not zero");
-            assertEq(rExp, ZERO_OFFSET_NEG, "Solidity result is not zero");
-        }
-        if (packedFloat.unwrap(r) != 0) nDigits == 38 ? assertFalse(isLarge) : assertTrue(isLarge);
-        // we fix the python result due to the imprecision of python's log10. We cut precision where needed
-        if (pyExp != rExp) {
-            if (pyExp > rExp) {
-                ++rExp;
-                rMan /= 10;
-            } else {
-                ++pyExp;
-                pyMan /= 10;
-            }
-        }
-        // we only accept off by 1 if explicitly signaled. (addition/subtraction are famous for rounding difference with Python)
-        if (ulpsOfTolerance > 0) {
-            // we could be off by one due to rounding issues. The error should be less than 1/1e76
-            if (pyMan != rMan) {
-                console2.log("ulpsOfTolerance", ulpsOfTolerance);
-                if (pyMan > rMan) assertLe(pyMan, rMan + ulpsOfTolerance);
-                else assertGe(pyMan + ulpsOfTolerance, rMan);
-            }
-        } else assertEq(pyMan, rMan);
-
-        if (pyMan != 0) assertEq(pyExp, rExp);
-    }
-
-    /**
-     * @dev pure Solidity implementation of the normalization procedure that takes place in toPackedFloat function.
-     */
-    function emulateNormalization(int man, int exp) internal pure returns (int mantissa, int exponent) {
-        if (man == 0) return (0, -8192);
-        mantissa = man;
-        exponent = exp;
-        uint nDigits = findNumberOfDigits(uint(man < 0 ? -1 * man : man));
-        if (nDigits != 38 && nDigits != 72) {
-            int adj = int(Float128.MAX_DIGITS_M) - int(nDigits);
-            exponent = exp - adj;
-            if (exponent > Float128.MAXIMUM_EXPONENT) {
-                if (adj > 0) {
-                    exponent -= int(Float128.DIGIT_DIFF_L_M);
-                    mantissa *= (int(Float128.BASE_TO_THE_DIGIT_DIFF * Float128.BASE ** uint(adj)));
-                } else {
-                    exponent += int(Float128.DIGIT_DIFF_L_M);
-                    mantissa /= (int(Float128.BASE_TO_THE_DIGIT_DIFF) / int(Float128.BASE ** uint(-adj)));
-                }
-            } else {
-                if (adj > 0) {
-                    mantissa *= int(Float128.BASE ** uint(adj));
-                } else {
-                    mantissa /= int(Float128.BASE ** uint(-adj));
-                }
-            }
-        } else if (nDigits == 38 && exponent > Float128.MAXIMUM_EXPONENT) {
-            exponent -= int(Float128.DIGIT_DIFF_L_M);
-            mantissa *= (int(Float128.BASE_TO_THE_DIGIT_DIFF));
-        }
-    }
-
-    function findNumberOfDigits(uint x) internal pure returns (uint log) {
-        assembly {
-            if gt(x, 0) {
-                if gt(x, 9999999999999999999999999999999999999999999999999999999999999999) {
-                    log := 64
-                    x := div(x, 10000000000000000000000000000000000000000000000000000000000000000)
-                }
-                if gt(x, 99999999999999999999999999999999) {
-                    log := add(log, 32)
-                    x := div(x, 100000000000000000000000000000000)
-                }
-                if gt(x, 9999999999999999) {
-                    log := add(log, 16)
-                    x := div(x, 10000000000000000)
-                }
-                if gt(x, 99999999) {
-                    log := add(log, 8)
-                    x := div(x, 100000000)
-                }
-                if gt(x, 9999) {
-                    log := add(log, 4)
-                    x := div(x, 10000)
-                }
-                if gt(x, 99) {
-                    log := add(log, 2)
-                    x := div(x, 100)
-                }
-                if gt(x, 9) {
-                    log := add(log, 1)
-                }
-                log := add(log, 1)
-            }
-        }
-    }
-
-    function testEncoded_add_maliciousEncoding(uint8 distanceFromExpBound) public {
-        {
-            // very negative exponent
-            int bExp = 0;
-            int bMan = 1;
-            packedFloat b = bMan.toPackedFloat(bExp);
-            int aMan = int(1);
-            int aExp = int(uint(distanceFromExpBound)) - int(Float128.ZERO_OFFSET);
-            packedFloat a = encodeManually(aMan, aExp, false);
-            if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2) vm.expectRevert("float128: underflow");
-            packedFloat result = a.add(b);
-            decodeAndCheckResults(aMan, aExp, bMan, bExp, "add", false, result, 1);
-        }
-        {
-            // very positive exponent
-            int aMan = int(9e71);
-            int aExp = int(Float128.ZERO_OFFSET) - int(uint(distanceFromExpBound)) - 1;
-            packedFloat a = encodeManually(aMan, aExp, true);
-            int bExp = aExp;
-            int bMan = 9e71;
-            packedFloat b = bMan.toPackedFloat(bExp);
-            if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2 - 1) vm.expectRevert("float128: overflow");
-            packedFloat result = a.add(b);
-            decodeAndCheckResults(aMan, aExp, bMan, bExp, "add", false, result, 1);
-        }
-    }
-
-    function testEncoded_sub_maliciousEncoding(uint8 distanceFromExpBound) public {
-        {
-            // very negative exponent
-            int aMan = int(2);
-            int aExp = int(uint(distanceFromExpBound)) - int(Float128.ZERO_OFFSET);
-            packedFloat a = encodeManually(aMan, aExp, false);
-            packedFloat b = encodeManually(aMan - 1, aExp, false);
-            if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2) vm.expectRevert("float128: underflow");
-            packedFloat result = a.sub(b);
-            decodeAndCheckResults(aMan, aExp, aMan - 1, aExp, "sub", false, result, 1);
-        }
-        {
-            // very positive exponent
-            int aMan = int(Float128.MAX_L_DIGIT_NUMBER);
-            int aExp = int(Float128.ZERO_OFFSET) - int(uint(distanceFromExpBound)) - 1;
-            packedFloat a = encodeManually(aMan, aExp, true);
-            packedFloat b = encodeManually(aMan / 2, aExp, true);
-            if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2 - 1) vm.expectRevert("float128: overflow");
-            packedFloat result = a.sub(b);
-            decodeAndCheckResults(aMan, aExp, aMan / 2, aExp, "sub", false, result, 1);
-        }
-    }
-
-    function testEncoded_mul_maliciousEncoding(uint8 distanceFromExpBound) public {
-        int bExp = 0;
-        int bMan = 1;
-        packedFloat b = bMan.toPackedFloat(bExp);
-        {
-            // very negative exponent
-            int aMan = int(1e37);
-            int aExp = int(uint(distanceFromExpBound)) - int(Float128.ZERO_OFFSET);
-            packedFloat a = encodeManually(aMan, aExp, false);
-            // -37 is the exponent of b after normalization
-            if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2 + 37) vm.expectRevert("float128: underflow");
-            packedFloat result = a.mul(b);
-            decodeAndCheckResults(aMan, aExp, bMan, bExp, "mul", false, result, 1);
-        }
-        {
-            // very positive exponent
-            int aMan = int(1e71);
-            int aExp = int(Float128.ZERO_OFFSET) - int(uint(distanceFromExpBound)) - 1;
-            packedFloat a = encodeManually(aMan, aExp, true);
-            packedFloat result = a.mul(b);
-            decodeAndCheckResults(aMan, aExp, bMan, bExp, "mul", false, result, 1);
-        }
-    }
-
-    function testEncoded_div_maliciousEncoding(uint8 distanceFromExpBound) public {
-        int bExp = 0;
-        int bMan = 1;
-        packedFloat b = bMan.toPackedFloat(bExp);
-        {
-            // very negative exponent
-            int aMan = int(1e37);
-            int aExp = int(uint(distanceFromExpBound)) - int(Float128.ZERO_OFFSET);
-            packedFloat a = encodeManually(aMan, aExp, false);
-            // -37 is the exponent of b after normalization
-            if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2 * 2 - 37) vm.expectRevert("float128: underflow");
-            packedFloat result = a.div(b);
-            decodeAndCheckResults(aMan, aExp, bMan, bExp, "div", false, result, 1);
-        }
-        {
-            // very positive exponent
-            int aMan = int(1e71);
-            int aExp = int(Float128.ZERO_OFFSET) - int(uint(distanceFromExpBound)) - 1;
-            packedFloat a = encodeManually(aMan, aExp, true);
-            packedFloat result = a.div(b);
-            decodeAndCheckResults(aMan, aExp, bMan, bExp, "div", false, result, 1);
-        }
-    }
-
-    function testEncoded_sqrt_maliciousEncoding(uint8 distanceFromExpBound) public {
-        {
-            // very negative exponent
-            int aMan = int(1e37);
-            int aExp = int(uint(distanceFromExpBound)) - int(Float128.ZERO_OFFSET);
-            packedFloat a = encodeManually(aMan, aExp, false);
-            packedFloat result = a.sqrt();
-            decodeAndCheckResults(aMan, aExp, 0, 0, "sqrt", false, result, 0);
-        }
-        {
-            // very positive exponent
-            int aMan = int(1e71);
-            int aExp = int(Float128.ZERO_OFFSET) - int(uint(distanceFromExpBound)) - 1;
-            packedFloat a = encodeManually(aMan, aExp, true);
-            packedFloat result = a.sqrt();
-            decodeAndCheckResults(aMan, aExp, 0, 0, "sqrt", false, result, 0);
-        }
-    }
-
-    function testEncoded_toPackedFloat_maliciousEncoding(uint8 distanceFromExpBound, int aMan) public {
-        aMan = bound(aMan, -int(Float128.MAX_76_DIGIT_NUMBER), int(Float128.MAX_76_DIGIT_NUMBER));
-        {
-            // very negative exponent
-            int aExp = int(uint(distanceFromExpBound)) - int(Float128.ZERO_OFFSET);
-            if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2 && aMan != 0) vm.expectRevert("float128: underflow");
-            packedFloat a = aMan.toPackedFloat(aExp);
-            (int rMan, int rExp) = a.decode();
-            (aMan, aExp) = emulateNormalization(aMan, aExp);
-            assertEq(rMan, aMan, "different mantissas");
-            assertEq(rExp, aExp, "different exponents");
-        }
-        {
-            // very positive exponent
-            int aExp = int(Float128.ZERO_OFFSET) - int(uint(distanceFromExpBound)) - 1;
-            packedFloat a = aMan.toPackedFloat(aExp);
-            (int rMan, int rExp) = a.decode();
-            (aMan, aExp) = emulateNormalization(aMan, aExp);
-            assertEq(rMan, aMan, "different mantissas");
-            assertEq(rExp, aExp, "different exponents");
-        }
-    }
 
     function testEncoded_mul_regular(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
@@ -418,7 +120,6 @@ contract Float128FuzzTest is FloatCommon {
         aExp = 1 - int(digits);
 
         packedFloat a = Float128.toPackedFloat(aMan, aExp);
-        (int manNorm, int expNorm) = Float128.decode(a);
         packedFloat retVal = Ln.ln(a);
 
         (int pyMan, int pyExp) = getPythonValue(aMan, aExp, 0, 0, "ln", false);
@@ -439,7 +140,6 @@ contract Float128FuzzTest is FloatCommon {
         aExp = 1 - int(digits);
 
         packedFloat a = Float128.toPackedFloat(aMan, aExp);
-        (int manNorm, int expNorm) = Float128.decode(a);
         packedFloat retVal = Ln.ln(a);
 
         (int pyMan, int pyExp) = getPythonValue(aMan, aExp, 0, 0, "ln", false);
@@ -460,7 +160,6 @@ contract Float128FuzzTest is FloatCommon {
         aExp = bound(aExp, -3000, 0 - int(digits));
 
         packedFloat a = Float128.toPackedFloat(aMan, aExp);
-        (int manNorm, int expNorm) = Float128.decode(a);
         packedFloat retVal = Ln.ln(a);
 
         (int pyMan, int pyExp) = getPythonValue(aMan, aExp, 0, 0, "ln", false);
@@ -481,7 +180,6 @@ contract Float128FuzzTest is FloatCommon {
         aExp = bound(aExp, 1 - int(digits), 3000);
 
         packedFloat a = Float128.toPackedFloat(aMan, aExp);
-        (int manNorm, int expNorm) = Float128.decode(a);
         packedFloat retVal = Ln.ln(a);
 
         (int pyMan, int pyExp) = getPythonValue(aMan, aExp, 0, 0, "ln", false);
@@ -499,7 +197,6 @@ contract Float128FuzzTest is FloatCommon {
     function testLnpackedFloatFuzzAllRanges(int aMan, int aExp) public {
         (aMan, aExp, , ) = setBounds(aMan, aExp, 0, 0);
         packedFloat a = Float128.toPackedFloat(aMan, aExp);
-        (int manNorm, int expNorm) = Float128.decode(a);
 
         if (a.le(int(0).toPackedFloat(0))) vm.expectRevert("float128: ln undefined");
         packedFloat retVal = Ln.ln(a);
@@ -521,7 +218,6 @@ contract Float128FuzzTest is FloatCommon {
         int aExp = -37;
 
         packedFloat a = Float128.toPackedFloat(aMan, aExp);
-        (int manNorm, int expNorm) = Float128.decode(a);
         packedFloat retVal = Ln.ln(a);
 
         (int pyMan, int pyExp) = getPythonValue(aMan, aExp, 0, 0, "ln", false);
@@ -648,30 +344,5 @@ contract Float128FuzzTest is FloatCommon {
 
         bool retVal = Float128.eq(a, b);
         assertFalse(retVal);
-    }
-
-    function testExponentiationOverflow_DivisionOfLNumberByOverflowedExpReturnsZero() public pure {
-        uint r;
-        uint BASE = Float128.BASE;
-        uint MAX_L_DIGIT_NUMBER = Float128.MAX_L_DIGIT_NUMBER;
-        // we test the whole range of overflowed exponentiation which goes from 10**77 to 10**(exponent whole range)
-        for (uint i = 77; i < Float128.ZERO_OFFSET * 2; i++) {
-            // since all the overflowed exponentiations are greater than MAX_L_DIGIT_NUMBER, the result will always be zero
-            assembly {
-                r := div(MAX_L_DIGIT_NUMBER, exp(BASE, i))
-            }
-            assertEq(r, 0, "dividing an L number by an overflowed power of BASE does not return zero");
-        }
-    }
-
-    function testExponentiationOverflow_ExpReturnsZeroForExponentsGreaterThan255() public pure {
-        uint r;
-        uint BASE = Float128.BASE;
-        for (uint i = 256; i < Float128.ZERO_OFFSET * 2; i++) {
-            assembly {
-                r := exp(BASE, i)
-            }
-            assertEq(r, 0, "BASE to a power greater than 256 is not 0");
-        }
     }
 }

@@ -3,13 +3,12 @@ pragma solidity ^0.8.24;
 
 import "forge-std/console2.sol";
 import "src/Float128.sol";
+import {Ln} from "src/Ln.sol";
 import "test/FloatUtils.sol";
 
-abstract contract FloatCommon is FloatUtils {
+contract FloatZeroHandlingTest is FloatUtils {
     using Float128 for int256;
     using Float128 for packedFloat;
-
-    int constant ZERO_OFFSET_NEG = -8192;
 
     function testEncoded_mul_zero(int bMan, int bExp) public pure {
         (bMan, bExp) = setBounds(bMan, bExp);
