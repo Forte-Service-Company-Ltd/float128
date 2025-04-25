@@ -57,8 +57,54 @@ library Float128 {
      * @return r the result of a + b
      */
     function add(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
-        validate(a);
-        validate(b);
+        assembly {
+            let mantissaA := and(a, MANTISSA_MASK)
+            let isLargeA := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
+            let mantissaB := and(b, MANTISSA_MASK)
+            let isLargeB := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
+
+            // Check both floats - if either is invalid, we'll revert
+            let isValid := 1
+
+            // Check for invalid zero representations
+            if or(and(iszero(a), gt(mantissaA, 0)), and(iszero(b), gt(mantissaB, 0))) {
+                isValid := 0
+            }
+
+            // Validate first float if non-zero
+            if and(isValid, gt(mantissaA, 0)) {
+                if isLargeA {
+                    // Check if mantissa A has exactly 72 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaA, MIN_L_DIGIT_NUMBER)), iszero(gt(mantissaA, MAX_L_DIGIT_NUMBER))))
+                }
+                if iszero(isLargeA) {
+                    // Check if mantissa A has exactly 38 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaA, MIN_M_DIGIT_NUMBER)), iszero(gt(mantissaA, MAX_M_DIGIT_NUMBER))))
+                }
+            }
+
+            // Validate second float if non-zero
+            if and(isValid, gt(mantissaB, 0)) {
+                if isLargeB {
+                    // Check if mantissa B has exactly 72 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaB, MIN_L_DIGIT_NUMBER)), iszero(gt(mantissaB, MAX_L_DIGIT_NUMBER))))
+                }
+                if iszero(isLargeB) {
+                    // Check if mantissa B has exactly 38 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaB, MIN_M_DIGIT_NUMBER)), iszero(gt(mantissaB, MAX_M_DIGIT_NUMBER))))
+                }
+            }
+
+            // Revert if validation fails
+            if iszero(isValid) {
+                let ptr := mload(0x40)
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                mstore(add(ptr, 0x04), 0x20)
+                mstore(add(ptr, 0x24), 23)
+                mstore(add(ptr, 0x44), "float128: invalid float")
+                revert(ptr, 0x64)
+            }
+        }
         uint addition;
         bool isSubtraction;
         bool sameExponent;
@@ -267,8 +313,54 @@ library Float128 {
      * @notice this version of the function uses only the packedFloat type
      */
     function sub(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
-        validate(a);
-        validate(b);
+        assembly {
+            let mantissaA := and(a, MANTISSA_MASK)
+            let isLargeA := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
+            let mantissaB := and(b, MANTISSA_MASK)
+            let isLargeB := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
+
+            // Check both floats - if either is invalid, we'll revert
+            let isValid := 1
+
+            // Check for invalid zero representations
+            if or(and(iszero(a), gt(mantissaA, 0)), and(iszero(b), gt(mantissaB, 0))) {
+                isValid := 0
+            }
+
+            // Validate first float if non-zero
+            if and(isValid, gt(mantissaA, 0)) {
+                if isLargeA {
+                    // Check if mantissa A has exactly 72 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaA, MIN_L_DIGIT_NUMBER)), iszero(gt(mantissaA, MAX_L_DIGIT_NUMBER))))
+                }
+                if iszero(isLargeA) {
+                    // Check if mantissa A has exactly 38 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaA, MIN_M_DIGIT_NUMBER)), iszero(gt(mantissaA, MAX_M_DIGIT_NUMBER))))
+                }
+            }
+
+            // Validate second float if non-zero
+            if and(isValid, gt(mantissaB, 0)) {
+                if isLargeB {
+                    // Check if mantissa B has exactly 72 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaB, MIN_L_DIGIT_NUMBER)), iszero(gt(mantissaB, MAX_L_DIGIT_NUMBER))))
+                }
+                if iszero(isLargeB) {
+                    // Check if mantissa B has exactly 38 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaB, MIN_M_DIGIT_NUMBER)), iszero(gt(mantissaB, MAX_M_DIGIT_NUMBER))))
+                }
+            }
+
+            // Revert if validation fails
+            if iszero(isValid) {
+                let ptr := mload(0x40)
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                mstore(add(ptr, 0x04), 0x20)
+                mstore(add(ptr, 0x24), 23)
+                mstore(add(ptr, 0x44), "float128: invalid float")
+                revert(ptr, 0x64)
+            }
+        }
         uint addition;
         bool isSubtraction;
         bool sameExponent;
@@ -482,8 +574,54 @@ library Float128 {
      * @return r the result of a * b
      */
     function mul(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
-        validate(a);
-        validate(b);
+        assembly {
+            let mantissaA := and(a, MANTISSA_MASK)
+            let isLargeA := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
+            let mantissaB := and(b, MANTISSA_MASK)
+            let isLargeB := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
+
+            // Check both floats - if either is invalid, we'll revert
+            let isValid := 1
+
+            // Check for invalid zero representations
+            if or(and(iszero(a), gt(mantissaA, 0)), and(iszero(b), gt(mantissaB, 0))) {
+                isValid := 0
+            }
+
+            // Validate first float if non-zero
+            if and(isValid, gt(mantissaA, 0)) {
+                if isLargeA {
+                    // Check if mantissa A has exactly 72 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaA, MIN_L_DIGIT_NUMBER)), iszero(gt(mantissaA, MAX_L_DIGIT_NUMBER))))
+                }
+                if iszero(isLargeA) {
+                    // Check if mantissa A has exactly 38 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaA, MIN_M_DIGIT_NUMBER)), iszero(gt(mantissaA, MAX_M_DIGIT_NUMBER))))
+                }
+            }
+
+            // Validate second float if non-zero
+            if and(isValid, gt(mantissaB, 0)) {
+                if isLargeB {
+                    // Check if mantissa B has exactly 72 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaB, MIN_L_DIGIT_NUMBER)), iszero(gt(mantissaB, MAX_L_DIGIT_NUMBER))))
+                }
+                if iszero(isLargeB) {
+                    // Check if mantissa B has exactly 38 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaB, MIN_M_DIGIT_NUMBER)), iszero(gt(mantissaB, MAX_M_DIGIT_NUMBER))))
+                }
+            }
+
+            // Revert if validation fails
+            if iszero(isValid) {
+                let ptr := mload(0x40)
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                mstore(add(ptr, 0x04), 0x20)
+                mstore(add(ptr, 0x24), 23)
+                mstore(add(ptr, 0x44), "float128: invalid float")
+                revert(ptr, 0x64)
+            }
+        }
         uint rMan;
         uint rExp;
         uint r0;
@@ -628,8 +766,54 @@ library Float128 {
      * @return r the result of a / b
      */
     function div(packedFloat a, packedFloat b, bool rL) internal pure returns (packedFloat r) {
-        validate(a);
-        validate(b);
+        assembly {
+            let mantissaA := and(a, MANTISSA_MASK)
+            let isLargeA := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
+            let mantissaB := and(b, MANTISSA_MASK)
+            let isLargeB := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
+
+            // Check both floats - if either is invalid, we'll revert
+            let isValid := 1
+
+            // Check for invalid zero representations
+            if or(and(iszero(a), gt(mantissaA, 0)), and(iszero(b), gt(mantissaB, 0))) {
+                isValid := 0
+            }
+
+            // Validate first float if non-zero
+            if and(isValid, gt(mantissaA, 0)) {
+                if isLargeA {
+                    // Check if mantissa A has exactly 72 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaA, MIN_L_DIGIT_NUMBER)), iszero(gt(mantissaA, MAX_L_DIGIT_NUMBER))))
+                }
+                if iszero(isLargeA) {
+                    // Check if mantissa A has exactly 38 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaA, MIN_M_DIGIT_NUMBER)), iszero(gt(mantissaA, MAX_M_DIGIT_NUMBER))))
+                }
+            }
+
+            // Validate second float if non-zero
+            if and(isValid, gt(mantissaB, 0)) {
+                if isLargeB {
+                    // Check if mantissa B has exactly 72 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaB, MIN_L_DIGIT_NUMBER)), iszero(gt(mantissaB, MAX_L_DIGIT_NUMBER))))
+                }
+                if iszero(isLargeB) {
+                    // Check if mantissa B has exactly 38 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaB, MIN_M_DIGIT_NUMBER)), iszero(gt(mantissaB, MAX_M_DIGIT_NUMBER))))
+                }
+            }
+
+            // Revert if validation fails
+            if iszero(isValid) {
+                let ptr := mload(0x40)
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                mstore(add(ptr, 0x04), 0x20)
+                mstore(add(ptr, 0x24), 23)
+                mstore(add(ptr, 0x44), "float128: invalid float")
+                revert(ptr, 0x64)
+            }
+        }
         assembly {
             if eq(and(b, MANTISSA_MASK), 0) {
                 let ptr := mload(0x40) // Get free memory pointer
@@ -758,8 +942,57 @@ library Float128 {
      * @param a the numerator to get the square root of
      * @return r the result of √a
      */
-    function sqrt(packedFloat a) internal pure tester returns (packedFloat r) {
-        validate(a);
+    function sqrt(packedFloat a) internal pure returns (packedFloat r) {
+        assembly {
+            let mantissa := and(a, MANTISSA_MASK)
+            let isLarge := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
+
+            // Check for invalid zero representations
+            // If the unwrapped value is zero, the mantissa must also be zero
+            if and(iszero(a), gt(mantissa, 0)) {
+                let ptr := mload(0x40)
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                mstore(add(ptr, 0x04), 0x20)
+                mstore(add(ptr, 0x24), 23)
+                mstore(add(ptr, 0x44), "float128: invalid float")
+                revert(ptr, 0x64)
+            }
+
+            // If the unwrapped value is not zero, proceed with normal validation
+            // Initialize default to invalid
+            let isValid := 0
+
+            // Check if mantissa has EXACTLY the required digits
+            if isLarge {
+                // Large mantissa must be EXACTLY 72 digits
+                // MIN_L_DIGIT_NUMBER <= mantissa <= MAX_L_DIGIT_NUMBER
+                isValid := and(iszero(lt(mantissa, MIN_L_DIGIT_NUMBER)), iszero(gt(mantissa, MAX_L_DIGIT_NUMBER)))
+
+                if iszero(isValid) {
+                    let ptr := mload(0x40)
+                    mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                    mstore(add(ptr, 0x04), 0x20)
+                    mstore(add(ptr, 0x24), 23)
+                    mstore(add(ptr, 0x44), "float128: invalid float")
+                    revert(ptr, 0x64)
+                }
+            }
+
+            if iszero(isLarge) {
+                // Medium mantissa must be EXACTLY 38 digits
+                // MIN_M_DIGIT_NUMBER <= mantissa <= MAX_M_DIGIT_NUMBER
+                isValid := and(iszero(lt(mantissa, MIN_M_DIGIT_NUMBER)), iszero(gt(mantissa, MAX_M_DIGIT_NUMBER)))
+
+                if iszero(isValid) {
+                    let ptr := mload(0x40)
+                    mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                    mstore(add(ptr, 0x04), 0x20)
+                    mstore(add(ptr, 0x24), 23)
+                    mstore(add(ptr, 0x44), "float128: invalid float")
+                    revert(ptr, 0x64)
+                }
+            }
+        }
         uint s;
         int aExp;
         uint x;
@@ -899,8 +1132,54 @@ library Float128 {
      * @return retVal the result of a < b
      */
     function lt(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
-        validate(a);
-        validate(b);
+        assembly {
+            let mantissaA := and(a, MANTISSA_MASK)
+            let isLargeA := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
+            let mantissaB := and(b, MANTISSA_MASK)
+            let isLargeB := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
+
+            // Check both floats - if either is invalid, we'll revert
+            let isValid := 1
+
+            // Check for invalid zero representations
+            if or(and(iszero(a), gt(mantissaA, 0)), and(iszero(b), gt(mantissaB, 0))) {
+                isValid := 0
+            }
+
+            // Validate first float if non-zero
+            if and(isValid, gt(mantissaA, 0)) {
+                if isLargeA {
+                    // Check if mantissa A has exactly 72 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaA, MIN_L_DIGIT_NUMBER)), iszero(gt(mantissaA, MAX_L_DIGIT_NUMBER))))
+                }
+                if iszero(isLargeA) {
+                    // Check if mantissa A has exactly 38 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaA, MIN_M_DIGIT_NUMBER)), iszero(gt(mantissaA, MAX_M_DIGIT_NUMBER))))
+                }
+            }
+
+            // Validate second float if non-zero
+            if and(isValid, gt(mantissaB, 0)) {
+                if isLargeB {
+                    // Check if mantissa B has exactly 72 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaB, MIN_L_DIGIT_NUMBER)), iszero(gt(mantissaB, MAX_L_DIGIT_NUMBER))))
+                }
+                if iszero(isLargeB) {
+                    // Check if mantissa B has exactly 38 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaB, MIN_M_DIGIT_NUMBER)), iszero(gt(mantissaB, MAX_M_DIGIT_NUMBER))))
+                }
+            }
+
+            // Revert if validation fails
+            if iszero(isValid) {
+                let ptr := mload(0x40)
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                mstore(add(ptr, 0x04), 0x20)
+                mstore(add(ptr, 0x24), 23)
+                mstore(add(ptr, 0x44), "float128: invalid float")
+                revert(ptr, 0x64)
+            }
+        }
         if (packedFloat.unwrap(a) == packedFloat.unwrap(b)) return false;
         assembly {
             let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
@@ -958,8 +1237,54 @@ library Float128 {
      * @return retVal the result of a <= b
      */
     function le(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
-        validate(a);
-        validate(b);
+        assembly {
+            let mantissaA := and(a, MANTISSA_MASK)
+            let isLargeA := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
+            let mantissaB := and(b, MANTISSA_MASK)
+            let isLargeB := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
+
+            // Check both floats - if either is invalid, we'll revert
+            let isValid := 1
+
+            // Check for invalid zero representations
+            if or(and(iszero(a), gt(mantissaA, 0)), and(iszero(b), gt(mantissaB, 0))) {
+                isValid := 0
+            }
+
+            // Validate first float if non-zero
+            if and(isValid, gt(mantissaA, 0)) {
+                if isLargeA {
+                    // Check if mantissa A has exactly 72 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaA, MIN_L_DIGIT_NUMBER)), iszero(gt(mantissaA, MAX_L_DIGIT_NUMBER))))
+                }
+                if iszero(isLargeA) {
+                    // Check if mantissa A has exactly 38 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaA, MIN_M_DIGIT_NUMBER)), iszero(gt(mantissaA, MAX_M_DIGIT_NUMBER))))
+                }
+            }
+
+            // Validate second float if non-zero
+            if and(isValid, gt(mantissaB, 0)) {
+                if isLargeB {
+                    // Check if mantissa B has exactly 72 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaB, MIN_L_DIGIT_NUMBER)), iszero(gt(mantissaB, MAX_L_DIGIT_NUMBER))))
+                }
+                if iszero(isLargeB) {
+                    // Check if mantissa B has exactly 38 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaB, MIN_M_DIGIT_NUMBER)), iszero(gt(mantissaB, MAX_M_DIGIT_NUMBER))))
+                }
+            }
+
+            // Revert if validation fails
+            if iszero(isValid) {
+                let ptr := mload(0x40)
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                mstore(add(ptr, 0x04), 0x20)
+                mstore(add(ptr, 0x24), 23)
+                mstore(add(ptr, 0x44), "float128: invalid float")
+                revert(ptr, 0x64)
+            }
+        }
         if (packedFloat.unwrap(a) == packedFloat.unwrap(b)) return true;
         assembly {
             let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
@@ -1017,8 +1342,54 @@ library Float128 {
      * @return retVal the result of a > b
      */
     function gt(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
-        validate(a);
-        validate(b);
+        assembly {
+            let mantissaA := and(a, MANTISSA_MASK)
+            let isLargeA := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
+            let mantissaB := and(b, MANTISSA_MASK)
+            let isLargeB := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
+
+            // Check both floats - if either is invalid, we'll revert
+            let isValid := 1
+
+            // Check for invalid zero representations
+            if or(and(iszero(a), gt(mantissaA, 0)), and(iszero(b), gt(mantissaB, 0))) {
+                isValid := 0
+            }
+
+            // Validate first float if non-zero
+            if and(isValid, gt(mantissaA, 0)) {
+                if isLargeA {
+                    // Check if mantissa A has exactly 72 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaA, MIN_L_DIGIT_NUMBER)), iszero(gt(mantissaA, MAX_L_DIGIT_NUMBER))))
+                }
+                if iszero(isLargeA) {
+                    // Check if mantissa A has exactly 38 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaA, MIN_M_DIGIT_NUMBER)), iszero(gt(mantissaA, MAX_M_DIGIT_NUMBER))))
+                }
+            }
+
+            // Validate second float if non-zero
+            if and(isValid, gt(mantissaB, 0)) {
+                if isLargeB {
+                    // Check if mantissa B has exactly 72 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaB, MIN_L_DIGIT_NUMBER)), iszero(gt(mantissaB, MAX_L_DIGIT_NUMBER))))
+                }
+                if iszero(isLargeB) {
+                    // Check if mantissa B has exactly 38 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaB, MIN_M_DIGIT_NUMBER)), iszero(gt(mantissaB, MAX_M_DIGIT_NUMBER))))
+                }
+            }
+
+            // Revert if validation fails
+            if iszero(isValid) {
+                let ptr := mload(0x40)
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                mstore(add(ptr, 0x04), 0x20)
+                mstore(add(ptr, 0x24), 23)
+                mstore(add(ptr, 0x44), "float128: invalid float")
+                revert(ptr, 0x64)
+            }
+        }
         if (packedFloat.unwrap(a) == packedFloat.unwrap(b)) return false;
         assembly {
             let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
@@ -1076,8 +1447,54 @@ library Float128 {
      * @return retVal the result of a >= b
      */
     function ge(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
-        validate(a);
-        validate(b);
+        assembly {
+            let mantissaA := and(a, MANTISSA_MASK)
+            let isLargeA := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
+            let mantissaB := and(b, MANTISSA_MASK)
+            let isLargeB := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
+
+            // Check both floats - if either is invalid, we'll revert
+            let isValid := 1
+
+            // Check for invalid zero representations
+            if or(and(iszero(a), gt(mantissaA, 0)), and(iszero(b), gt(mantissaB, 0))) {
+                isValid := 0
+            }
+
+            // Validate first float if non-zero
+            if and(isValid, gt(mantissaA, 0)) {
+                if isLargeA {
+                    // Check if mantissa A has exactly 72 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaA, MIN_L_DIGIT_NUMBER)), iszero(gt(mantissaA, MAX_L_DIGIT_NUMBER))))
+                }
+                if iszero(isLargeA) {
+                    // Check if mantissa A has exactly 38 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaA, MIN_M_DIGIT_NUMBER)), iszero(gt(mantissaA, MAX_M_DIGIT_NUMBER))))
+                }
+            }
+
+            // Validate second float if non-zero
+            if and(isValid, gt(mantissaB, 0)) {
+                if isLargeB {
+                    // Check if mantissa B has exactly 72 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaB, MIN_L_DIGIT_NUMBER)), iszero(gt(mantissaB, MAX_L_DIGIT_NUMBER))))
+                }
+                if iszero(isLargeB) {
+                    // Check if mantissa B has exactly 38 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaB, MIN_M_DIGIT_NUMBER)), iszero(gt(mantissaB, MAX_M_DIGIT_NUMBER))))
+                }
+            }
+
+            // Revert if validation fails
+            if iszero(isValid) {
+                let ptr := mload(0x40)
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                mstore(add(ptr, 0x04), 0x20)
+                mstore(add(ptr, 0x24), 23)
+                mstore(add(ptr, 0x44), "float128: invalid float")
+                revert(ptr, 0x64)
+            }
+        }
         if (packedFloat.unwrap(a) == packedFloat.unwrap(b)) return true;
         assembly {
             let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
@@ -1135,6 +1552,54 @@ library Float128 {
      * @return retVal the result of a == b
      */
     function eq(packedFloat a, packedFloat b) internal pure returns (bool retVal) {
+        assembly {
+            let mantissaA := and(a, MANTISSA_MASK)
+            let isLargeA := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
+            let mantissaB := and(b, MANTISSA_MASK)
+            let isLargeB := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
+
+            // Check both floats - if either is invalid, we'll revert
+            let isValid := 1
+
+            // Check for invalid zero representations
+            if or(and(iszero(a), gt(mantissaA, 0)), and(iszero(b), gt(mantissaB, 0))) {
+                isValid := 0
+            }
+
+            // Validate first float if non-zero
+            if and(isValid, gt(mantissaA, 0)) {
+                if isLargeA {
+                    // Check if mantissa A has exactly 72 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaA, MIN_L_DIGIT_NUMBER)), iszero(gt(mantissaA, MAX_L_DIGIT_NUMBER))))
+                }
+                if iszero(isLargeA) {
+                    // Check if mantissa A has exactly 38 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaA, MIN_M_DIGIT_NUMBER)), iszero(gt(mantissaA, MAX_M_DIGIT_NUMBER))))
+                }
+            }
+
+            // Validate second float if non-zero
+            if and(isValid, gt(mantissaB, 0)) {
+                if isLargeB {
+                    // Check if mantissa B has exactly 72 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaB, MIN_L_DIGIT_NUMBER)), iszero(gt(mantissaB, MAX_L_DIGIT_NUMBER))))
+                }
+                if iszero(isLargeB) {
+                    // Check if mantissa B has exactly 38 digits
+                    isValid := and(isValid, and(iszero(lt(mantissaB, MIN_M_DIGIT_NUMBER)), iszero(gt(mantissaB, MAX_M_DIGIT_NUMBER))))
+                }
+            }
+
+            // Revert if validation fails
+            if iszero(isValid) {
+                let ptr := mload(0x40)
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                mstore(add(ptr, 0x04), 0x20)
+                mstore(add(ptr, 0x24), 23)
+                mstore(add(ptr, 0x44), "float128: invalid float")
+                revert(ptr, 0x64)
+            }
+        }
         retVal = packedFloat.unwrap(a) == packedFloat.unwrap(b);
         assembly {
             let aL := and(a, MANTISSA_L_FLAG_MASK)
@@ -1238,7 +1703,6 @@ library Float128 {
      * @return exponent the exponent of the floating-point number
      */
     function decode(packedFloat float) internal pure returns (int mantissa, int exponent) {
-        validate(float);
         assembly {
             // exponent
             let _exp := shr(EXPONENT_BIT, float)
@@ -1300,27 +1764,87 @@ library Float128 {
     /**
      * @dev Validates if a packedFloat has correct encoding
      * @param float The packedFloat to validate
-     * @return isValid True if the packedFloat is valid, false otherwise
      */
-    function validate(packedFloat float) internal pure returns (bool isValid) {
-        // Return true for zero values
-        if (packedFloat.unwrap(float) == 0) {
-            return true;
+    /*function validate(packedFloat float) internal pure {
+        assembly {
+            let mantissa := and(float, MANTISSA_MASK)
+            let isLarge := gt(and(float, MANTISSA_L_FLAG_MASK), 0)
+
+            // Check for invalid zero representations
+            // If the unwrapped value is zero, the mantissa must also be zero
+            if and(iszero(float), gt(mantissa, 0)) {
+                let ptr := mload(0x40)
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                mstore(add(ptr, 0x04), 0x20)
+                mstore(add(ptr, 0x24), 23)
+                mstore(add(ptr, 0x44), "float128: invalid float")
+                revert(ptr, 0x64)
+            }
+
+            // If the unwrapped value is not zero, proceed with normal validation
+            // Initialize default to invalid
+            let isValid := 0
+
+            // Check if mantissa has EXACTLY the required digits
+            if isLarge {
+                // Large mantissa must be EXACTLY 72 digits
+                // MIN_L_DIGIT_NUMBER <= mantissa <= MAX_L_DIGIT_NUMBER
+                isValid := and(iszero(lt(mantissa, MIN_L_DIGIT_NUMBER)), iszero(gt(mantissa, MAX_L_DIGIT_NUMBER)))
+
+                if iszero(isValid) {
+                    let ptr := mload(0x40)
+                    mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                    mstore(add(ptr, 0x04), 0x20)
+                    mstore(add(ptr, 0x24), 23)
+                    mstore(add(ptr, 0x44), "float128: invalid float")
+                    revert(ptr, 0x64)
+                }
+            }
+
+            if iszero(isLarge) {
+                // Medium mantissa must be EXACTLY 38 digits
+                // MIN_M_DIGIT_NUMBER <= mantissa <= MAX_M_DIGIT_NUMBER
+                isValid := and(iszero(lt(mantissa, MIN_M_DIGIT_NUMBER)), iszero(gt(mantissa, MAX_M_DIGIT_NUMBER)))
+
+                if iszero(isValid) {
+                    let ptr := mload(0x40)
+                    mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                    mstore(add(ptr, 0x04), 0x20)
+                    mstore(add(ptr, 0x24), 23)
+                    mstore(add(ptr, 0x44), "float128: invalid float")
+                    revert(ptr, 0x64)
+                }
+            }
         }
+    }
+    function validate(packedFloat float) internal pure {
+        if (packedFloat.unwrap(float) == 0) return;
 
         assembly {
             let mantissa := and(float, MANTISSA_MASK)
-            let exponent := shr(EXPONENT_BIT, and(float, EXPONENT_MASK))
             let isLarge := gt(and(float, MANTISSA_L_FLAG_MASK), 0)
+            let isValid := 0
 
-            // Check if mantissa is within valid range
+            // Calculate min/max values based on digit constants
+            let minMantissa := 0
+            let maxMantissa := 0
+
             if isLarge {
                 // For large mantissas (72 digits)
-                isValid := and(and(gt(mantissa, 0), iszero(gt(mantissa, MAX_L_DIGIT_NUMBER))), iszero(gt(mantissa, MAX_L_DIGIT_NUMBER)))
+                minMantissa := exp(BASE, sub(MAX_DIGITS_L, 1)) // 10^(72-1) = 10^71
+                maxMantissa := sub(exp(BASE, MAX_DIGITS_L), 1) // 10^72 - 1
+
+                // Check if mantissa has EXACTLY 72 digits
+                isValid := and(iszero(lt(mantissa, minMantissa)), iszero(gt(mantissa, maxMantissa)))
             }
+
             if iszero(isLarge) {
                 // For medium mantissas (38 digits)
-                isValid := and(and(gt(mantissa, 0), iszero(gt(mantissa, MAX_M_DIGIT_NUMBER))), iszero(gt(mantissa, MAX_M_DIGIT_NUMBER)))
+                minMantissa := exp(BASE, sub(MAX_DIGITS_M, 1)) // 10^(38-1) = 10^37
+                maxMantissa := sub(exp(BASE, MAX_DIGITS_M), 1) // 10^38 - 1
+
+                // Check if mantissa has EXACTLY 38 digits
+                isValid := and(iszero(lt(mantissa, minMantissa)), iszero(gt(mantissa, maxMantissa)))
             }
 
             // Revert if validation fails
@@ -1329,9 +1853,9 @@ library Float128 {
                 mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for Error(string)
                 mstore(add(ptr, 0x04), 0x20) // String offset
                 mstore(add(ptr, 0x24), 23) // Revert reason length
-                mstore(add(ptr, 0x44), "float128: invalid float")
+                mstore(add(ptr, 0x44), "float128: invalid float") // Match the error message from your test
                 revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
             }
         }
-    }
+    }*/
 }

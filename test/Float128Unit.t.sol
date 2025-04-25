@@ -85,4 +85,73 @@ contract Float128UnitTest is FloatUtils {
         assertEq(mantissaF, expectedResultMantissa);
         assertEq(exponentF, expectedResultExp);
     }
+
+    function test_add_Unit_ValidatePackedFloat() public {
+        // 39 digit mantissa
+        int mantissaA = int(Float128.MAX_M_DIGIT_NUMBER + 1);
+        int exponentA = -37;
+
+        // 38 digit mantissa
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Have to wrap instead of using toPackedFloat because toPackedFloat normalizes the mantissa
+        packedFloat a = packedFloat.wrap(uint(mantissaA));
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.add(a, b);
+
+        // Try with 73 digit mantissa
+        mantissaA = int(Float128.MAX_L_DIGIT_NUMBER + 1);
+        exponentA = -71;
+
+        a = packedFloat.wrap(uint(mantissaA));
+
+        vm.expectRevert("float128: invalid float");
+        Float128.add(a, b);
+    }
+
+    function test_sub_Unit_ValidatePackedFloat() public {
+        // 39 digit mantissa
+        int mantissaA = int(Float128.MAX_M_DIGIT_NUMBER + 1);
+        int exponentA = -37;
+
+        // 38 digit mantissa
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Have to wrap instead of using toPackedFloat because toPackedFloat normalizes the mantissa
+        packedFloat a = packedFloat.wrap(uint(mantissaA));
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.sub(a, b);
+
+        // Try with 73 digit mantissa
+        mantissaA = int(Float128.MAX_L_DIGIT_NUMBER + 1);
+        exponentA = -71;
+
+        a = packedFloat.wrap(uint(mantissaA));
+
+        vm.expectRevert("float128: invalid float");
+        Float128.sub(a, b);
+    }
+
+    function test_sub_Unit_ValidatePackedFloat_MedMantissa() public {
+        // 39 digit mantissa
+        int mantissaA = int(Float128.MAX_M_DIGIT_NUMBER + 1);
+        int exponentA = 0;
+
+        // 38 digit mantissa
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Have to wrap instead of using toPackedFloat because toPackedFloat normalizes the mantissa
+        packedFloat a = packedFloat.wrap(uint(mantissaA));
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.sub(a, b);
+    }
 }

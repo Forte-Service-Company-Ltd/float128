@@ -32,9 +32,9 @@
     },
     "mul": {
       "mulbyzero": {
-        "min": 171,
-        "avg": 171,
-        "max": 171
+        "min": 428,
+        "avg": 428,
+        "max": 428
       },
       "min": 628,
       "avg": 1025,
@@ -42,9 +42,9 @@
     },
     "div": {
       "numeratorzero": {
-        "min": 189,
-        "avg": 189,
-        "max": 189
+        "min": 452,
+        "avg": 452,
+        "max": 452
       },
       "min": 681,
       "avg": 1229,
@@ -52,9 +52,9 @@
     },
     "divL": {
       "numeratorzero": {
-        "min": 190,
-        "avg": 190,
-        "max": 190
+        "min": 453,
+        "avg": 453,
+        "max": 453
       },
       "min": 1245,
       "avg": 1288,
@@ -73,7 +73,7 @@
   },
   "Helpers": {
     "Log10": {
-      "min": 345,
+      "min": 322,
       "avg": 346,
       "max": 351
     },
