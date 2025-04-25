@@ -22,7 +22,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
     /*******************************************************/
     /********************  PACKED FLOAT ********************/
     /*******************************************************/
-    function test_gasUsedPacked_add() public {
+    function test_add_GasReport() public {
         vm.sleep(delay * 11);
         _primer();
         _resetGasUsed();
@@ -43,7 +43,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
         _writeJson(".Packed.add.", min, avg / runs, max);
     }
 
-    function test_gasUsedPacked_add_matching_exponents() public {
+    function test_add_matching_exponents_GasReport() public {
         vm.sleep(delay * 12);
         _primer();
         _resetGasUsed();
@@ -64,7 +64,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
         _writeJson(".Packed.add.matchingexponents.", min, avg / runs, max);
     }
 
-    function test_gasUsedPacked_add_sub() public {
+    function test_add_sub_GasReport() public {
         vm.sleep(delay * 13);
         _primer();
         _resetGasUsed();
@@ -100,7 +100,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
         _writeJson(".Packed.add.addsub.", min, avg / runs, max);
     }
 
-    function test_gasUsedPacked_sub() public {
+    function test_sub_GasReport() public {
         vm.sleep(delay * 14);
         _primer();
         _resetGasUsed();
@@ -121,7 +121,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
         _writeJson(".Packed.sub.", min, avg / runs, max);
     }
 
-    function test_gasUsedPacked_sub_matching_exponents() public {
+    function test_sub_matching_exponents_GasReport() public {
         vm.sleep(delay * 15);
         _primer();
         _resetGasUsed();
@@ -146,7 +146,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
         _writeJson(".Packed.sub.matchingexponents.", min, avg / runs, max);
     }
 
-    function test_gasUsedPacked_sub_add() public {
+    function test_sub_add_GasReport() public {
         vm.sleep(delay * 16);
         _primer();
         _resetGasUsed();
@@ -182,15 +182,15 @@ contract GasReport is Test, GasHelpers, FloatUtils {
         _writeJson(".Packed.sub.subadd.", min, avg / runs, max);
     }
 
-    function test_gasUsedPacked_mul() public {
+    function test_mul_GasReport() public {
         vm.sleep(delay * 17);
         _primer();
         _resetGasUsed();
 
         for (uint i = 0; i < runs; ++i) {
             (int aMan, int aExp, int bMan, int bExp) = setBounds(vm.randomInt(), vm.randomInt(), vm.randomInt(), vm.randomInt());
-            packedFloat a = Float128.toPackedFloat(aMan, aExp);
-            packedFloat b = Float128.toPackedFloat(bMan, bExp);
+            packedFloat a = Float128.toPackedFloat(aMan, aExp / 2);
+            packedFloat b = Float128.toPackedFloat(bMan, bExp / 2);
 
             startMeasuringGas("Packed - Mul");
             Float128.mul(a, b);
@@ -204,7 +204,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
         _writeJson(".Packed.mul.", min, avg / runs, max);
     }
 
-    function test_gasUsedPacked_mul_by_zero() public {
+    function test_mul_by_zero_GasReport() public {
         vm.sleep(delay * 18);
         _primer();
         _resetGasUsed();
@@ -227,7 +227,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
         _writeJson(".Packed.mul.mulbyzero.", min, avg / runs, max);
     }
 
-    function test_gasUsedPacked_div() public {
+    function test_div_GasReport() public {
         vm.sleep(delay * 19);
         _primer();
         _resetGasUsed();
@@ -238,8 +238,8 @@ contract GasReport is Test, GasHelpers, FloatUtils {
             if (bMan == 0) {
                 bMan = 1;
             }
-            packedFloat a = Float128.toPackedFloat(aMan, aExp);
-            packedFloat b = Float128.toPackedFloat(bMan, bExp);
+            packedFloat a = Float128.toPackedFloat(aMan, aExp / 2);
+            packedFloat b = Float128.toPackedFloat(bMan, bExp / 2);
 
             startMeasuringGas("Packed - Div");
             Float128.div(a, b);
@@ -253,7 +253,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
         _writeJson(".Packed.div.", min, avg / runs, max);
     }
 
-    function test_gasUsedPacked_divL() public {
+    function test_divL_GasReport() public {
         vm.sleep(delay * 20);
         _primer();
         _resetGasUsed();
@@ -264,8 +264,8 @@ contract GasReport is Test, GasHelpers, FloatUtils {
             if (bMan == 0) {
                 bMan = 1;
             }
-            packedFloat a = Float128.toPackedFloat(aMan, aExp);
-            packedFloat b = Float128.toPackedFloat(bMan, bExp);
+            packedFloat a = Float128.toPackedFloat(aMan, aExp / 2);
+            packedFloat b = Float128.toPackedFloat(bMan, bExp / 2);
 
             startMeasuringGas("Packed - Div");
             Float128.divL(a, b);
@@ -279,7 +279,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
         _writeJson(".Packed.divL.", min, avg / runs, max);
     }
 
-    function test_gasUsedPacked_div_numerator_zero() public {
+    function test_div_numerator_zero_GasReport() public {
         vm.sleep(delay * 21);
         _primer();
         _resetGasUsed();
@@ -288,7 +288,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
 
         for (uint i = 0; i < runs; ++i) {
             (, , int bMan, int bExp) = setBounds(vm.randomInt(), vm.randomInt(), vm.randomInt(), vm.randomInt());
-            packedFloat b = Float128.toPackedFloat(bMan, bExp);
+            packedFloat b = Float128.toPackedFloat(bMan, bExp / 2);
 
             startMeasuringGas("Packed - Div - Numerator Zero");
             Float128.div(a, b);
@@ -302,7 +302,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
         _writeJson(".Packed.div.numeratorzero.", min, avg / runs, max);
     }
 
-    function test_gasUsedPacked_divL_numerator_zero() public {
+    function test_divL_numerator_zero_GasReport() public {
         vm.sleep(delay * 22);
         _primer();
         _resetGasUsed();
@@ -311,7 +311,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
 
         for (uint i = 0; i < runs; ++i) {
             (, , int bMan, int bExp) = setBounds(vm.randomInt(), vm.randomInt(), vm.randomInt(), vm.randomInt());
-            packedFloat b = Float128.toPackedFloat(bMan, bExp);
+            packedFloat b = Float128.toPackedFloat(bMan, bExp / 2);
 
             startMeasuringGas("Packed - Div - Numerator Zero");
             Float128.divL(a, b);
@@ -325,7 +325,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
         _writeJson(".Packed.divL.numeratorzero.", min, avg / runs, max);
     }
 
-    function test_gasUsedPacked_sqrt() public {
+    function test_sqrt_GasReport() public {
         vm.sleep(delay * 23);
         _primer();
         _resetGasUsed();
@@ -351,7 +351,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
         _writeJson(".Packed.sqrt.", min, avg / runs, max);
     }
 
-    function test_gasUsedPacked_ln() public {
+    function test_ln_GasReport() public {
         vm.sleep(delay * 24);
         _primer();
         _resetGasUsed();

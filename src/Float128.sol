@@ -67,15 +67,40 @@ library Float128 {
             let bL := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
             isSubtraction := xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK))
             // we extract the exponent and mantissas for both
-            let aExp := and(a, EXPONENT_MASK)
-            let bExp := and(b, EXPONENT_MASK)
+            let aExp := shr(EXPONENT_BIT, a)
+            let bExp := shr(EXPONENT_BIT, b)
             let aMan := and(a, MANTISSA_MASK)
             let bMan := and(b, MANTISSA_MASK)
+            // we check exponents cannot maliciously underflow while expanding, or underflow on a similar result
+            if or(lt(aExp, MAX_DIGITS_M_X_2), lt(bExp, MAX_DIGITS_M_X_2)) {
+                let ptr := mload(0x40) // Get free memory pointer
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                mstore(add(ptr, 0x04), 0x20) // String offset
+                mstore(add(ptr, 0x24), 19) // Revert reason length
+                mstore(add(ptr, 0x44), "float128: underflow")
+                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+            }
+            // we check that the result of an addition won't overflow while normalizing
+            if and(
+                iszero(isSubtraction),
+                or(
+                    and(or(gt(aExp, bExp), eq(aExp, bExp)), gt(aExp, sub(shl(1, ZERO_OFFSET), MAX_DIGITS_M_X_2))),
+                    and(gt(bExp, aExp), gt(bExp, sub(shl(1, ZERO_OFFSET), MAX_DIGITS_M_X_2)))
+                )
+            ) {
+                let ptr := mload(0x40) // Get free memory pointer
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                mstore(add(ptr, 0x04), 0x20) // String offset
+                mstore(add(ptr, 0x24), 18) // Revert reason length
+                mstore(add(ptr, 0x44), "float128: overflow")
+                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+            }
+
             if iszero(or(aL, bL)) {
                 // we add 38 digits of precision in the case of subtraction
                 if gt(aExp, bExp) {
-                    r := sub(aExp, shl(EXPONENT_BIT, MAX_DIGITS_M))
-                    let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, bExp))
+                    r := shl(EXPONENT_BIT, sub(aExp, MAX_DIGITS_M))
+                    let adj := sub(shr(EXPONENT_BIT, r), bExp)
                     let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
                     if neg {
                         bMan := mul(bMan, exp(BASE, sub(0, adj)))
@@ -87,8 +112,8 @@ library Float128 {
                     }
                 }
                 if gt(bExp, aExp) {
-                    r := sub(bExp, shl(EXPONENT_BIT, MAX_DIGITS_M))
-                    let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, aExp))
+                    r := shl(EXPONENT_BIT, sub(bExp, MAX_DIGITS_M))
+                    let adj := sub(shr(EXPONENT_BIT, r), aExp)
                     let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
                     if neg {
                         aMan := mul(aMan, exp(BASE, sub(0, adj)))
@@ -103,7 +128,7 @@ library Float128 {
                 if eq(aExp, bExp) {
                     aMan := mul(aMan, BASE_TO_THE_MAX_DIGITS_M)
                     bMan := mul(bMan, BASE_TO_THE_MAX_DIGITS_M)
-                    r := sub(aExp, shl(EXPONENT_BIT, MAX_DIGITS_M))
+                    r := shl(EXPONENT_BIT, sub(aExp, MAX_DIGITS_M))
                     sameExponent := 1
                 }
             }
@@ -111,16 +136,16 @@ library Float128 {
                 // we make sure both of them are size L before continuing
                 if iszero(aL) {
                     aMan := mul(aMan, BASE_TO_THE_DIGIT_DIFF)
-                    aExp := sub(aExp, shl(EXPONENT_BIT, DIGIT_DIFF_L_M))
+                    aExp := sub(aExp, DIGIT_DIFF_L_M)
                 }
                 if iszero(bL) {
                     bMan := mul(bMan, BASE_TO_THE_DIGIT_DIFF)
-                    bExp := sub(bExp, shl(EXPONENT_BIT, DIGIT_DIFF_L_M))
+                    bExp := sub(bExp, DIGIT_DIFF_L_M)
                 }
                 // we adjust the significant digits and set the exponent of the result
                 if gt(aExp, bExp) {
-                    r := sub(aExp, shl(EXPONENT_BIT, DIGIT_DIFF_76_L))
-                    let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, bExp))
+                    r := shl(EXPONENT_BIT, sub(aExp, DIGIT_DIFF_76_L))
+                    let adj := sub(shr(EXPONENT_BIT, r), bExp)
                     let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
                     if neg {
                         bMan := mul(bMan, exp(BASE, sub(0, adj)))
@@ -132,8 +157,8 @@ library Float128 {
                     }
                 }
                 if gt(bExp, aExp) {
-                    r := sub(bExp, shl(EXPONENT_BIT, DIGIT_DIFF_76_L))
-                    let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, aExp))
+                    r := shl(EXPONENT_BIT, sub(bExp, DIGIT_DIFF_76_L))
+                    let adj := sub(shr(EXPONENT_BIT, r), aExp)
                     let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
                     if neg {
                         aMan := mul(aMan, exp(BASE, sub(0, adj)))
@@ -148,7 +173,7 @@ library Float128 {
                 if eq(aExp, bExp) {
                     aMan := mul(aMan, BASE_TO_THE_DIFF_76_L)
                     bMan := mul(bMan, BASE_TO_THE_DIFF_76_L)
-                    r := sub(aExp, shl(EXPONENT_BIT, DIGIT_DIFF_76_L))
+                    r := shl(EXPONENT_BIT, sub(aExp, DIGIT_DIFF_76_L))
                     sameExponent := 1
                 }
             }
@@ -209,7 +234,7 @@ library Float128 {
                 // or + 1 digits due to an "overflow"
                 assembly {
                     let isGreaterThan76Digits := gt(addition, MAX_76_DIGIT_NUMBER)
-                    let maxExp := sub(sub(sub(add(ZERO_OFFSET, MAXIMUM_EXPONENT), DIGIT_DIFF_L_M), DIGIT_DIFF_76_L), isGreaterThan76Digits)
+                    let maxExp := sub(sub(add(ZERO_OFFSET, MAXIMUM_EXPONENT), MAX_DIGITS_M), isGreaterThan76Digits)
                     let _isM := or(eq(rExp, maxExp), lt(rExp, maxExp))
                     if _isM {
                         addition := div(addition, BASE_TO_THE_MAX_DIGITS_M)
@@ -257,15 +282,39 @@ library Float128 {
             let bL := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
             isSubtraction := eq(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK))
             // we extract the exponent and mantissas for both
-            let aExp := and(a, EXPONENT_MASK)
-            let bExp := and(b, EXPONENT_MASK)
+            let aExp := shr(EXPONENT_BIT, a)
+            let bExp := shr(EXPONENT_BIT, b)
             let aMan := and(a, MANTISSA_MASK)
             let bMan := and(b, MANTISSA_MASK)
+            if or(lt(aExp, MAX_DIGITS_M_X_2), lt(bExp, MAX_DIGITS_M_X_2)) {
+                let ptr := mload(0x40) // Get free memory pointer
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                mstore(add(ptr, 0x04), 0x20) // String offset
+                mstore(add(ptr, 0x24), 19) // Revert reason length
+                mstore(add(ptr, 0x44), "float128: underflow")
+                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+            }
+            // we check that the result of an addition won't overflow while normalizing
+            if and(
+                iszero(isSubtraction),
+                or(
+                    and(or(gt(aExp, bExp), eq(aExp, bExp)), gt(aExp, sub(shl(1, ZERO_OFFSET), MAX_DIGITS_M_X_2))),
+                    and(gt(bExp, aExp), gt(bExp, sub(shl(1, ZERO_OFFSET), MAX_DIGITS_M_X_2)))
+                )
+            ) {
+                let ptr := mload(0x40) // Get free memory pointer
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                mstore(add(ptr, 0x04), 0x20) // String offset
+                mstore(add(ptr, 0x24), 18) // Revert reason length
+                mstore(add(ptr, 0x44), "float128: overflow")
+                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+            }
+
             if iszero(or(aL, bL)) {
                 // we add 38 digits of precision in the case of subtraction
                 if gt(aExp, bExp) {
-                    r := sub(aExp, shl(EXPONENT_BIT, MAX_DIGITS_M))
-                    let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, bExp))
+                    r := shl(EXPONENT_BIT, sub(aExp, MAX_DIGITS_M))
+                    let adj := sub(shr(EXPONENT_BIT, r), bExp)
                     let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
                     if neg {
                         bMan := mul(bMan, exp(BASE, sub(0, adj)))
@@ -277,8 +326,8 @@ library Float128 {
                     }
                 }
                 if gt(bExp, aExp) {
-                    r := sub(bExp, shl(EXPONENT_BIT, MAX_DIGITS_M))
-                    let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, aExp))
+                    r := shl(EXPONENT_BIT, sub(bExp, MAX_DIGITS_M))
+                    let adj := sub(shr(EXPONENT_BIT, r), aExp)
                     let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
                     if neg {
                         aMan := mul(aMan, exp(BASE, sub(0, adj)))
@@ -293,7 +342,7 @@ library Float128 {
                 if eq(aExp, bExp) {
                     aMan := mul(aMan, BASE_TO_THE_MAX_DIGITS_M)
                     bMan := mul(bMan, BASE_TO_THE_MAX_DIGITS_M)
-                    r := sub(aExp, shl(EXPONENT_BIT, MAX_DIGITS_M))
+                    r := shl(EXPONENT_BIT, sub(aExp, MAX_DIGITS_M))
                     sameExponent := 1
                 }
             }
@@ -301,16 +350,16 @@ library Float128 {
                 // we make sure both of them are size L before continuing
                 if iszero(aL) {
                     aMan := mul(aMan, BASE_TO_THE_DIGIT_DIFF)
-                    aExp := sub(aExp, shl(EXPONENT_BIT, DIGIT_DIFF_L_M))
+                    aExp := sub(aExp, DIGIT_DIFF_L_M)
                 }
                 if iszero(bL) {
                     bMan := mul(bMan, BASE_TO_THE_DIGIT_DIFF)
-                    bExp := sub(bExp, shl(EXPONENT_BIT, DIGIT_DIFF_L_M))
+                    bExp := sub(bExp, DIGIT_DIFF_L_M)
                 }
                 // we adjust the significant digits and set the exponent of the result
                 if gt(aExp, bExp) {
-                    r := sub(aExp, shl(EXPONENT_BIT, DIGIT_DIFF_76_L))
-                    let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, bExp))
+                    r := shl(EXPONENT_BIT, sub(aExp, DIGIT_DIFF_76_L))
+                    let adj := sub(shr(EXPONENT_BIT, r), bExp)
                     let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
                     if neg {
                         bMan := mul(bMan, exp(BASE, sub(0, adj)))
@@ -322,8 +371,8 @@ library Float128 {
                     }
                 }
                 if gt(bExp, aExp) {
-                    r := sub(bExp, shl(EXPONENT_BIT, DIGIT_DIFF_76_L))
-                    let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, aExp))
+                    r := shl(EXPONENT_BIT, sub(bExp, DIGIT_DIFF_76_L))
+                    let adj := sub(shr(EXPONENT_BIT, r), aExp)
                     let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
                     if neg {
                         aMan := mul(aMan, exp(BASE, sub(0, adj)))
@@ -338,7 +387,7 @@ library Float128 {
                 if eq(aExp, bExp) {
                     aMan := mul(aMan, BASE_TO_THE_DIFF_76_L)
                     bMan := mul(bMan, BASE_TO_THE_DIFF_76_L)
-                    r := sub(aExp, shl(EXPONENT_BIT, DIGIT_DIFF_76_L))
+                    r := shl(EXPONENT_BIT, sub(aExp, DIGIT_DIFF_76_L))
                     sameExponent := 1
                 }
             }
@@ -440,29 +489,46 @@ library Float128 {
             let bL := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
             Loperation := or(aL, bL)
             // we extract the exponent and mantissas for both
-            let aExp := and(a, EXPONENT_MASK)
-            let bExp := and(b, EXPONENT_MASK)
+            let aExp := shr(EXPONENT_BIT, a)
+            let bExp := shr(EXPONENT_BIT, b)
             let aMan := and(a, MANTISSA_MASK)
             let bMan := and(b, MANTISSA_MASK)
-
+            // underflow can happen due to malicious encoding, or product of very negative exponents
+            if or(or(lt(aExp, MAX_DIGITS_M_X_2), lt(bExp, MAX_DIGITS_M_X_2)), lt(add(aExp, bExp), add(ZERO_OFFSET, MAX_DIGITS_M_X_2))) {
+                let ptr := mload(0x40) // Get free memory pointer
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                mstore(add(ptr, 0x04), 0x20) // String offset
+                mstore(add(ptr, 0x24), 19) // Revert reason length
+                mstore(add(ptr, 0x44), "float128: underflow")
+                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+            }
+            // overflow can happen if exponents can go over 2*ZERO_OFFSET - 1: aExp - Z + bExp - Z > Z - 1 --> aExp + bExp > 3Z - 1
+            if gt(add(aExp, bExp), sub(mul(3, ZERO_OFFSET), MAX_DIGITS_M_X_2)) {
+                let ptr := mload(0x40) // Get free memory pointer
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                mstore(add(ptr, 0x04), 0x20) // String offset
+                mstore(add(ptr, 0x24), 18) // Revert reason length
+                mstore(add(ptr, 0x44), "float128: overflow")
+                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+            }
             if Loperation {
                 // we make sure both of them are size L before continuing
                 if iszero(aL) {
                     aMan := mul(aMan, BASE_TO_THE_DIGIT_DIFF)
-                    aExp := sub(aExp, shl(EXPONENT_BIT, DIGIT_DIFF_L_M))
+                    aExp := sub(aExp, DIGIT_DIFF_L_M)
                 }
                 if iszero(bL) {
                     bMan := mul(bMan, BASE_TO_THE_DIGIT_DIFF)
-                    bExp := sub(bExp, shl(EXPONENT_BIT, DIGIT_DIFF_L_M))
+                    bExp := sub(bExp, DIGIT_DIFF_L_M)
                 }
-                rExp := sub(add(shr(EXPONENT_BIT, aExp), shr(EXPONENT_BIT, bExp)), ZERO_OFFSET)
+                rExp := sub(add(aExp, bExp), ZERO_OFFSET)
                 let mm := mulmod(aMan, bMan, not(0))
                 r0 := mul(aMan, bMan)
                 r1 := sub(sub(mm, r0), lt(mm, r0))
             }
             if iszero(Loperation) {
                 rMan := mul(aMan, bMan)
-                rExp := sub(add(shr(EXPONENT_BIT, aExp), shr(EXPONENT_BIT, bExp)), ZERO_OFFSET)
+                rExp := sub(add(aExp, bExp), ZERO_OFFSET)
             }
         }
         if (Loperation) {
@@ -580,10 +646,30 @@ library Float128 {
             let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
             let bL := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
             // if a is zero then the result will be zero
+            aExp := shr(EXPONENT_BIT, a)
+            bExp := shr(EXPONENT_BIT, b)
             aMan := and(a, MANTISSA_MASK)
-            aExp := shr(EXPONENT_BIT, and(a, EXPONENT_MASK))
             bMan := and(b, MANTISSA_MASK)
-            bExp := shr(EXPONENT_BIT, and(b, EXPONENT_MASK))
+            // underflow can happen due to malicious encoding, or division of a very negative exponent by a very positive exponent
+            // large-mantissa operations makes it riskier for division to underflow. A skewed lower bound of 2 * MAX_DIGITS_M_X_2 is necessary
+            if or(or(lt(aExp, MAX_DIGITS_M_X_2), lt(bExp, MAX_DIGITS_M_X_2)), slt(sub(aExp, bExp), sub(shl(1, MAX_DIGITS_M_X_2), ZERO_OFFSET))) {
+                let ptr := mload(0x40) // Get free memory pointer
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                mstore(add(ptr, 0x04), 0x20) // String offset
+                mstore(add(ptr, 0x24), 19) // Revert reason length
+                mstore(add(ptr, 0x44), "float128: underflow")
+                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+            }
+            // overflow can happen if exponents can get to at least ZERO_OFFSET: aExp - Z - bExp + Z >= Z --> aExp - bExp >= Z
+            // we add the protection buffer of MAX_DIGITS_M_X_2
+            if sgt(sub(aExp, bExp), sub(ZERO_OFFSET, MAX_DIGITS_M_X_2)) {
+                let ptr := mload(0x40) // Get free memory pointer
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                mstore(add(ptr, 0x04), 0x20) // String offset
+                mstore(add(ptr, 0x24), 18) // Revert reason length
+                mstore(add(ptr, 0x44), "float128: overflow")
+                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+            }
             Loperation := or(
                 or(rL, or(aL, bL)),
                 // we add 1 to the calculation because division could result in an extra digit which will increase
@@ -683,7 +769,7 @@ library Float128 {
             }
             aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
             aMan := and(a, MANTISSA_MASK)
-            aExp := shr(EXPONENT_BIT, and(a, EXPONENT_MASK))
+            aExp := shr(EXPONENT_BIT, a)
         }
 
         if ((aL && aExp > int(ZERO_OFFSET) - int(DIGIT_DIFF_L_M - 1)) || (!aL && aExp > int(ZERO_OFFSET) - int(MAX_DIGITS_M / 2 - 1))) {
@@ -1070,6 +1156,15 @@ library Float128 {
         // we start by extracting the sign of the mantissa
         if (mantissa != 0) {
             assembly {
+                // we make sure the number can't underflow during normalization
+                if slt(exponent, sub(MAX_DIGITS_M_X_2, ZERO_OFFSET)) {
+                    let ptr := mload(0x40) // Get free memory pointer
+                    mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                    mstore(add(ptr, 0x04), 0x20) // String offset
+                    mstore(add(ptr, 0x24), 19) // Revert reason length
+                    mstore(add(ptr, 0x44), "float128: underflow")
+                    revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+                }
                 if and(mantissa, TWO_COMPLEMENT_SIGN_MASK) {
                     float := MANTISSA_SIGN_MASK
                     mantissa := sub(0, mantissa)
@@ -1079,13 +1174,18 @@ library Float128 {
             if (!((mantissa <= int(MAX_M_DIGIT_NUMBER) && mantissa >= int(MIN_M_DIGIT_NUMBER)) || (mantissa <= int(MAX_L_DIGIT_NUMBER) && mantissa >= int(MIN_L_DIGIT_NUMBER)))) {
                 digitsMantissa = findNumberOfDigits(uint(mantissa));
                 assembly {
+                    // we check how far the amount of digits is from the M-man digits
                     mantissaMultiplier := sub(digitsMantissa, MAX_DIGITS_M)
+                    // we check the resulting exponent to see if we normalize to L-man or M-man format
                     let isResultL := slt(MAXIMUM_EXPONENT, add(exponent, mantissaMultiplier))
+                    // if the result will be a L-man size, we adjust the multiplier accordingly
                     if isResultL {
                         mantissaMultiplier := sub(mantissaMultiplier, DIGIT_DIFF_L_M)
                         float := or(float, MANTISSA_L_FLAG_MASK)
                     }
+                    // we now adjust the exponent
                     exponent := add(exponent, mantissaMultiplier)
+                    // we divide (truncate) or multiply (expand) the mantissa depending on the sign of the multiplier
                     let negativeMultiplier := and(TWO_COMPLEMENT_SIGN_MASK, mantissaMultiplier)
                     if negativeMultiplier {
                         mantissa := mul(mantissa, exp(BASE, sub(0, mantissaMultiplier)))
@@ -1095,12 +1195,14 @@ library Float128 {
                     }
                 }
             } else if ((mantissa <= int(MAX_M_DIGIT_NUMBER) && mantissa >= int(MIN_M_DIGIT_NUMBER)) && exponent > MAXIMUM_EXPONENT) {
+                // we still check if the prenormalized number has an exponent bigger than MAXIMUM_EXPONENT in which case we use L-man format
                 assembly {
                     mantissa := mul(mantissa, BASE_TO_THE_DIGIT_DIFF)
                     exponent := sub(exponent, DIGIT_DIFF_L_M)
                     float := add(float, MANTISSA_L_FLAG_MASK)
                 }
             } else if ((mantissa <= int(MAX_L_DIGIT_NUMBER) && mantissa >= int(MIN_L_DIGIT_NUMBER))) {
+                // if the prenormalized number has a a L-man size we make sure to add the L fLag
                 assembly {
                     float := add(float, MANTISSA_L_FLAG_MASK)
                 }
