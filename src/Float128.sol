@@ -943,6 +943,7 @@ library Float128 {
      * @return r the result of √a
      */
     function sqrt(packedFloat a) internal pure returns (packedFloat r) {
+        if (packedFloat.unwrap(a) == 0) return a;
         assembly {
             let mantissa := and(a, MANTISSA_MASK)
             let isLarge := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
@@ -999,7 +1000,6 @@ library Float128 {
         uint aMan;
         uint256 roundedDownResult;
         bool aL;
-        if (packedFloat.unwrap(a) == 0) return a;
         assembly {
             if and(a, MANTISSA_SIGN_MASK) {
                 let ptr := mload(0x40) // Get free memory pointer
@@ -1760,102 +1760,4 @@ library Float128 {
             }
         }
     }
-
-    /**
-     * @dev Validates if a packedFloat has correct encoding
-     * @param float The packedFloat to validate
-     */
-    /*function validate(packedFloat float) internal pure {
-        assembly {
-            let mantissa := and(float, MANTISSA_MASK)
-            let isLarge := gt(and(float, MANTISSA_L_FLAG_MASK), 0)
-
-            // Check for invalid zero representations
-            // If the unwrapped value is zero, the mantissa must also be zero
-            if and(iszero(float), gt(mantissa, 0)) {
-                let ptr := mload(0x40)
-                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
-                mstore(add(ptr, 0x04), 0x20)
-                mstore(add(ptr, 0x24), 23)
-                mstore(add(ptr, 0x44), "float128: invalid float")
-                revert(ptr, 0x64)
-            }
-
-            // If the unwrapped value is not zero, proceed with normal validation
-            // Initialize default to invalid
-            let isValid := 0
-
-            // Check if mantissa has EXACTLY the required digits
-            if isLarge {
-                // Large mantissa must be EXACTLY 72 digits
-                // MIN_L_DIGIT_NUMBER <= mantissa <= MAX_L_DIGIT_NUMBER
-                isValid := and(iszero(lt(mantissa, MIN_L_DIGIT_NUMBER)), iszero(gt(mantissa, MAX_L_DIGIT_NUMBER)))
-
-                if iszero(isValid) {
-                    let ptr := mload(0x40)
-                    mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
-                    mstore(add(ptr, 0x04), 0x20)
-                    mstore(add(ptr, 0x24), 23)
-                    mstore(add(ptr, 0x44), "float128: invalid float")
-                    revert(ptr, 0x64)
-                }
-            }
-
-            if iszero(isLarge) {
-                // Medium mantissa must be EXACTLY 38 digits
-                // MIN_M_DIGIT_NUMBER <= mantissa <= MAX_M_DIGIT_NUMBER
-                isValid := and(iszero(lt(mantissa, MIN_M_DIGIT_NUMBER)), iszero(gt(mantissa, MAX_M_DIGIT_NUMBER)))
-
-                if iszero(isValid) {
-                    let ptr := mload(0x40)
-                    mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
-                    mstore(add(ptr, 0x04), 0x20)
-                    mstore(add(ptr, 0x24), 23)
-                    mstore(add(ptr, 0x44), "float128: invalid float")
-                    revert(ptr, 0x64)
-                }
-            }
-        }
-    }
-    function validate(packedFloat float) internal pure {
-        if (packedFloat.unwrap(float) == 0) return;
-
-        assembly {
-            let mantissa := and(float, MANTISSA_MASK)
-            let isLarge := gt(and(float, MANTISSA_L_FLAG_MASK), 0)
-            let isValid := 0
-
-            // Calculate min/max values based on digit constants
-            let minMantissa := 0
-            let maxMantissa := 0
-
-            if isLarge {
-                // For large mantissas (72 digits)
-                minMantissa := exp(BASE, sub(MAX_DIGITS_L, 1)) // 10^(72-1) = 10^71
-                maxMantissa := sub(exp(BASE, MAX_DIGITS_L), 1) // 10^72 - 1
-
-                // Check if mantissa has EXACTLY 72 digits
-                isValid := and(iszero(lt(mantissa, minMantissa)), iszero(gt(mantissa, maxMantissa)))
-            }
-
-            if iszero(isLarge) {
-                // For medium mantissas (38 digits)
-                minMantissa := exp(BASE, sub(MAX_DIGITS_M, 1)) // 10^(38-1) = 10^37
-                maxMantissa := sub(exp(BASE, MAX_DIGITS_M), 1) // 10^38 - 1
-
-                // Check if mantissa has EXACTLY 38 digits
-                isValid := and(iszero(lt(mantissa, minMantissa)), iszero(gt(mantissa, maxMantissa)))
-            }
-
-            // Revert if validation fails
-            if iszero(isValid) {
-                let ptr := mload(0x40) // Get free memory pointer
-                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for Error(string)
-                mstore(add(ptr, 0x04), 0x20) // String offset
-                mstore(add(ptr, 0x24), 23) // Revert reason length
-                mstore(add(ptr, 0x44), "float128: invalid float") // Match the error message from your test
-                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
-            }
-        }
-    }*/
 }

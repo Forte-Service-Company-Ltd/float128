@@ -2,33 +2,33 @@
   "Packed": {
     "add": {
       "matchingexponents": {
-        "min": 869,
-        "avg": 1183,
-        "max": 1575
+        "min": 1192,
+        "avg": 1522,
+        "max": 1898
       },
       "addsub": {
-        "min": 1423,
-        "avg": 1594,
-        "max": 1642
+        "min": 1728,
+        "avg": 1919,
+        "max": 1965
       },
-      "min": 999,
-      "avg": 1347,
-      "max": 1643
+      "min": 1322,
+      "avg": 1666,
+      "max": 1966
     },
     "sub": {
       "matchingexponents": {
-        "min": 866,
-        "avg": 1146,
-        "max": 1510
+        "min": 1189,
+        "avg": 1473,
+        "max": 1833
       },
       "subadd": {
-        "min": 866,
-        "avg": 1080,
-        "max": 1107
+        "min": 1319,
+        "avg": 1403,
+        "max": 1430
       },
-      "min": 996,
-      "avg": 1339,
-      "max": 1640
+      "min": 1319,
+      "avg": 1663,
+      "max": 1963
     },
     "mul": {
       "mulbyzero": {
@@ -36,9 +36,9 @@
         "avg": 428,
         "max": 428
       },
-      "min": 628,
-      "avg": 1025,
-      "max": 1195
+      "min": 955,
+      "avg": 1370,
+      "max": 1522
     },
     "div": {
       "numeratorzero": {
@@ -46,9 +46,9 @@
         "avg": 452,
         "max": 452
       },
-      "min": 681,
-      "avg": 1229,
-      "max": 1334
+      "min": 1010,
+      "avg": 1552,
+      "max": 1663
     },
     "divL": {
       "numeratorzero": {
@@ -56,19 +56,19 @@
         "avg": 453,
         "max": 453
       },
-      "min": 1245,
-      "avg": 1288,
-      "max": 1335
+      "min": 1574,
+      "avg": 1620,
+      "max": 1664
     },
     "sqrt": {
-      "min": 1295,
-      "avg": 2178,
-      "max": 3104
+      "min": 1442,
+      "avg": 2292,
+      "max": 3251
     },
     "ln": {
-      "min": 53639,
-      "avg": 63950,
-      "max": 70301
+      "min": 70532,
+      "avg": 81945,
+      "max": 88531
     }
   },
   "Helpers": {

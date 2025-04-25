@@ -86,72 +86,1015 @@ contract Float128UnitTest is FloatUtils {
         assertEq(exponentF, expectedResultExp);
     }
 
-    function test_add_Unit_ValidatePackedFloat() public {
-        // 39 digit mantissa
-        int mantissaA = int(Float128.MAX_M_DIGIT_NUMBER + 1);
-        int exponentA = -37;
-
-        // 38 digit mantissa
+    function test_add_Unit_ValidatePackedFloat_InvalidA_MedMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
         int mantissaB = 10000000000000000000000000000000000000;
         int exponentB = -37;
 
-        // Have to wrap instead of using toPackedFloat because toPackedFloat normalizes the mantissa
-        packedFloat a = packedFloat.wrap(uint(mantissaA));
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(false);
         packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
-
-        vm.expectRevert("float128: invalid float");
-        Float128.add(a, b);
-
-        // Try with 73 digit mantissa
-        mantissaA = int(Float128.MAX_L_DIGIT_NUMBER + 1);
-        exponentA = -71;
-
-        a = packedFloat.wrap(uint(mantissaA));
 
         vm.expectRevert("float128: invalid float");
         Float128.add(a, b);
     }
 
-    function test_sub_Unit_ValidatePackedFloat() public {
-        // 39 digit mantissa
-        int mantissaA = int(Float128.MAX_M_DIGIT_NUMBER + 1);
-        int exponentA = -37;
-
-        // 38 digit mantissa
+    function test_add_Unit_ValidatePackedFloat_InvalidB_MedMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
         int mantissaB = 10000000000000000000000000000000000000;
         int exponentB = -37;
 
-        // Have to wrap instead of using toPackedFloat because toPackedFloat normalizes the mantissa
-        packedFloat a = packedFloat.wrap(uint(mantissaA));
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(false);
         packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
 
         vm.expectRevert("float128: invalid float");
-        Float128.sub(a, b);
+        Float128.add(b, a);
+    }
 
-        // Try with 73 digit mantissa
-        mantissaA = int(Float128.MAX_L_DIGIT_NUMBER + 1);
-        exponentA = -71;
+    function test_add_Unit_ValidatePackedFloat_InvalidA_MedMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
 
-        a = packedFloat.wrap(uint(mantissaA));
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.add(a, b);
+    }
+
+    function test_add_Unit_ValidatePackedFloat_InvalidB_MedMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.add(b, a);
+    }
+
+    function test_add_Unit_ValidatePackedFloat_InvalidA_LMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.add(a, b);
+    }
+
+    function test_add_Unit_ValidatePackedFloat_InvalidB_LMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.add(b, a);
+    }
+
+    function test_add_Unit_ValidatePackedFloat_InvalidA_LMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.add(a, b);
+    }
+
+    function test_add_Unit_ValidatePackedFloat_InvalidB_LMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.add(b, a);
+    }
+
+    function test_sub_Unit_ValidatePackedFloat_InvalidA_MedMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
 
         vm.expectRevert("float128: invalid float");
         Float128.sub(a, b);
     }
 
-    function test_sub_Unit_ValidatePackedFloat_MedMantissa() public {
-        // 39 digit mantissa
-        int mantissaA = int(Float128.MAX_M_DIGIT_NUMBER + 1);
-        int exponentA = 0;
-
-        // 38 digit mantissa
+    function test_sub_Unit_ValidatePackedFloat_InvalidB_MedMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
         int mantissaB = 10000000000000000000000000000000000000;
         int exponentB = -37;
 
-        // Have to wrap instead of using toPackedFloat because toPackedFloat normalizes the mantissa
-        packedFloat a = packedFloat.wrap(uint(mantissaA));
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.sub(b, a);
+    }
+
+    function test_sub_Unit_ValidatePackedFloat_InvalidA_MedMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(false);
         packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
 
         vm.expectRevert("float128: invalid float");
         Float128.sub(a, b);
+    }
+
+    function test_sub_Unit_ValidatePackedFloat_InvalidB_MedMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.sub(b, a);
+    }
+
+    function test_sub_Unit_ValidatePackedFloat_InvalidA_LMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.sub(a, b);
+    }
+
+    function test_sub_Unit_ValidatePackedFloat_InvalidB_LMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.sub(b, a);
+    }
+
+    function test_sub_Unit_ValidatePackedFloat_InvalidA_LMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.sub(a, b);
+    }
+
+    function test_sub_Unit_ValidatePackedFloat_InvalidB_LMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.sub(b, a);
+    }
+
+    function test_mul_Unit_ValidatePackedFloat_InvalidA_MedMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.mul(a, b);
+    }
+
+    function test_mul_Unit_ValidatePackedFloat_InvalidB_MedMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.mul(b, a);
+    }
+
+    function test_mul_Unit_ValidatePackedFloat_InvalidA_MedMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.mul(a, b);
+    }
+
+    function test_mul_Unit_ValidatePackedFloat_InvalidB_MedMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.mul(b, a);
+    }
+
+    function test_mul_Unit_ValidatePackedFloat_InvalidA_LMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.mul(a, b);
+    }
+
+    function test_mul_Unit_ValidatePackedFloat_InvalidB_LMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.mul(b, a);
+    }
+
+    function test_mul_Unit_ValidatePackedFloat_InvalidA_LMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.mul(a, b);
+    }
+
+    function test_mul_Unit_ValidatePackedFloat_InvalidB_LMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.mul(b, a);
+    }
+
+    function test_div_Unit_ValidatePackedFloat_InvalidA_MedMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.div(a, b);
+    }
+
+    function test_div_Unit_ValidatePackedFloat_InvalidB_MedMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.div(b, a);
+    }
+
+    function test_div_Unit_ValidatePackedFloat_InvalidA_MedMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.div(a, b);
+    }
+
+    function test_div_Unit_ValidatePackedFloat_InvalidB_MedMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.div(b, a);
+    }
+
+    function test_div_Unit_ValidatePackedFloat_InvalidA_LMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.div(a, b);
+    }
+
+    function test_div_Unit_ValidatePackedFloat_InvalidB_LMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.div(b, a);
+    }
+
+    function test_div_Unit_ValidatePackedFloat_InvalidA_LMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.div(a, b);
+    }
+
+    function test_div_Unit_ValidatePackedFloat_InvalidB_LMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.div(b, a);
+    }
+
+    function test_sqrt_Unit_ValidatePackedFloat_InvalidA_MedMan_GreaterThanAccepted() public {
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(false);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.sqrt(a);
+    }
+
+    function test_sqrt_Unit_ValidatePackedFloat_InvalidA_MedMan_LesserThanAccepted() public {
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(false);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.sqrt(a);
+    }
+
+    function test_sqrt_Unit_ValidatePackedFloat_InvalidA_LMan_GreaterThanAccepted() public {
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(true);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.sqrt(a);
+    }
+
+    function test_sqrt_Unit_ValidatePackedFloat_InvalidA_LMan_LesserThanAccepted() public {
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(true);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.sqrt(a);
+    }
+
+    function test_lt_Unit_ValidatePackedFloat_InvalidA_MedMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.lt(a, b);
+    }
+
+    function test_lt_Unit_ValidatePackedFloat_InvalidB_MedMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.lt(b, a);
+    }
+
+    function test_lt_Unit_ValidatePackedFloat_InvalidA_MedMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.lt(a, b);
+    }
+
+    function test_lt_Unit_ValidatePackedFloat_InvalidB_MedMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.lt(b, a);
+    }
+
+    function test_lt_Unit_ValidatePackedFloat_InvalidA_LMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.lt(a, b);
+    }
+
+    function test_lt_Unit_ValidatePackedFloat_InvalidB_LMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.lt(b, a);
+    }
+
+    function test_lt_Unit_ValidatePackedFloat_InvalidA_LMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.lt(a, b);
+    }
+
+    function test_lt_Unit_ValidatePackedFloat_InvalidB_LMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.lt(b, a);
+    }
+
+    function test_le_Unit_ValidatePackedFloat_InvalidA_MedMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.le(a, b);
+    }
+
+    function test_le_Unit_ValidatePackedFloat_InvalidB_MedMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.le(b, a);
+    }
+
+    function test_le_Unit_ValidatePackedFloat_InvalidA_MedMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.le(a, b);
+    }
+
+    function test_le_Unit_ValidatePackedFloat_InvalidB_MedMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.le(b, a);
+    }
+
+    function test_le_Unit_ValidatePackedFloat_InvalidA_LMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.le(a, b);
+    }
+
+    function test_le_Unit_ValidatePackedFloat_InvalidB_LMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.le(b, a);
+    }
+
+    function test_le_Unit_ValidatePackedFloat_InvalidA_LMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.le(a, b);
+    }
+
+    function test_le_Unit_ValidatePackedFloat_InvalidB_LMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.le(b, a);
+    }
+
+    function test_gt_Unit_ValidatePackedFloat_InvalidA_MedMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.gt(a, b);
+    }
+
+    function test_gt_Unit_ValidatePackedFloat_InvalidB_MedMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.gt(b, a);
+    }
+
+    function test_gt_Unit_ValidatePackedFloat_InvalidA_MedMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.gt(a, b);
+    }
+
+    function test_gt_Unit_ValidatePackedFloat_InvalidB_MedMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.gt(b, a);
+    }
+
+    function test_gt_Unit_ValidatePackedFloat_InvalidA_LMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.gt(a, b);
+    }
+
+    function test_gt_Unit_ValidatePackedFloat_InvalidB_LMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.gt(b, a);
+    }
+
+    function test_gt_Unit_ValidatePackedFloat_InvalidA_LMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.gt(a, b);
+    }
+
+    function test_gt_Unit_ValidatePackedFloat_InvalidB_LMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.gt(b, a);
+    }
+
+    function test_ge_Unit_ValidatePackedFloat_InvalidA_MedMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.ge(a, b);
+    }
+
+    function test_ge_Unit_ValidatePackedFloat_InvalidB_MedMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.ge(b, a);
+    }
+
+    function test_ge_Unit_ValidatePackedFloat_InvalidA_MedMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.ge(a, b);
+    }
+
+    function test_ge_Unit_ValidatePackedFloat_InvalidB_MedMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.ge(b, a);
+    }
+
+    function test_ge_Unit_ValidatePackedFloat_InvalidA_LMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.ge(a, b);
+    }
+
+    function test_ge_Unit_ValidatePackedFloat_InvalidB_LMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.ge(b, a);
+    }
+
+    function test_ge_Unit_ValidatePackedFloat_InvalidA_LMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.ge(a, b);
+    }
+
+    function test_ge_Unit_ValidatePackedFloat_InvalidB_LMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.ge(b, a);
+    }
+
+    function test_eq_Unit_ValidatePackedFloat_InvalidA_MedMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.eq(a, b);
+    }
+
+    function test_eq_Unit_ValidatePackedFloat_InvalidB_MedMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.eq(b, a);
+    }
+
+    function test_eq_Unit_ValidatePackedFloat_InvalidA_MedMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.eq(a, b);
+    }
+
+    function test_eq_Unit_ValidatePackedFloat_InvalidB_MedMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(false);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.eq(b, a);
+    }
+
+    function test_eq_Unit_ValidatePackedFloat_InvalidA_LMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.eq(a, b);
+    }
+
+    function test_eq_Unit_ValidatePackedFloat_InvalidB_LMan_GreaterThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.eq(b, a);
+    }
+
+    function test_eq_Unit_ValidatePackedFloat_InvalidA_LMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.eq(a, b);
+    }
+
+    function test_eq_Unit_ValidatePackedFloat_InvalidB_LMan_LesserThanAccepted() public {
+        // 38 digit mantissa (valid)
+        int mantissaB = 10000000000000000000000000000000000000;
+        int exponentB = -37;
+
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(true);
+        packedFloat b = Float128.toPackedFloat(mantissaB, exponentB);
+
+        vm.expectRevert("float128: invalid float");
+        Float128.eq(b, a);
+    }
+
+    function test_ln_Unit_ValidatePackedFloat_InvalidA_MedMan_GreaterThanAccepted() public {
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(false);
+
+        vm.expectRevert("float128: invalid float");
+        Ln.ln(a);
+    }
+
+    function test_ln_Unit_ValidatePackedFloat_InvalidA_MedMan_LesserThanAccepted() public {
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(false);
+
+        vm.expectRevert("float128: invalid float");
+        Ln.ln(a);
+    }
+
+    function test_ln_Unit_ValidatePackedFloat_InvalidA_LMan_GreaterThanAccepted() public {
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_GreaterThanAccepted(true);
+
+        vm.expectRevert("float128: invalid float");
+        Ln.ln(a);
+    }
+
+    function test_ln_Unit_ValidatePackedFloat_InvalidA_LMan_LesserThanAccepted() public {
+        // Create an invalid float
+        packedFloat a = _invalidFloatHelper_LesserThanAccepted(true);
+
+        vm.expectRevert("float128: invalid float");
+        Ln.ln(a);
+    }
+
+    function _invalidFloatHelper_GreaterThanAccepted(bool isLarge) internal returns (packedFloat invalid) {
+        // 39 digit or 73 digit mantissa
+        int mantissa = isLarge ? int(Float128.MAX_M_DIGIT_NUMBER + 1) : int(Float128.MAX_L_DIGIT_NUMBER + 1);
+        invalid = packedFloat.wrap(uint(mantissa));
+    }
+
+    function _invalidFloatHelper_LesserThanAccepted(bool isLarge) internal returns (packedFloat invalid) {
+        // 37 digit or 71 digit mantissa
+        int mantissa = isLarge ? int(Float128.MIN_M_DIGIT_NUMBER - 1) : int(Float128.MIN_L_DIGIT_NUMBER - 1);
+        invalid = packedFloat.wrap(uint(mantissa));
     }
 }
