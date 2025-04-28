@@ -41,6 +41,8 @@ def calculate_float(args):
         result_float = 1 if a >= b else 0
     elif(operation == "ln"):
         result_float = a.ln() if a > 0 else 0
+    elif(operation == "na"):
+        result_float = a
 
     # print(result_float)
     log_10 = 0 if result_float == 0 else Decimal(abs(result_float)).log10()

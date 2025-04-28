@@ -220,18 +220,13 @@ contract Float128FuzzTest is FloatUtils {
         }
     }
 
-    function test_toPackedFloat_Fuzz(int256 man, int256 exp) public pure {
-        (man, exp, , ) = setBounds(man, exp, 0, 0);
-
-        packedFloat float = man.toPackedFloat(exp);
-        (int manDecode, int expDecode) = Float128.decode(float);
-        packedFloat comp = manDecode.toPackedFloat(expDecode - exp);
-
-        int256 retVal = 0;
-        if (man != 0) {
-            retVal = _reverseNormalize(comp);
-        }
-        assertEq(man, retVal);
+    function test_toPackedFloat_Fuzz(int256 aMan, int256 aExp) public {
+        (aMan, aExp, , ) = setBounds(aMan, aExp, 0, 0);
+        uint nDigits = Float128.findNumberOfDigits(uint(aMan < 0 ? aMan * -1 : aMan));
+        // we force the large mantissa if number of digits is greater than 38
+        (packedFloat a, , int pyMan, int pyExp) = getPackedFloatInputsAndPythonValues(aMan, aExp, 0, 0, "na", nDigits > 38);
+        (int rMan, int rExp) = Float128.decode(a);
+        checkResults(a, rMan, rExp, pyMan, pyExp, 0);
     }
 
     function test_findNumbeOfDigits_Fuzz(uint256 man) public pure {

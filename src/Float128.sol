@@ -1153,7 +1153,6 @@ library Float128 {
     function toPackedFloat(int mantissa, int exponent) internal pure returns (packedFloat float) {
         uint digitsMantissa;
         uint mantissaMultiplier;
-        // we start by extracting the sign of the mantissa
         if (mantissa != 0) {
             assembly {
                 // we make sure the number can't underflow during normalization
@@ -1165,6 +1164,7 @@ library Float128 {
                     mstore(add(ptr, 0x44), "float128: underflow")
                     revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
                 }
+                // we start by extracting the sign of the mantissa
                 if and(mantissa, TWO_COMPLEMENT_SIGN_MASK) {
                     float := MANTISSA_SIGN_MASK
                     mantissa := sub(0, mantissa)
@@ -1176,17 +1176,18 @@ library Float128 {
                 assembly {
                     // we check how far the amount of digits is from the M-man digits
                     mantissaMultiplier := sub(digitsMantissa, MAX_DIGITS_M)
+                    let negativeMultiplier := and(TWO_COMPLEMENT_SIGN_MASK, mantissaMultiplier)
                     // we check the resulting exponent to see if we normalize to L-man or M-man format
-                    let isResultL := slt(MAXIMUM_EXPONENT, add(exponent, mantissaMultiplier))
+                    let isResultL := or(iszero(negativeMultiplier), slt(MAXIMUM_EXPONENT, add(exponent, mantissaMultiplier)))
                     // if the result will be a L-man size, we adjust the multiplier accordingly
                     if isResultL {
                         mantissaMultiplier := sub(mantissaMultiplier, DIGIT_DIFF_L_M)
+                        negativeMultiplier := and(TWO_COMPLEMENT_SIGN_MASK, mantissaMultiplier)
                         float := or(float, MANTISSA_L_FLAG_MASK)
                     }
                     // we now adjust the exponent
                     exponent := add(exponent, mantissaMultiplier)
                     // we divide (truncate) or multiply (expand) the mantissa depending on the sign of the multiplier
-                    let negativeMultiplier := and(TWO_COMPLEMENT_SIGN_MASK, mantissaMultiplier)
                     if negativeMultiplier {
                         mantissa := mul(mantissa, exp(BASE, sub(0, mantissaMultiplier)))
                     }
