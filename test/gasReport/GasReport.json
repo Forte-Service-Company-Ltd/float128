@@ -2,33 +2,33 @@
   "Packed": {
     "add": {
       "matchingexponents": {
-        "min": 869,
-        "avg": 1183,
-        "max": 1575
+        "min": 868,
+        "avg": 1172,
+        "max": 1574
       },
       "addsub": {
-        "min": 1423,
+        "min": 1472,
         "avg": 1594,
-        "max": 1642
+        "max": 1641
       },
-      "min": 999,
-      "avg": 1347,
-      "max": 1643
+      "min": 998,
+      "avg": 1350,
+      "max": 1642
     },
     "sub": {
       "matchingexponents": {
-        "min": 866,
-        "avg": 1146,
-        "max": 1510
+        "min": 865,
+        "avg": 1154,
+        "max": 1509
       },
       "subadd": {
-        "min": 866,
+        "min": 995,
         "avg": 1080,
-        "max": 1107
+        "max": 1106
       },
-      "min": 996,
-      "avg": 1339,
-      "max": 1640
+      "min": 995,
+      "avg": 1342,
+      "max": 1639
     },
     "mul": {
       "mulbyzero": {
@@ -36,9 +36,9 @@
         "avg": 171,
         "max": 171
       },
-      "min": 628,
-      "avg": 1025,
-      "max": 1195
+      "min": 632,
+      "avg": 1032,
+      "max": 1199
     },
     "div": {
       "numeratorzero": {
@@ -47,7 +47,7 @@
         "max": 189
       },
       "min": 681,
-      "avg": 1229,
+      "avg": 1228,
       "max": 1334
     },
     "divL": {
@@ -57,35 +57,25 @@
         "max": 190
       },
       "min": 1245,
-      "avg": 1288,
+      "avg": 1291,
       "max": 1335
     },
     "sqrt": {
       "min": 1295,
-      "avg": 2178,
+      "avg": 2157,
       "max": 3104
     },
     "ln": {
-      "min": 53639,
-      "avg": 63950,
-      "max": 70301
+      "min": 53675,
+      "avg": 64052,
+      "max": 70471
     }
   },
   "Helpers": {
     "Log10": {
-      "min": 345,
+      "min": 328,
       "avg": 346,
       "max": 351
-    },
-    "toFloat": {
-      "min": 456,
-      "avg": 1416,
-      "max": 2749
-    },
-    "toFloatNormalized": {
-      "min": 458,
-      "avg": 1401,
-      "max": 2353
     },
     "toPacked": {
       "min": 281,
@@ -96,6 +86,36 @@
       "min": 307,
       "avg": 596,
       "max": 886
+    },
+    "gt": {
+      "min": 405,
+      "avg": 456,
+      "max": 511
+    },
+    "ge": {
+      "min": 405,
+      "avg": 454,
+      "max": 511
+    },
+    "lt": {
+      "min": 405,
+      "avg": 454,
+      "max": 511
+    },
+    "le": {
+      "min": 405,
+      "avg": 456,
+      "max": 511
+    },
+    "eq": {
+      "min": 177,
+      "avg": 205,
+      "max": 298
+    },
+    "decode": {
+      "min": 197,
+      "avg": 197,
+      "max": 197
     }
   }
 }

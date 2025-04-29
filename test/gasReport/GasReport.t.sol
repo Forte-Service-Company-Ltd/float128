@@ -23,7 +23,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
     /********************  PACKED FLOAT ********************/
     /*******************************************************/
     function test_add_GasReport() public {
-        vm.sleep(delay * 11);
+        vm.sleep(delay);
         _primer();
         _resetGasUsed();
 
@@ -44,7 +44,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
     }
 
     function test_add_matching_exponents_GasReport() public {
-        vm.sleep(delay * 12);
+        vm.sleep(delay * 2);
         _primer();
         _resetGasUsed();
 
@@ -65,7 +65,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
     }
 
     function test_add_sub_GasReport() public {
-        vm.sleep(delay * 13);
+        vm.sleep(delay * 3);
         _primer();
         _resetGasUsed();
 
@@ -101,7 +101,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
     }
 
     function test_sub_GasReport() public {
-        vm.sleep(delay * 14);
+        vm.sleep(delay * 4);
         _primer();
         _resetGasUsed();
 
@@ -122,7 +122,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
     }
 
     function test_sub_matching_exponents_GasReport() public {
-        vm.sleep(delay * 15);
+        vm.sleep(delay * 5);
         _primer();
         _resetGasUsed();
 
@@ -147,7 +147,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
     }
 
     function test_sub_add_GasReport() public {
-        vm.sleep(delay * 16);
+        vm.sleep(delay * 6);
         _primer();
         _resetGasUsed();
 
@@ -183,7 +183,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
     }
 
     function test_mul_GasReport() public {
-        vm.sleep(delay * 17);
+        vm.sleep(delay * 7);
         _primer();
         _resetGasUsed();
 
@@ -205,7 +205,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
     }
 
     function test_mul_by_zero_GasReport() public {
-        vm.sleep(delay * 18);
+        vm.sleep(delay * 8);
         _primer();
         _resetGasUsed();
 
@@ -228,7 +228,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
     }
 
     function test_div_GasReport() public {
-        vm.sleep(delay * 19);
+        vm.sleep(delay * 9);
         _primer();
         _resetGasUsed();
 
@@ -254,7 +254,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
     }
 
     function test_divL_GasReport() public {
-        vm.sleep(delay * 20);
+        vm.sleep(delay * 10);
         _primer();
         _resetGasUsed();
 
@@ -280,7 +280,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
     }
 
     function test_div_numerator_zero_GasReport() public {
-        vm.sleep(delay * 21);
+        vm.sleep(delay * 11);
         _primer();
         _resetGasUsed();
 
@@ -303,7 +303,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
     }
 
     function test_divL_numerator_zero_GasReport() public {
-        vm.sleep(delay * 22);
+        vm.sleep(delay * 12);
         _primer();
         _resetGasUsed();
 
@@ -326,7 +326,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
     }
 
     function test_sqrt_GasReport() public {
-        vm.sleep(delay * 23);
+        vm.sleep(delay * 13);
         _primer();
         _resetGasUsed();
 
@@ -352,7 +352,7 @@ contract GasReport is Test, GasHelpers, FloatUtils {
     }
 
     function test_ln_GasReport() public {
-        vm.sleep(delay * 24);
+        vm.sleep(delay * 14);
         _primer();
         _resetGasUsed();
 
@@ -381,13 +381,13 @@ contract GasReport is Test, GasHelpers, FloatUtils {
     /*********************  HELPERS ************************/
     /*******************************************************/
     function test_gasUsedLog10() public {
-        vm.sleep(delay * 25);
+        vm.sleep(delay * 15);
         _primer();
         _resetGasUsed();
 
         for (uint i = 0; i < runs; ++i) {
             uint256 x = vm.randomUint();
-            startMeasuringGas("Packed - Sqrt");
+            startMeasuringGas("Packed - Log10");
             Float128.findNumberOfDigits(x);
 
             gasUsed = stopMeasuringGas();
@@ -397,6 +397,137 @@ contract GasReport is Test, GasHelpers, FloatUtils {
         }
 
         _writeJson(".Helpers.Log10.", min, avg / runs, max);
+    }
+
+    function test_gt_GasReport() public {
+        vm.sleep(delay * 16);
+        _primer();
+        _resetGasUsed();
+
+        for (uint i = 0; i < runs; ++i) {
+            (int aMan, int aExp, int bMan, int bExp) = setBounds(vm.randomInt(), vm.randomInt(), vm.randomInt(), vm.randomInt());
+            packedFloat a = Float128.toPackedFloat(aMan, aExp / 2);
+            packedFloat b = Float128.toPackedFloat(bMan, bExp / 2);
+
+            startMeasuringGas("Packed - gt");
+            Float128.gt(a, b);
+
+            gasUsed = stopMeasuringGas();
+            if (gasUsed > max) max = gasUsed;
+            if (gasUsed < min) min = gasUsed;
+            avg += gasUsed;
+        }
+
+        _writeJson(".Helpers.gt.", min, avg / runs, max);
+    }
+
+    function test_ge_GasReport() public {
+        vm.sleep(delay * 17);
+        _primer();
+        _resetGasUsed();
+
+        for (uint i = 0; i < runs; ++i) {
+            (int aMan, int aExp, int bMan, int bExp) = setBounds(vm.randomInt(), vm.randomInt(), vm.randomInt(), vm.randomInt());
+            packedFloat a = Float128.toPackedFloat(aMan, aExp / 2);
+            packedFloat b = Float128.toPackedFloat(bMan, bExp / 2);
+
+            startMeasuringGas("Packed - ge");
+            Float128.ge(a, b);
+
+            gasUsed = stopMeasuringGas();
+            if (gasUsed > max) max = gasUsed;
+            if (gasUsed < min) min = gasUsed;
+            avg += gasUsed;
+        }
+
+        _writeJson(".Helpers.ge.", min, avg / runs, max);
+    }
+
+    function test_lt_GasReport() public {
+        vm.sleep(delay * 18);
+        _primer();
+        _resetGasUsed();
+
+        for (uint i = 0; i < runs; ++i) {
+            (int aMan, int aExp, int bMan, int bExp) = setBounds(vm.randomInt(), vm.randomInt(), vm.randomInt(), vm.randomInt());
+            packedFloat a = Float128.toPackedFloat(aMan, aExp / 2);
+            packedFloat b = Float128.toPackedFloat(bMan, bExp / 2);
+
+            startMeasuringGas("Packed - lt");
+            Float128.lt(a, b);
+
+            gasUsed = stopMeasuringGas();
+            if (gasUsed > max) max = gasUsed;
+            if (gasUsed < min) min = gasUsed;
+            avg += gasUsed;
+        }
+
+        _writeJson(".Helpers.lt.", min, avg / runs, max);
+    }
+
+    function test_le_GasReport() public {
+        vm.sleep(delay * 19);
+        _primer();
+        _resetGasUsed();
+
+        for (uint i = 0; i < runs; ++i) {
+            (int aMan, int aExp, int bMan, int bExp) = setBounds(vm.randomInt(), vm.randomInt(), vm.randomInt(), vm.randomInt());
+            packedFloat a = Float128.toPackedFloat(aMan, aExp / 2);
+            packedFloat b = Float128.toPackedFloat(bMan, bExp / 2);
+
+            startMeasuringGas("Packed - le");
+            Float128.le(a, b);
+
+            gasUsed = stopMeasuringGas();
+            if (gasUsed > max) max = gasUsed;
+            if (gasUsed < min) min = gasUsed;
+            avg += gasUsed;
+        }
+
+        _writeJson(".Helpers.le.", min, avg / runs, max);
+    }
+
+    function test_eq_GasReport() public {
+        vm.sleep(delay * 20);
+        _primer();
+        _resetGasUsed();
+
+        for (uint i = 0; i < runs; ++i) {
+            (int aMan, int aExp, int bMan, int bExp) = setBounds(vm.randomInt(), vm.randomInt(), vm.randomInt(), vm.randomInt());
+            packedFloat a = Float128.toPackedFloat(aMan, aExp / 2);
+            packedFloat b = Float128.toPackedFloat(bMan, bExp / 2);
+
+            startMeasuringGas("Packed - eq");
+            Float128.eq(a, b);
+
+            gasUsed = stopMeasuringGas();
+            if (gasUsed > max) max = gasUsed;
+            if (gasUsed < min) min = gasUsed;
+            avg += gasUsed;
+        }
+
+        _writeJson(".Helpers.eq.", min, avg / runs, max);
+    }
+
+    function test_decode_GasReport() public {
+        vm.sleep(delay * 21);
+        _primer();
+        _resetGasUsed();
+
+        for (uint i = 0; i < runs; ++i) {
+            (int aMan, int aExp) = setBoundsSqrt(vm.randomInt(), vm.randomInt());
+
+            packedFloat a = Float128.toPackedFloat(aMan, aExp);
+            startMeasuringGas("Packed - Decode");
+            Float128.decode(a);
+
+            gasUsed = stopMeasuringGas();
+            if (gasUsed > max) max = gasUsed;
+            if (gasUsed < min) min = gasUsed;
+            avg += gasUsed;
+        }
+
+        _writeJson(".Helpers.decode.", min, avg / runs, max);
     }
 
     function _writeJson(string memory obj, uint256 min, uint256 avg, uint256 max) public {
