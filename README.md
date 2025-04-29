@@ -56,14 +56,14 @@ Available operations:
 
 The library's arithmetic operations' error have been calculated against results from Python's Decimal library. The error appear in the Units in the Last Place (ULP):
 
-| Operation                | Max error (ULPs) |
-| ------------------------ | ---------------- |
-| Addition (add)           | 1                |
-| Subtraction (sub)        | 1                |
-| Multiplication (mul)     | 0                |
-| Division (div/divL)      | 0                |
-| Square root (sqrt)       | 0                |
-| Natural Logarithm (ln)\* | 99               |
+| Operation                | \|Max error\| (ULPs) |
+| ------------------------ | -------------------- |
+| Addition (add)           | < 2                  |
+| Subtraction (sub)        | < 2                  |
+| Multiplication (mul)     | < 1                  |
+| Division (div/divL)      | < 1                  |
+| Square root (sqrt)       | < 1                  |
+| Natural Logarithm (ln)\* | < 99                 |
 
 \* WARNING: the precision for `ln` is not guaranteed for numbers that are between 1.0 and 1.1 (exclusive). For numbers with ≤38 significand digits, errors are generally limited to 199 ULPs (units in the last place). However, numbers with >38 significand digits may exhibit relative errors exceeding 50% in extreme cases.
 
@@ -85,7 +85,7 @@ type packedFloat is uint256;
 | 241       | L_MANTISSA_FLAG |
 | 240       | MANTISSA_SIGN   |
 | 239 - 0   | L_MANTISSA      |
-| 128 - 0   | M_MANTISSA      |
+| 127 - 0   | M_MANTISSA      |
 
 #### Mantissa sizes:
 
@@ -112,6 +112,8 @@ function toPackedFloat(int mantissa, int exponent) internal pure returns (packed
 
 function decode(packedFloat float) internal pure returns (int mantissa, int exponent);
 ```
+
+The encoding strategy of the `toPackedFloat` function will always prioritize precision over efficiency. Therefore, if the `mantissa` parameter has more than 38 digits, then the resulting encoded packedFloat number will force a large-mantissa format (72 digits).
 
 ## Usage
 
