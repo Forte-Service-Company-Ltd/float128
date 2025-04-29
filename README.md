@@ -113,7 +113,7 @@ function toPackedFloat(int mantissa, int exponent) internal pure returns (packed
 function decode(packedFloat float) internal pure returns (int mantissa, int exponent);
 ```
 
-The encoding strategy of the `toPackedFloat` function will always prioritize precision over efficiency. Therefore, if the `mantissa` parameter has more than 38 digits, then the resulting encoded packedFloat number will force a large-mantissa format (72 digits).
+The encoding strategy of the `toPackedFloat` function will always prioritize precision over efficiency. Therefore, if the `mantissa` parameter has more than 38 digits, then the resulting encoded packedFloat number will force a large-mantissa format (72 digits) independently of the exponent magnitud. The rest of the autoscaling rules still apply.
 
 ## Usage
 
