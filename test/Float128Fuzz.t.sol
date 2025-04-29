@@ -62,7 +62,10 @@ contract Float128FuzzTest is FloatUtils {
 
     function test_add_Fuzz(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
-        (packedFloat a, packedFloat b, int pyMan, int pyExp) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "add", false);
+        uint nDigitsA = Float128.findNumberOfDigits(uint(aMan < 0 ? aMan * -1 : aMan));
+        uint nDigitsB = Float128.findNumberOfDigits(uint(bMan < 0 ? bMan * -1 : bMan));
+        bool isL = (aMan == 0 && nDigitsB > 38) || (bMan == 0 && nDigitsA > 38);
+        (packedFloat a, packedFloat b, int pyMan, int pyExp) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "add", isL);
         packedFloat result = Float128.add(a, b);
         (int rMan, int rExp) = Float128.decode(result);
         checkResults(result, rMan, rExp, pyMan, pyExp, 1);
@@ -70,7 +73,10 @@ contract Float128FuzzTest is FloatUtils {
 
     function test_sub_Fuzz(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
-        (packedFloat a, packedFloat b, int pyMan, int pyExp) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "sub", false);
+        uint nDigitsA = Float128.findNumberOfDigits(uint(aMan < 0 ? aMan * -1 : aMan));
+        uint nDigitsB = Float128.findNumberOfDigits(uint(bMan < 0 ? bMan * -1 : bMan));
+        bool isL = (aMan == 0 && nDigitsB > 38) || (bMan == 0 && nDigitsA > 38);
+        (packedFloat a, packedFloat b, int pyMan, int pyExp) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "sub", isL);
         packedFloat result = Float128.sub(a, b);
         (int rMan, int rExp) = Float128.decode(result);
         checkResults(result, rMan, rExp, pyMan, pyExp, 1);
@@ -96,7 +102,9 @@ contract Float128FuzzTest is FloatUtils {
     function test_lt_Fuzz(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
         (packedFloat a, packedFloat b, int pyMan, ) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "lt", false);
-        bool result = Float128.le(a, b);
+        console2.log(packedFloat.unwrap(a));
+        console2.log(packedFloat.unwrap(b));
+        bool result = Float128.lt(a, b);
         assertEq(result, pyMan > 0);
     }
 

@@ -900,7 +900,7 @@ library Float128 {
             let isBZero := iszero(b)
             let zeroFound := or(isAZero, isBZero)
             if zeroFound {
-                if or(and(isAZero, iszero(bNeg)), and(isBZero, aNeg)) {
+                if or(and(isAZero, and(iszero(isBZero), iszero(bNeg))), and(isBZero, aNeg)) {
                     retVal := true
                 }
             }
@@ -1014,7 +1014,7 @@ library Float128 {
             let isBZero := iszero(b)
             let zeroFound := or(isAZero, isBZero)
             if zeroFound {
-                if or(and(isBZero, iszero(aNeg)), and(isAZero, bNeg)) {
+                if or(and(isBZero, and(iszero(isAZero), iszero(aNeg))), and(isAZero, bNeg)) {
                     retVal := true
                 }
             }

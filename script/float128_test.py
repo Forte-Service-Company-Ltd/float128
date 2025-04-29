@@ -31,6 +31,8 @@ def calculate_float(args):
         result_float = a - b
     elif(operation == "sqrt"):
         result_float = a.sqrt() if a >= 0 else 0
+    elif(operation == "eq"):
+        result_float = 1 if a == b else 0
     elif(operation == "le"):
         result_float = 1 if a <= b else 0
     elif(operation == "lt"):
@@ -52,7 +54,7 @@ def calculate_float(args):
     if(result_exp > max_exponent or largeResult):
         result_exp -= max_digits_l - max_digits_m
     result_man = int(result_float*10**(-result_exp))
-
+    # print(result_man, int(result_exp))
     return result_man, int(result_exp)
 
 
