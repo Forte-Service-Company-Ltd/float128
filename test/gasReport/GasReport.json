@@ -2,33 +2,33 @@
   "Packed": {
     "add": {
       "matchingexponents": {
-        "min": 869,
-        "avg": 1183,
+        "min": 900,
+        "avg": 1211,
         "max": 1575
       },
       "addsub": {
-        "min": 1423,
-        "avg": 1594,
-        "max": 1642
+        "min": 1484,
+        "avg": 1589,
+        "max": 1612
       },
-      "min": 999,
-      "avg": 1347,
-      "max": 1643
+      "min": 1030,
+      "avg": 1350,
+      "max": 1620
     },
     "sub": {
       "matchingexponents": {
-        "min": 866,
-        "avg": 1146,
-        "max": 1510
+        "min": 897,
+        "avg": 1207,
+        "max": 1572
       },
       "subadd": {
-        "min": 866,
-        "avg": 1080,
-        "max": 1107
+        "min": 1027,
+        "avg": 1076,
+        "max": 1080
       },
-      "min": 996,
-      "avg": 1339,
-      "max": 1640
+      "min": 1027,
+      "avg": 1348,
+      "max": 1617
     },
     "mul": {
       "mulbyzero": {
@@ -36,9 +36,9 @@
         "avg": 171,
         "max": 171
       },
-      "min": 628,
-      "avg": 1025,
-      "max": 1195
+      "min": 1117,
+      "avg": 1154,
+      "max": 1169
     },
     "div": {
       "numeratorzero": {
@@ -46,9 +46,9 @@
         "avg": 189,
         "max": 189
       },
-      "min": 681,
-      "avg": 1229,
-      "max": 1334
+      "min": 1244,
+      "avg": 1278,
+      "max": 1296
     },
     "divL": {
       "numeratorzero": {
@@ -57,18 +57,18 @@
         "max": 190
       },
       "min": 1245,
-      "avg": 1288,
-      "max": 1335
+      "avg": 1260,
+      "max": 1275
     },
     "sqrt": {
       "min": 1295,
-      "avg": 2178,
+      "avg": 2199,
       "max": 3104
     },
     "ln": {
-      "min": 53639,
-      "avg": 63950,
-      "max": 70301
+      "min": 53834,
+      "avg": 64219,
+      "max": 70004
     }
   },
   "Helpers": {

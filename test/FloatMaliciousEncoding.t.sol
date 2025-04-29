@@ -181,24 +181,23 @@ contract Float128MaliciousEncodingTest is FloatUtils {
 
     function test_toPackedFloat_MaliciousEncoding(uint8 distanceFromExpBound, int aMan) public {
         aMan = bound(aMan, -int(Float128.MAX_76_DIGIT_NUMBER), int(Float128.MAX_76_DIGIT_NUMBER));
+        uint nDigits = Float128.findNumberOfDigits(uint(aMan < 0 ? aMan * -1 : aMan));
         {
             // very negative exponent
             int aExp = int(uint(distanceFromExpBound)) - int(Float128.ZERO_OFFSET);
             if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2 && aMan != 0) vm.expectRevert("float128: underflow");
             packedFloat a = aMan.toPackedFloat(aExp);
             (int rMan, int rExp) = a.decode();
-            (aMan, aExp) = emulateNormalization(aMan, aExp);
-            assertEq(rMan, aMan, "different mantissas");
-            assertEq(rExp, aExp, "different exponents");
+            (int pyMan, int pyExp) = getPythonValue(aMan, aExp, 0, 0, "na", nDigits > 38);
+            checkResults(a, rMan, rExp, pyMan, pyExp, 0);
         }
         {
             // very positive exponent
             int aExp = int(Float128.ZERO_OFFSET) - int(uint(distanceFromExpBound)) - 1;
             packedFloat a = aMan.toPackedFloat(aExp);
             (int rMan, int rExp) = a.decode();
-            (aMan, aExp) = emulateNormalization(aMan, aExp);
-            assertEq(rMan, aMan, "different mantissas");
-            assertEq(rExp, aExp, "different exponents");
+            (int pyMan, int pyExp) = getPythonValue(aMan, aExp, 0, 0, "na", nDigits > 38);
+            checkResults(a, rMan, rExp, pyMan, pyExp, 0);
         }
     }
 
