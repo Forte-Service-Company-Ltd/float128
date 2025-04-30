@@ -46,7 +46,6 @@ def calculate_float(args):
     elif(operation == "na"):
         result_float = a
 
-    # print(result_float)
     log_10 = 0 if result_float == 0 else Decimal(abs(result_float)).log10()
     result_digits = int(log_10) + 1
     if (result_digits < 0): result_digits -= 1
@@ -54,7 +53,7 @@ def calculate_float(args):
     if(result_exp > max_exponent or largeResult):
         result_exp -= max_digits_l - max_digits_m
     result_man = int(result_float*10**(-result_exp))
-    # print(result_man, int(result_exp))
+
     return result_man, int(result_exp)
 
 
