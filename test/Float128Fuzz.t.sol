@@ -62,7 +62,10 @@ contract Float128FuzzTest is FloatUtils {
 
     function test_add_Fuzz(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
-        (packedFloat a, packedFloat b, int pyMan, int pyExp) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "add", false);
+        uint nDigitsA = Float128.findNumberOfDigits(uint(aMan < 0 ? aMan * -1 : aMan));
+        uint nDigitsB = Float128.findNumberOfDigits(uint(bMan < 0 ? bMan * -1 : bMan));
+        bool isL = (aMan == 0 && nDigitsB > 38) || (bMan == 0 && nDigitsA > 38);
+        (packedFloat a, packedFloat b, int pyMan, int pyExp) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "add", isL);
         packedFloat result = Float128.add(a, b);
         (int rMan, int rExp) = Float128.decode(result);
         checkResults(result, rMan, rExp, pyMan, pyExp, 1);
@@ -70,7 +73,10 @@ contract Float128FuzzTest is FloatUtils {
 
     function test_sub_Fuzz(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
-        (packedFloat a, packedFloat b, int pyMan, int pyExp) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "sub", false);
+        uint nDigitsA = Float128.findNumberOfDigits(uint(aMan < 0 ? aMan * -1 : aMan));
+        uint nDigitsB = Float128.findNumberOfDigits(uint(bMan < 0 ? bMan * -1 : bMan));
+        bool isL = (aMan == 0 && nDigitsB > 38) || (bMan == 0 && nDigitsA > 38);
+        (packedFloat a, packedFloat b, int pyMan, int pyExp) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "sub", isL);
         packedFloat result = Float128.sub(a, b);
         (int rMan, int rExp) = Float128.decode(result);
         checkResults(result, rMan, rExp, pyMan, pyExp, 1);
@@ -220,18 +226,13 @@ contract Float128FuzzTest is FloatUtils {
         }
     }
 
-    function test_toPackedFloat_Fuzz(int256 man, int256 exp) public pure {
-        (man, exp, , ) = setBounds(man, exp, 0, 0);
-
-        packedFloat float = man.toPackedFloat(exp);
-        (int manDecode, int expDecode) = Float128.decode(float);
-        packedFloat comp = manDecode.toPackedFloat(expDecode - exp);
-
-        int256 retVal = 0;
-        if (man != 0) {
-            retVal = _reverseNormalize(comp);
-        }
-        assertEq(man, retVal);
+    function test_toPackedFloat_Fuzz(int256 aMan, int256 aExp) public {
+        (aMan, aExp, , ) = setBounds(aMan, aExp, 0, 0);
+        uint nDigits = Float128.findNumberOfDigits(uint(aMan < 0 ? aMan * -1 : aMan));
+        // we force the large mantissa if number of digits is greater than 38
+        (packedFloat a, , int pyMan, int pyExp) = getPackedFloatInputsAndPythonValues(aMan, aExp, 0, 0, "na", nDigits > 38);
+        (int rMan, int rExp) = Float128.decode(a);
+        checkResults(a, rMan, rExp, pyMan, pyExp, 0);
     }
 
     function test_findNumbeOfDigits_Fuzz(uint256 man) public pure {
