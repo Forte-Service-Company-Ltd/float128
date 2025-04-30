@@ -65,6 +65,17 @@ library Ln {
         int exponent;
         bool inputL;
         assembly {
+            mantissa := and(input, MANTISSA_MASK)
+
+            if and(iszero(mantissa), gt(input, 0)) {
+                let ptr := mload(0x40)
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                mstore(add(ptr, 0x04), 0x20)
+                mstore(add(ptr, 0x24), 24)
+                mstore(add(ptr, 0x44), "float128: corrupted zero")
+                revert(ptr, 0x64)
+            }
+
             if or(iszero(input), and(input, MANTISSA_SIGN_MASK)) {
                 let ptr := mload(0x40) // Get free memory pointer
                 mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
@@ -74,56 +85,28 @@ library Ln {
                 revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
             }
             inputL := gt(and(input, MANTISSA_L_FLAG_MASK), 0)
-            mantissa := and(input, MANTISSA_MASK)
             exponent := sub(shr(EXPONENT_BIT, and(input, EXPONENT_MASK)), ZERO_OFFSET)
-        }
-        assembly {
-            let isLarge := gt(and(input, MANTISSA_L_FLAG_MASK), 0)
 
-            // Check for invalid zero representations
-            // If the unwrapped value is zero, the mantissa must also be zero
-            if and(iszero(input), gt(mantissa, 0)) {
+            let isInvalid := 0
+
+            if inputL {
+                // Check if mantissa A has exactly 72 digits
+                isInvalid := or(isInvalid, or(lt(mantissa, MIN_L_DIGIT_NUMBER), gt(mantissa, MAX_L_DIGIT_NUMBER)))
+            }
+
+            if iszero(inputL) {
+                // Check if mantissa A has exactly 38 digits
+                isInvalid := or(isInvalid, or(lt(mantissa, MIN_M_DIGIT_NUMBER), gt(mantissa, MAX_M_DIGIT_NUMBER)))
+            }
+
+            // Revert if validation fails
+            if isInvalid {
                 let ptr := mload(0x40)
                 mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
                 mstore(add(ptr, 0x04), 0x20)
-                mstore(add(ptr, 0x24), 23)
-                mstore(add(ptr, 0x44), "float128: invalid float")
+                mstore(add(ptr, 0x24), 28)
+                mstore(add(ptr, 0x44), "float128: unnormalized float")
                 revert(ptr, 0x64)
-            }
-
-            // If the unwrapped value is not zero, proceed with normal validation
-            // Initialize default to invalid
-            let isValid := 0
-
-            // Check if mantissa has EXACTLY the required digits
-            if isLarge {
-                // Large mantissa must be EXACTLY 72 digits
-                // MIN_L_DIGIT_NUMBER <= mantissa <= MAX_L_DIGIT_NUMBER
-                isValid := and(iszero(lt(mantissa, MIN_L_DIGIT_NUMBER)), iszero(gt(mantissa, MAX_L_DIGIT_NUMBER)))
-
-                if iszero(isValid) {
-                    let ptr := mload(0x40)
-                    mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
-                    mstore(add(ptr, 0x04), 0x20)
-                    mstore(add(ptr, 0x24), 23)
-                    mstore(add(ptr, 0x44), "float128: invalid float")
-                    revert(ptr, 0x64)
-                }
-            }
-
-            if iszero(isLarge) {
-                // Medium mantissa must be EXACTLY 38 digits
-                // MIN_M_DIGIT_NUMBER <= mantissa <= MAX_M_DIGIT_NUMBER
-                isValid := and(iszero(lt(mantissa, MIN_M_DIGIT_NUMBER)), iszero(gt(mantissa, MAX_M_DIGIT_NUMBER)))
-
-                if iszero(isValid) {
-                    let ptr := mload(0x40)
-                    mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
-                    mstore(add(ptr, 0x04), 0x20)
-                    mstore(add(ptr, 0x24), 23)
-                    mstore(add(ptr, 0x44), "float128: invalid float")
-                    revert(ptr, 0x64)
-                }
             }
         }
         if (

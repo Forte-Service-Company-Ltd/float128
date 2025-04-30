@@ -20,7 +20,7 @@ contract Float128MaliciousEncodingTest is FloatUtils {
             int aMan = int(1);
             int aExp = int(uint(distanceFromExpBound)) - int(Float128.ZERO_OFFSET);
             packedFloat a = encodeManually(aMan, aExp, false);
-            vm.expectRevert("float128: invalid float");
+            vm.expectRevert("float128: unnormalized float");
             packedFloat result = a.add(b);
             decodeAndCheckResults(aMan, aExp, bMan, bExp, "add", false, result, 1);
         }
@@ -32,7 +32,7 @@ contract Float128MaliciousEncodingTest is FloatUtils {
             int bExp = aExp;
             int bMan = 9e71;
             packedFloat b = bMan.toPackedFloat(bExp);
-            vm.expectRevert("float128: invalid float");
+            vm.expectRevert("float128: unnormalized float");
             packedFloat result = a.add(b);
             decodeAndCheckResults(aMan, aExp, bMan, bExp, "add", false, result, 1);
         }
@@ -45,7 +45,7 @@ contract Float128MaliciousEncodingTest is FloatUtils {
             int aExp = int(uint(distanceFromExpBound)) - int(Float128.ZERO_OFFSET);
             packedFloat a = encodeManually(aMan, aExp, false);
             packedFloat b = encodeManually(aMan - 1, aExp, false);
-            vm.expectRevert("float128: invalid float");
+            vm.expectRevert("float128: unnormalized float");
             packedFloat result = a.sub(b);
             decodeAndCheckResults(aMan, aExp, aMan - 1, aExp, "sub", false, result, 1);
         }
@@ -55,7 +55,7 @@ contract Float128MaliciousEncodingTest is FloatUtils {
             int aExp = int(Float128.ZERO_OFFSET) - int(uint(distanceFromExpBound)) - 1;
             packedFloat a = encodeManually(aMan, aExp, true);
             packedFloat b = encodeManually(aMan / 2, aExp, true);
-            vm.expectRevert("float128: invalid float");
+            if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2 - 1) vm.expectRevert("float128: overflow");
             packedFloat result = a.sub(b);
             decodeAndCheckResults(aMan, aExp, aMan / 2, aExp, "sub", false, result, 1);
         }

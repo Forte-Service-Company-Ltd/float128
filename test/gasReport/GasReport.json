@@ -2,78 +2,78 @@
   "Packed": {
     "add": {
       "matchingexponents": {
-        "min": 1192,
-        "avg": 1522,
-        "max": 1898
+        "min": 1070,
+        "avg": 1371,
+        "max": 1776
       },
       "addsub": {
-        "min": 1728,
-        "avg": 1919,
-        "max": 1965
+        "min": 1674,
+        "avg": 1793,
+        "max": 1843
       },
-      "min": 1322,
-      "avg": 1666,
-      "max": 1966
+      "min": 1200,
+      "avg": 1557,
+      "max": 1844
     },
     "sub": {
       "matchingexponents": {
-        "min": 1189,
-        "avg": 1473,
-        "max": 1833
+        "min": 1067,
+        "avg": 1345,
+        "max": 1711
       },
       "subadd": {
-        "min": 1319,
-        "avg": 1403,
-        "max": 1430
+        "min": 1197,
+        "avg": 1280,
+        "max": 1308
       },
-      "min": 1319,
-      "avg": 1663,
-      "max": 1963
+      "min": 1197,
+      "avg": 1543,
+      "max": 1841
     },
     "mul": {
       "mulbyzero": {
-        "min": 428,
-        "avg": 428,
-        "max": 428
+        "min": 171,
+        "avg": 171,
+        "max": 171
       },
-      "min": 955,
-      "avg": 1370,
-      "max": 1522
+      "min": 887,
+      "avg": 1291,
+      "max": 1454
     },
     "div": {
       "numeratorzero": {
-        "min": 452,
-        "avg": 452,
-        "max": 452
+        "min": 189,
+        "avg": 189,
+        "max": 189
       },
-      "min": 1010,
-      "avg": 1552,
-      "max": 1663
+      "min": 948,
+      "avg": 1490,
+      "max": 1601
     },
     "divL": {
       "numeratorzero": {
-        "min": 453,
-        "avg": 453,
-        "max": 453
+        "min": 190,
+        "avg": 190,
+        "max": 190
       },
-      "min": 1574,
-      "avg": 1620,
-      "max": 1664
+      "min": 1512,
+      "avg": 1556,
+      "max": 1602
     },
     "sqrt": {
-      "min": 1442,
-      "avg": 2292,
-      "max": 3251
+      "min": 1415,
+      "avg": 2265,
+      "max": 3224
     },
     "ln": {
-      "min": 70532,
-      "avg": 81945,
-      "max": 88531
+      "min": 67169,
+      "avg": 76546,
+      "max": 83248
     }
   },
   "Helpers": {
     "Log10": {
-      "min": 322,
+      "min": 345,
       "avg": 346,
       "max": 351
     },
