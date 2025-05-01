@@ -31,6 +31,9 @@ contract GasReport is Test, GasHelpers, FloatUtils {
             (int aMan, int aExp, int bMan, int bExp) = setBounds(vm.randomInt(), vm.randomInt(), vm.randomInt(), vm.randomInt());
             packedFloat a = Float128.toPackedFloat(aMan, aExp);
             packedFloat b = Float128.toPackedFloat(bMan, bExp);
+            console2.log("a man", aMan);
+            console2.log("b man", bMan);
+
             startMeasuringGas("Packed - Add");
             Float128.add(a, b);
 

@@ -102,8 +102,6 @@ contract Float128FuzzTest is FloatUtils {
     function test_lt_Fuzz(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
         (packedFloat a, packedFloat b, int pyMan, ) = getPackedFloatInputsAndPythonValues(aMan, aExp, bMan, bExp, "lt", false);
-        console2.log(packedFloat.unwrap(a));
-        console2.log(packedFloat.unwrap(b));
         bool result = Float128.lt(a, b);
         assertEq(result, pyMan > 0);
     }

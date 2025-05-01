@@ -71,6 +71,48 @@ library Float128 {
             let bExp := shr(EXPONENT_BIT, b)
             let aMan := and(a, MANTISSA_MASK)
             let bMan := and(b, MANTISSA_MASK)
+
+            let isInvalid := 0
+
+            if or(iszero(aMan), iszero(bMan)) {
+                let ptr := mload(0x40)
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                mstore(add(ptr, 0x04), 0x20)
+                mstore(add(ptr, 0x24), 24)
+                mstore(add(ptr, 0x44), "float128: corrupted zero")
+                revert(ptr, 0x64)
+            }
+
+            if aL {
+                // Check if mantissa A has exactly 72 digits
+                isInvalid := or(isInvalid, or(lt(aMan, MIN_L_DIGIT_NUMBER), gt(aMan, MAX_L_DIGIT_NUMBER)))
+            }
+
+            if iszero(aL) {
+                // Check if mantissa A has exactly 38 digits
+                isInvalid := or(isInvalid, or(lt(aMan, MIN_M_DIGIT_NUMBER), gt(aMan, MAX_M_DIGIT_NUMBER)))
+            }
+
+            if bL {
+                // Check if mantissa B has exactly 72 digits
+                isInvalid := or(isInvalid, or(lt(bMan, MIN_L_DIGIT_NUMBER), gt(bMan, MAX_L_DIGIT_NUMBER)))
+            }
+
+            if iszero(bL) {
+                // Check if mantissa B has exactly 38 digits
+                isInvalid := or(isInvalid, or(lt(bMan, MIN_M_DIGIT_NUMBER), gt(bMan, MAX_M_DIGIT_NUMBER)))
+            }
+
+            // Revert if validation fails
+            if isInvalid {
+                let ptr := mload(0x40)
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                mstore(add(ptr, 0x04), 0x20)
+                mstore(add(ptr, 0x24), 28)
+                mstore(add(ptr, 0x44), "float128: unnormalized float")
+                revert(ptr, 0x64)
+            }
+
             // we check exponents cannot maliciously underflow while expanding, or underflow on a similar result
             if or(lt(aExp, MAX_DIGITS_M_X_2), lt(bExp, MAX_DIGITS_M_X_2)) {
                 let ptr := mload(0x40) // Get free memory pointer
@@ -286,6 +328,47 @@ library Float128 {
             let bExp := shr(EXPONENT_BIT, b)
             let aMan := and(a, MANTISSA_MASK)
             let bMan := and(b, MANTISSA_MASK)
+            let isInvalid := 0
+
+            if or(iszero(aMan), iszero(bMan)) {
+                let ptr := mload(0x40)
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                mstore(add(ptr, 0x04), 0x20)
+                mstore(add(ptr, 0x24), 24)
+                mstore(add(ptr, 0x44), "float128: corrupted zero")
+                revert(ptr, 0x64)
+            }
+
+            if aL {
+                // Check if mantissa A has exactly 72 digits
+                isInvalid := or(isInvalid, or(lt(aMan, MIN_L_DIGIT_NUMBER), gt(aMan, MAX_L_DIGIT_NUMBER)))
+            }
+
+            if iszero(aL) {
+                // Check if mantissa A has exactly 38 digits
+                isInvalid := or(isInvalid, or(lt(aMan, MIN_M_DIGIT_NUMBER), gt(aMan, MAX_M_DIGIT_NUMBER)))
+            }
+
+            if bL {
+                // Check if mantissa B has exactly 72 digits
+                isInvalid := or(isInvalid, or(lt(bMan, MIN_L_DIGIT_NUMBER), gt(bMan, MAX_L_DIGIT_NUMBER)))
+            }
+
+            if iszero(bL) {
+                // Check if mantissa B has exactly 38 digits
+                isInvalid := or(isInvalid, or(lt(bMan, MIN_M_DIGIT_NUMBER), gt(bMan, MAX_M_DIGIT_NUMBER)))
+            }
+
+            // Revert if validation fails
+            if isInvalid {
+                let ptr := mload(0x40)
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                mstore(add(ptr, 0x04), 0x20)
+                mstore(add(ptr, 0x24), 28)
+                mstore(add(ptr, 0x44), "float128: unnormalized float")
+                revert(ptr, 0x64)
+            }
+
             if or(lt(aExp, MAX_DIGITS_M_X_2), lt(bExp, MAX_DIGITS_M_X_2)) {
                 let ptr := mload(0x40) // Get free memory pointer
                 mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
@@ -294,6 +377,7 @@ library Float128 {
                 mstore(add(ptr, 0x44), "float128: underflow")
                 revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
             }
+
             // we check that the result of an addition won't overflow while normalizing
             if and(
                 iszero(isSubtraction),
@@ -493,6 +577,47 @@ library Float128 {
             let bExp := shr(EXPONENT_BIT, b)
             let aMan := and(a, MANTISSA_MASK)
             let bMan := and(b, MANTISSA_MASK)
+            let isInvalid := 0
+
+            if or(iszero(aMan), iszero(bMan)) {
+                let ptr := mload(0x40)
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                mstore(add(ptr, 0x04), 0x20)
+                mstore(add(ptr, 0x24), 24)
+                mstore(add(ptr, 0x44), "float128: corrupted zero")
+                revert(ptr, 0x64)
+            }
+
+            if aL {
+                // Check if mantissa A has exactly 72 digits
+                isInvalid := or(isInvalid, or(lt(aMan, MIN_L_DIGIT_NUMBER), gt(aMan, MAX_L_DIGIT_NUMBER)))
+            }
+
+            if iszero(aL) {
+                // Check if mantissa A has exactly 38 digits
+                isInvalid := or(isInvalid, or(lt(aMan, MIN_M_DIGIT_NUMBER), gt(aMan, MAX_M_DIGIT_NUMBER)))
+            }
+
+            if bL {
+                // Check if mantissa B has exactly 72 digits
+                isInvalid := or(isInvalid, or(lt(bMan, MIN_L_DIGIT_NUMBER), gt(bMan, MAX_L_DIGIT_NUMBER)))
+            }
+
+            if iszero(bL) {
+                // Check if mantissa B has exactly 38 digits
+                isInvalid := or(isInvalid, or(lt(bMan, MIN_M_DIGIT_NUMBER), gt(bMan, MAX_M_DIGIT_NUMBER)))
+            }
+
+            // Revert if validation fails
+            if isInvalid {
+                let ptr := mload(0x40)
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                mstore(add(ptr, 0x04), 0x20)
+                mstore(add(ptr, 0x24), 28)
+                mstore(add(ptr, 0x44), "float128: unnormalized float")
+                revert(ptr, 0x64)
+            }
+
             // underflow can happen due to malicious encoding, or product of very negative exponents
             if or(or(lt(aExp, MAX_DIGITS_M_X_2), lt(bExp, MAX_DIGITS_M_X_2)), lt(add(aExp, bExp), add(ZERO_OFFSET, MAX_DIGITS_M_X_2))) {
                 let ptr := mload(0x40) // Get free memory pointer
@@ -623,7 +748,7 @@ library Float128 {
      */
     function div(packedFloat a, packedFloat b, bool rL) internal pure returns (packedFloat r) {
         assembly {
-            if eq(and(b, MANTISSA_MASK), 0) {
+            if iszero(b) {
                 let ptr := mload(0x40) // Get free memory pointer
                 mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
                 mstore(add(ptr, 0x04), 0x20) // String offset
@@ -650,6 +775,46 @@ library Float128 {
             bExp := shr(EXPONENT_BIT, b)
             aMan := and(a, MANTISSA_MASK)
             bMan := and(b, MANTISSA_MASK)
+            let isInvalid := 0
+
+            if or(iszero(aMan), iszero(bMan)) {
+                let ptr := mload(0x40)
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                mstore(add(ptr, 0x04), 0x20)
+                mstore(add(ptr, 0x24), 24)
+                mstore(add(ptr, 0x44), "float128: corrupted zero")
+                revert(ptr, 0x64)
+            }
+
+            if aL {
+                // Check if mantissa A has exactly 72 digits
+                isInvalid := or(isInvalid, or(lt(aMan, MIN_L_DIGIT_NUMBER), gt(aMan, MAX_L_DIGIT_NUMBER)))
+            }
+
+            if iszero(aL) {
+                // Check if mantissa A has exactly 38 digits
+                isInvalid := or(isInvalid, or(lt(aMan, MIN_M_DIGIT_NUMBER), gt(aMan, MAX_M_DIGIT_NUMBER)))
+            }
+
+            if bL {
+                // Check if mantissa B has exactly 72 digits
+                isInvalid := or(isInvalid, or(lt(bMan, MIN_L_DIGIT_NUMBER), gt(bMan, MAX_L_DIGIT_NUMBER)))
+            }
+
+            if iszero(bL) {
+                // Check if mantissa B has exactly 38 digits
+                isInvalid := or(isInvalid, or(lt(bMan, MIN_M_DIGIT_NUMBER), gt(bMan, MAX_M_DIGIT_NUMBER)))
+            }
+
+            // Revert if validation fails
+            if isInvalid {
+                let ptr := mload(0x40)
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                mstore(add(ptr, 0x04), 0x20)
+                mstore(add(ptr, 0x24), 28)
+                mstore(add(ptr, 0x44), "float128: unnormalized float")
+                revert(ptr, 0x64)
+            }
             // underflow can happen due to malicious encoding, or division of a very negative exponent by a very positive exponent
             // large-mantissa operations makes it riskier for division to underflow. A skewed lower bound of 2 * MAX_DIGITS_M_X_2 is necessary
             if or(or(lt(aExp, MAX_DIGITS_M_X_2), lt(bExp, MAX_DIGITS_M_X_2)), slt(sub(aExp, bExp), sub(shl(1, MAX_DIGITS_M_X_2), ZERO_OFFSET))) {
@@ -751,13 +916,13 @@ library Float128 {
      * @return r the result of √a
      */
     function sqrt(packedFloat a) internal pure returns (packedFloat r) {
+        if (packedFloat.unwrap(a) == 0) return a;
         uint s;
         int aExp;
         uint x;
         uint aMan;
         uint256 roundedDownResult;
         bool aL;
-        if (packedFloat.unwrap(a) == 0) return a;
         assembly {
             if and(a, MANTISSA_SIGN_MASK) {
                 let ptr := mload(0x40) // Get free memory pointer
@@ -770,6 +935,36 @@ library Float128 {
             aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
             aMan := and(a, MANTISSA_MASK)
             aExp := shr(EXPONENT_BIT, a)
+            let isInvalid := 0
+
+            if iszero(aMan) {
+                let ptr := mload(0x40)
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                mstore(add(ptr, 0x04), 0x20)
+                mstore(add(ptr, 0x24), 24)
+                mstore(add(ptr, 0x44), "float128: corrupted zero")
+                revert(ptr, 0x64)
+            }
+
+            if aL {
+                // Check if mantissa A has exactly 72 digits
+                isInvalid := or(isInvalid, or(lt(aMan, MIN_L_DIGIT_NUMBER), gt(aMan, MAX_L_DIGIT_NUMBER)))
+            }
+
+            if iszero(aL) {
+                // Check if mantissa A has exactly 38 digits
+                isInvalid := or(isInvalid, or(lt(aMan, MIN_M_DIGIT_NUMBER), gt(aMan, MAX_M_DIGIT_NUMBER)))
+            }
+
+            // Revert if validation fails
+            if isInvalid {
+                let ptr := mload(0x40)
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                mstore(add(ptr, 0x04), 0x20)
+                mstore(add(ptr, 0x24), 28)
+                mstore(add(ptr, 0x44), "float128: unnormalized float")
+                revert(ptr, 0x64)
+            }
         }
 
         if ((aL && aExp > int(ZERO_OFFSET) - int(DIGIT_DIFF_L_M - 1)) || (!aL && aExp > int(ZERO_OFFSET) - int(MAX_DIGITS_M / 2 - 1))) {

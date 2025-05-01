@@ -17,7 +17,7 @@ contract Float128MaliciousEncodingTest is FloatUtils {
             int bExp = 0;
             int bMan = 1;
             packedFloat b = bMan.toPackedFloat(bExp);
-            int aMan = int(1);
+            int aMan = int(1e37);
             int aExp = int(uint(distanceFromExpBound)) - int(Float128.ZERO_OFFSET);
             packedFloat a = encodeManually(aMan, aExp, false);
             if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2) vm.expectRevert("float128: underflow");
@@ -41,7 +41,7 @@ contract Float128MaliciousEncodingTest is FloatUtils {
     function test_sub_MaliciousEncoding(uint8 distanceFromExpBound) public {
         {
             // very negative exponent
-            int aMan = int(2);
+            int aMan = int(2e37);
             int aExp = int(uint(distanceFromExpBound)) - int(Float128.ZERO_OFFSET);
             packedFloat a = encodeManually(aMan, aExp, false);
             packedFloat b = encodeManually(aMan - 1, aExp, false);

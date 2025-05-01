@@ -20,6 +20,10 @@ library Ln {
     uint constant EXPONENT_MASK = 0xfffc000000000000000000000000000000000000000000000000000000000000;
     uint constant ZERO_OFFSET = 8192;
     uint constant EXPONENT_BIT = 242;
+    uint constant MAX_M_DIGIT_NUMBER = 99999999999999999999999999999999999999;
+    uint constant MIN_M_DIGIT_NUMBER = 10000000000000000000000000000000000000;
+    uint constant MAX_L_DIGIT_NUMBER = 999999999999999999999999999999999999999999999999999999999999999999999999;
+    uint constant MIN_L_DIGIT_NUMBER = 100000000000000000000000000000000000000000000000000000000000000000000000;
 
     // ln specific variables
 
@@ -61,6 +65,8 @@ library Ln {
         int exponent;
         bool inputL;
         assembly {
+            mantissa := and(input, MANTISSA_MASK)
+
             if or(iszero(input), and(input, MANTISSA_SIGN_MASK)) {
                 let ptr := mload(0x40) // Get free memory pointer
                 mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
@@ -69,9 +75,39 @@ library Ln {
                 mstore(add(ptr, 0x44), "float128: ln undefined")
                 revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
             }
+
+            if iszero(mantissa) {
+                let ptr := mload(0x40)
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                mstore(add(ptr, 0x04), 0x20)
+                mstore(add(ptr, 0x24), 24)
+                mstore(add(ptr, 0x44), "float128: corrupted zero")
+                revert(ptr, 0x64)
+            }
             inputL := gt(and(input, MANTISSA_L_FLAG_MASK), 0)
-            mantissa := and(input, MANTISSA_MASK)
             exponent := sub(shr(EXPONENT_BIT, and(input, EXPONENT_MASK)), ZERO_OFFSET)
+
+            let isInvalid := 0
+
+            if inputL {
+                // Check if mantissa A has exactly 72 digits
+                isInvalid := or(isInvalid, or(lt(mantissa, MIN_L_DIGIT_NUMBER), gt(mantissa, MAX_L_DIGIT_NUMBER)))
+            }
+
+            if iszero(inputL) {
+                // Check if mantissa A has exactly 38 digits
+                isInvalid := or(isInvalid, or(lt(mantissa, MIN_M_DIGIT_NUMBER), gt(mantissa, MAX_M_DIGIT_NUMBER)))
+            }
+
+            // Revert if validation fails
+            if isInvalid {
+                let ptr := mload(0x40)
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                mstore(add(ptr, 0x04), 0x20)
+                mstore(add(ptr, 0x24), 28)
+                mstore(add(ptr, 0x44), "float128: unnormalized float")
+                revert(ptr, 0x64)
+            }
         }
         if (
             exponent == 0 - int(inputL ? Float128.MAX_DIGITS_L_MINUS_1 : Float128.MAX_DIGITS_M_MINUS_1) &&
