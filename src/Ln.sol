@@ -67,15 +67,6 @@ library Ln {
         assembly {
             mantissa := and(input, MANTISSA_MASK)
 
-            if and(iszero(mantissa), gt(input, 0)) {
-                let ptr := mload(0x40)
-                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
-                mstore(add(ptr, 0x04), 0x20)
-                mstore(add(ptr, 0x24), 24)
-                mstore(add(ptr, 0x44), "float128: corrupted zero")
-                revert(ptr, 0x64)
-            }
-
             if or(iszero(input), and(input, MANTISSA_SIGN_MASK)) {
                 let ptr := mload(0x40) // Get free memory pointer
                 mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
@@ -83,6 +74,15 @@ library Ln {
                 mstore(add(ptr, 0x24), 22) // Revert reason length
                 mstore(add(ptr, 0x44), "float128: ln undefined")
                 revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+            }
+
+            if iszero(mantissa) {
+                let ptr := mload(0x40)
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                mstore(add(ptr, 0x04), 0x20)
+                mstore(add(ptr, 0x24), 24)
+                mstore(add(ptr, 0x44), "float128: corrupted zero")
+                revert(ptr, 0x64)
             }
             inputL := gt(and(input, MANTISSA_L_FLAG_MASK), 0)
             exponent := sub(shr(EXPONENT_BIT, and(input, EXPONENT_MASK)), ZERO_OFFSET)

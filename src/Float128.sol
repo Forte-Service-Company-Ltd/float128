@@ -748,7 +748,7 @@ library Float128 {
      */
     function div(packedFloat a, packedFloat b, bool rL) internal pure returns (packedFloat r) {
         assembly {
-            if eq(and(b, MANTISSA_MASK), 0) {
+            if iszero(b) {
                 let ptr := mload(0x40) // Get free memory pointer
                 mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
                 mstore(add(ptr, 0x04), 0x20) // String offset

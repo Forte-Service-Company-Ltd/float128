@@ -17,10 +17,10 @@ contract Float128MaliciousEncodingTest is FloatUtils {
             int bExp = 0;
             int bMan = 1;
             packedFloat b = bMan.toPackedFloat(bExp);
-            int aMan = int(1);
+            int aMan = int(1e37);
             int aExp = int(uint(distanceFromExpBound)) - int(Float128.ZERO_OFFSET);
             packedFloat a = encodeManually(aMan, aExp, false);
-            vm.expectRevert("float128: unnormalized float");
+            if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2) vm.expectRevert("float128: underflow");
             packedFloat result = a.add(b);
             decodeAndCheckResults(aMan, aExp, bMan, bExp, "add", false, result, 1);
         }
@@ -32,7 +32,7 @@ contract Float128MaliciousEncodingTest is FloatUtils {
             int bExp = aExp;
             int bMan = 9e71;
             packedFloat b = bMan.toPackedFloat(bExp);
-            vm.expectRevert("float128: unnormalized float");
+            if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2 - 1) vm.expectRevert("float128: overflow");
             packedFloat result = a.add(b);
             decodeAndCheckResults(aMan, aExp, bMan, bExp, "add", false, result, 1);
         }
@@ -41,11 +41,11 @@ contract Float128MaliciousEncodingTest is FloatUtils {
     function test_sub_MaliciousEncoding(uint8 distanceFromExpBound) public {
         {
             // very negative exponent
-            int aMan = int(2);
+            int aMan = int(2e37);
             int aExp = int(uint(distanceFromExpBound)) - int(Float128.ZERO_OFFSET);
             packedFloat a = encodeManually(aMan, aExp, false);
             packedFloat b = encodeManually(aMan - 1, aExp, false);
-            vm.expectRevert("float128: unnormalized float");
+            if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2) vm.expectRevert("float128: underflow");
             packedFloat result = a.sub(b);
             decodeAndCheckResults(aMan, aExp, aMan - 1, aExp, "sub", false, result, 1);
         }
