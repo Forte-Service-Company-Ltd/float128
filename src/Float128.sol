@@ -74,7 +74,7 @@ library Float128 {
 
             let isInvalid := 0
 
-            if or(and(iszero(aMan), gt(a, 0)), and(iszero(bMan), gt(b, 0))) {
+            if or(iszero(aMan), iszero(bMan)) {
                 let ptr := mload(0x40)
                 mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
                 mstore(add(ptr, 0x04), 0x20)
@@ -330,7 +330,7 @@ library Float128 {
             let bMan := and(b, MANTISSA_MASK)
             let isInvalid := 0
 
-            if or(and(iszero(aMan), gt(a, 0)), and(iszero(bMan), gt(b, 0))) {
+            if or(iszero(aMan), iszero(bMan)) {
                 let ptr := mload(0x40)
                 mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
                 mstore(add(ptr, 0x04), 0x20)
@@ -569,14 +569,17 @@ library Float128 {
         bool Loperation;
         if (packedFloat.unwrap(a) == 0 || packedFloat.unwrap(b) == 0) return packedFloat.wrap(0);
         assembly {
-            let aMan := and(a, MANTISSA_MASK)
             let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
-            let bMan := and(b, MANTISSA_MASK)
             let bL := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
-
+            Loperation := or(aL, bL)
+            // we extract the exponent and mantissas for both
+            let aExp := shr(EXPONENT_BIT, a)
+            let bExp := shr(EXPONENT_BIT, b)
+            let aMan := and(a, MANTISSA_MASK)
+            let bMan := and(b, MANTISSA_MASK)
             let isInvalid := 0
 
-            if or(and(iszero(aMan), gt(a, 0)), and(iszero(bMan), gt(b, 0))) {
+            if or(iszero(aMan), iszero(bMan)) {
                 let ptr := mload(0x40)
                 mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
                 mstore(add(ptr, 0x04), 0x20)
@@ -614,16 +617,6 @@ library Float128 {
                 mstore(add(ptr, 0x44), "float128: unnormalized float")
                 revert(ptr, 0x64)
             }
-        }
-        assembly {
-            let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
-            let bL := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
-            Loperation := or(aL, bL)
-            // we extract the exponent and mantissas for both
-            let aExp := shr(EXPONENT_BIT, a)
-            let bExp := shr(EXPONENT_BIT, b)
-            let aMan := and(a, MANTISSA_MASK)
-            let bMan := and(b, MANTISSA_MASK)
 
             // underflow can happen due to malicious encoding, or product of very negative exponents
             if or(or(lt(aExp, MAX_DIGITS_M_X_2), lt(bExp, MAX_DIGITS_M_X_2)), lt(add(aExp, bExp), add(ZERO_OFFSET, MAX_DIGITS_M_X_2))) {
@@ -765,15 +758,26 @@ library Float128 {
             }
         }
         if (packedFloat.unwrap(a) == 0) return a;
+        uint rMan;
+        uint rExp;
+        uint a0;
+        uint a1;
+        uint aMan;
+        uint aExp;
+        uint bMan;
+        uint bExp;
+        bool Loperation;
         assembly {
-            let aMan := and(a, MANTISSA_MASK)
             let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
-            let bMan := and(b, MANTISSA_MASK)
             let bL := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
-
+            // if a is zero then the result will be zero
+            aExp := shr(EXPONENT_BIT, a)
+            bExp := shr(EXPONENT_BIT, b)
+            aMan := and(a, MANTISSA_MASK)
+            bMan := and(b, MANTISSA_MASK)
             let isInvalid := 0
 
-            if or(and(iszero(aMan), gt(a, 0)), and(iszero(bMan), gt(b, 0))) {
+            if or(iszero(aMan), iszero(bMan)) {
                 let ptr := mload(0x40)
                 mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
                 mstore(add(ptr, 0x04), 0x20)
@@ -811,24 +815,6 @@ library Float128 {
                 mstore(add(ptr, 0x44), "float128: unnormalized float")
                 revert(ptr, 0x64)
             }
-        }
-        uint rMan;
-        uint rExp;
-        uint a0;
-        uint a1;
-        uint aMan;
-        uint aExp;
-        uint bMan;
-        uint bExp;
-        bool Loperation;
-        assembly {
-            let aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
-            let bL := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
-            // if a is zero then the result will be zero
-            aExp := shr(EXPONENT_BIT, a)
-            bExp := shr(EXPONENT_BIT, b)
-            aMan := and(a, MANTISSA_MASK)
-            bMan := and(b, MANTISSA_MASK)
             // underflow can happen due to malicious encoding, or division of a very negative exponent by a very positive exponent
             // large-mantissa operations makes it riskier for division to underflow. A skewed lower bound of 2 * MAX_DIGITS_M_X_2 is necessary
             if or(or(lt(aExp, MAX_DIGITS_M_X_2), lt(bExp, MAX_DIGITS_M_X_2)), slt(sub(aExp, bExp), sub(shl(1, MAX_DIGITS_M_X_2), ZERO_OFFSET))) {
@@ -951,7 +937,7 @@ library Float128 {
             aExp := shr(EXPONENT_BIT, a)
             let isInvalid := 0
 
-            if and(iszero(aMan), gt(a, 0)) {
+            if iszero(aMan) {
                 let ptr := mload(0x40)
                 mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
                 mstore(add(ptr, 0x04), 0x20)
