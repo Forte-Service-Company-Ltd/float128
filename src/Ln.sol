@@ -60,7 +60,7 @@ library Ln {
      * @return result log of the input as a packedFloat
      * @notice passing a large-mantissa input will have better precision results.
      */
-    function ln(packedFloat input) public pure returns (packedFloat result) {
+    function ln(packedFloat input) internal pure returns (packedFloat result) {
         uint mantissa;
         int exponent;
         bool inputL;
@@ -302,7 +302,7 @@ library Ln {
      * @return q1 uint value of q1
      * @return updatedMantissa updated mantissa for q1
      */
-    function calculateQ1(uint256 mantissa) public pure returns (uint256 q1, uint256 updatedMantissa) {
+    function calculateQ1(uint256 mantissa) internal pure returns (uint256 q1, uint256 updatedMantissa) {
         if (mantissa > (68300000 * 10 ** 68)) {
             if (mantissa > (82000000 * 10 ** 68)) {
                 if (mantissa > (90000000 * 10 ** 68)) {
@@ -378,7 +378,7 @@ library Ln {
      * @return q2 uint value of q2
      * @return updatedMantissa updated mantissa for q2
      */
-    function calculateQ2(uint256 mantissa) public pure returns (uint256 q2, uint256 updatedMantissa) {
+    function calculateQ2(uint256 mantissa) internal pure returns (uint256 q2, uint256 updatedMantissa) {
         if (mantissa > (9459 * 10 ** 72)) {
             if (mantissa > (9725 * 10 ** 72)) {
                 if (mantissa > 9860 * 10 ** 72) {
@@ -645,7 +645,7 @@ library Ln {
      * @return q3 uint value of q3
      * @return updatedMantissa updated mantissa for q3
      */
-    function calculateQ3(uint256 mantissa) public pure returns (uint256 q3, uint256 updatedMantissa) {
+    function calculateQ3(uint256 mantissa) internal pure returns (uint256 q3, uint256 updatedMantissa) {
         if (mantissa > (991129567482 * 10 ** 64)) {
             if (mantissa > (993708179366 * 10 ** 64)) {
                 if (mantissa > (995 * 10 ** 73)) {
