@@ -6,11 +6,14 @@ This is a signed floating-point library optimized for Solidity.
 
 ### General floating-point concepts
 
-a floating point number is a way to represent numbers in an efficient way. It is composed of 3 elements:
+A floating point number is a way to represent numbers in an efficient way. It is composed of 2 elements:
 
 - **The mantissa**: the significant digits of the number. It is an integer that is later multiplied by the base elevated to the exponent's power.
-- **The base**: generally either 2 or 10. It determines the base of the multiplier factor.
-- **The exponent**: the amount of times the base will multiply/divide itself to later be applied to the mantissa.
+- **The multiplier**: The factor to which the mantissa is multiplied to get the actual number that is being represented. The multiplier is also composed of 2 sub elements:
+  - **The base**: generally either 2 or 10. It determines the base of the multiplier factor.
+  - **The exponent**: the amount of times the base will multiply/divide itself.
+
+As it can be seen in the previous definitions, the mantissa, the base and the exponent can tell the whole story of a floating-point number.
 
 Some examples:
 
@@ -25,16 +28,13 @@ Some examples:
   - Base: 10
   - Exponent: 12
 
-Floating point numbers can represent the same number in infinite ways by playing with the exponent. For instance, the first example could be also represented by -10 x $10^{-5}$, -100 x $10^{-6}$, -1000 x $10^{-7}$, etc.
-
-> [!CAUTION]
-> This library will only handle numbers with exponents within the range of **-3000** to **3000**. Larger or smaller numbers may result in precision loss and/or overflow/underflow.
+An interesting feature of floating-point numbers is that the same number can be represented in infinite ways by playing with the exponent. For instance, the first example could be also represented by -10 x $10^{-5}$, -100 x $10^{-6}$, -1000 x $10^{-7}$, etc.
 
 #### Library main features
 
 - Base: 10
 - Significant digits: 38 or 72
-- Exponent range: -8192 and +8191
+- Exponent safe range: -8000 and +8000
 - Maximum exponent for 38-digit mantissas: -18
 - Maximum digits that can be handled accurately: 72
 
@@ -65,7 +65,8 @@ The library's arithmetic operations' error have been calculated against results 
 | Square root (sqrt)       | < 1                  |
 | Natural Logarithm (ln)\* | < 99                 |
 
-\* WARNING: the precision for `ln` is not guaranteed for numbers that are between 1.0 and 1.1 (exclusive). For numbers with ≤38 significand digits, errors are generally limited to 199 ULPs (units in the last place). However, numbers with >38 significand digits may exhibit relative errors exceeding 50% in extreme cases.
+> *[!CAUTION]
+> the precision for `ln` is not guaranteed for numbers that are between 1.0 and 1.1 (exclusive). For numbers with ≤38 significant digits, errors are generally limited to 199 ULPs (units in the last place). However, numbers with >38 significand digits may exhibit relative errors exceeding 50% in extreme cases.
 
 ### Types
 
@@ -93,7 +94,7 @@ The packedFloat can handle 2 different lengths of mantissas:
 
 - **Medium-size mantissas (38 digits)**: This is the more gas efficient representation of a floating-point number when it comes to arithmetic since all the operations, including results, will fit inside a 256-bit word. This representation, however, offers a limited storage for the number which might not be enough for ocasions where very high precision is required.
 
-- **Large-size mantissas (72 digits)**: This is the more precise representation of a floatint-point number since it can store 72 significand digits of information. The trade-off is higher gas consumption as its arithmetic will require 512-bit multiplication and division which can be expensive operations.
+- **Large-size mantissas (72 digits)**: This is the more precise representation of a floatint-point number since it can store 72 significant digits of information. The trade-off is higher gas consumption as its arithmetic will require 512-bit multiplication and division which can be expensive.
 
 #### Maximum exponent and mantissa-size autoscaling
 
@@ -159,7 +160,7 @@ For example, the number 12345.678 will have only one proper representation in th
 
 ### Representation of zero
 
-Zero is a special case in this library. It is the only number which mantissa is represented by all zeros. Its exponent is the smallest possible which is -8192.
+Zero is a special case in this library. It is the only number which mantissa is represented by all zeros. Its exponent is the smallest technically possible value which is -8192.
 
 ### Gas Profile
 
@@ -189,3 +190,10 @@ Here are the current Gas Results:
 | Division Large (numerator is zero)     | 190   | 190     | 190   |
 | Square Root                            | 1320  | 2156    | 3108  |
 | Natural logarithm                      | 50112 | 62647   | 69569 |
+
+
+## Audits
+
+This library has been audited by:
+
+- Code4rena, April 2025. [_See the Code4rena report here_](https://code4rena.com/reports/2025-04-forte-float128-solidity-library). All findings fixed.
