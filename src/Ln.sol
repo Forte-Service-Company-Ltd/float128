@@ -60,7 +60,7 @@ library Ln {
      * @return result log of the input as a packedFloat
      * @notice passing a large-mantissa input will have better precision results.
      */
-    function ln(packedFloat input) internal pure returns (packedFloat result) {
+    function ln(packedFloat input) public pure returns (packedFloat result) {
         uint mantissa;
         int exponent;
         bool inputL;
