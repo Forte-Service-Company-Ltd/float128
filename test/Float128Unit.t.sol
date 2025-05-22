@@ -634,13 +634,13 @@ contract Float128UnitTest is FloatUtils {
         Ln.ln(a);
     }
 
-    function _invalidFloatHelper_GreaterThanAccepted(bool isLarge) internal returns (packedFloat invalid) {
+    function _invalidFloatHelper_GreaterThanAccepted(bool isLarge) internal pure returns (packedFloat invalid) {
         // 39 digit or 73 digit mantissa
         int mantissa = isLarge ? int(Float128.MAX_M_DIGIT_NUMBER + 1) : int(Float128.MAX_L_DIGIT_NUMBER + 1);
         invalid = packedFloat.wrap(uint(mantissa));
     }
 
-    function _invalidFloatHelper_LesserThanAccepted(bool isLarge) internal returns (packedFloat invalid) {
+    function _invalidFloatHelper_LesserThanAccepted(bool isLarge) internal pure returns (packedFloat invalid) {
         // 37 digit or 71 digit mantissa
         int mantissa = isLarge ? int(Float128.MIN_M_DIGIT_NUMBER - 1) : int(Float128.MIN_L_DIGIT_NUMBER - 1);
         invalid = packedFloat.wrap(uint(mantissa));
