@@ -83,25 +83,16 @@ library Float128 {
                 revert(ptr, 0x64)
             }
 
-            if aL {
-                // Check if mantissa A has exactly 72 digits
-                isInvalid := or(isInvalid, or(lt(aMan, MIN_L_DIGIT_NUMBER), gt(aMan, MAX_L_DIGIT_NUMBER)))
-            }
-
-            if iszero(aL) {
-                // Check if mantissa A has exactly 38 digits
-                isInvalid := or(isInvalid, or(lt(aMan, MIN_M_DIGIT_NUMBER), gt(aMan, MAX_M_DIGIT_NUMBER)))
-            }
-
-            if bL {
-                // Check if mantissa B has exactly 72 digits
-                isInvalid := or(isInvalid, or(lt(bMan, MIN_L_DIGIT_NUMBER), gt(bMan, MAX_L_DIGIT_NUMBER)))
-            }
-
-            if iszero(bL) {
-                // Check if mantissa B has exactly 38 digits
-                isInvalid := or(isInvalid, or(lt(bMan, MIN_M_DIGIT_NUMBER), gt(bMan, MAX_M_DIGIT_NUMBER)))
-            }
+            isInvalid := or(
+                or(
+                    and(aL, or(lt(aMan, MIN_L_DIGIT_NUMBER), gt(aMan, MAX_L_DIGIT_NUMBER))),
+                    and(iszero(aL), or(lt(aMan, MIN_M_DIGIT_NUMBER), gt(aMan, MAX_M_DIGIT_NUMBER)))
+                ),
+                or(
+                    and(bL, or(lt(bMan, MIN_L_DIGIT_NUMBER), gt(bMan, MAX_L_DIGIT_NUMBER))), 
+                    and(iszero(bL),or(lt(bMan, MIN_M_DIGIT_NUMBER), gt(bMan, MAX_M_DIGIT_NUMBER))) 
+                )
+            )
 
             // Revert if validation fails
             if isInvalid {
@@ -125,10 +116,7 @@ library Float128 {
             // we check that the result of an addition won't overflow while normalizing
             if and(
                 iszero(isSubtraction),
-                or(
-                    and(or(gt(aExp, bExp), eq(aExp, bExp)), gt(aExp, sub(shl(1, ZERO_OFFSET), MAX_DIGITS_M_X_2))),
-                    and(gt(bExp, aExp), gt(bExp, sub(shl(1, ZERO_OFFSET), MAX_DIGITS_M_X_2)))
-                )
+                or(gt(aExp, sub(shl(1, ZERO_OFFSET), MAX_DIGITS_M_X_2)), gt(bExp, sub(shl(1, ZERO_OFFSET), MAX_DIGITS_M_X_2)))
             ) {
                 let ptr := mload(0x40) // Get free memory pointer
                 mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
@@ -138,86 +126,47 @@ library Float128 {
                 revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
             }
 
-            if iszero(or(aL, bL)) {
-                // we add 38 digits of precision in the case of subtraction
-                if gt(aExp, bExp) {
-                    r := shl(EXPONENT_BIT, sub(aExp, MAX_DIGITS_M))
-                    let adj := sub(shr(EXPONENT_BIT, r), bExp)
-                    let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
-                    if neg {
-                        bMan := mul(bMan, exp(BASE, sub(0, adj)))
-                        aMan := mul(aMan, BASE_TO_THE_MAX_DIGITS_M)
-                    }
-                    if iszero(neg) {
-                        bMan := sdiv(bMan, exp(BASE, adj))
-                        aMan := mul(aMan, BASE_TO_THE_MAX_DIGITS_M)
-                    }
+            if iszero(aL) {
+                aMan := mul(aMan, BASE_TO_THE_DIGIT_DIFF)
+                aExp := sub(aExp, DIGIT_DIFF_L_M)
+            }
+            if iszero(bL) {
+                bMan := mul(bMan, BASE_TO_THE_DIGIT_DIFF)
+                bExp := sub(bExp, DIGIT_DIFF_L_M)
+            }
+            // we adjust the significant digits and set the exponent of the result
+            if gt(aExp, bExp) {
+                r := shl(EXPONENT_BIT, sub(aExp, DIGIT_DIFF_76_L))
+                let adj := sub(shr(EXPONENT_BIT, r), bExp)
+                let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
+                if neg {
+                    bMan := mul(bMan, exp(BASE, sub(0, adj)))
+                    aMan := mul(aMan, BASE_TO_THE_DIFF_76_L)
                 }
-                if gt(bExp, aExp) {
-                    r := shl(EXPONENT_BIT, sub(bExp, MAX_DIGITS_M))
-                    let adj := sub(shr(EXPONENT_BIT, r), aExp)
-                    let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
-                    if neg {
-                        aMan := mul(aMan, exp(BASE, sub(0, adj)))
-                        bMan := mul(bMan, BASE_TO_THE_MAX_DIGITS_M)
-                    }
-                    if iszero(neg) {
-                        aMan := sdiv(aMan, exp(BASE, adj))
-                        bMan := mul(bMan, BASE_TO_THE_MAX_DIGITS_M)
-                    }
-                }
-                // if exponents are the same, we don't need to adjust the mantissas. We just set the result's exponent
-                if eq(aExp, bExp) {
-                    aMan := mul(aMan, BASE_TO_THE_MAX_DIGITS_M)
-                    bMan := mul(bMan, BASE_TO_THE_MAX_DIGITS_M)
-                    r := shl(EXPONENT_BIT, sub(aExp, MAX_DIGITS_M))
-                    sameExponent := 1
+                if iszero(neg) {
+                    bMan := sdiv(bMan, exp(BASE, adj))
+                    aMan := mul(aMan, BASE_TO_THE_DIFF_76_L)
                 }
             }
-            if or(aL, bL) {
-                // we make sure both of them are size L before continuing
-                if iszero(aL) {
-                    aMan := mul(aMan, BASE_TO_THE_DIGIT_DIFF)
-                    aExp := sub(aExp, DIGIT_DIFF_L_M)
-                }
-                if iszero(bL) {
-                    bMan := mul(bMan, BASE_TO_THE_DIGIT_DIFF)
-                    bExp := sub(bExp, DIGIT_DIFF_L_M)
-                }
-                // we adjust the significant digits and set the exponent of the result
-                if gt(aExp, bExp) {
-                    r := shl(EXPONENT_BIT, sub(aExp, DIGIT_DIFF_76_L))
-                    let adj := sub(shr(EXPONENT_BIT, r), bExp)
-                    let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
-                    if neg {
-                        bMan := mul(bMan, exp(BASE, sub(0, adj)))
-                        aMan := mul(aMan, BASE_TO_THE_DIFF_76_L)
-                    }
-                    if iszero(neg) {
-                        bMan := sdiv(bMan, exp(BASE, adj))
-                        aMan := mul(aMan, BASE_TO_THE_DIFF_76_L)
-                    }
-                }
-                if gt(bExp, aExp) {
-                    r := shl(EXPONENT_BIT, sub(bExp, DIGIT_DIFF_76_L))
-                    let adj := sub(shr(EXPONENT_BIT, r), aExp)
-                    let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
-                    if neg {
-                        aMan := mul(aMan, exp(BASE, sub(0, adj)))
-                        bMan := mul(bMan, BASE_TO_THE_DIFF_76_L)
-                    }
-                    if iszero(neg) {
-                        aMan := sdiv(aMan, exp(BASE, adj))
-                        bMan := mul(bMan, BASE_TO_THE_DIFF_76_L)
-                    }
-                }
-                // // if exponents are the same, we don't need to adjust the mantissas. We just set the result's exponent
-                if eq(aExp, bExp) {
-                    aMan := mul(aMan, BASE_TO_THE_DIFF_76_L)
+            if gt(bExp, aExp) {
+                r := shl(EXPONENT_BIT, sub(bExp, DIGIT_DIFF_76_L))
+                let adj := sub(shr(EXPONENT_BIT, r), aExp)
+                let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
+                if neg {
+                    aMan := mul(aMan, exp(BASE, sub(0, adj)))
                     bMan := mul(bMan, BASE_TO_THE_DIFF_76_L)
-                    r := shl(EXPONENT_BIT, sub(aExp, DIGIT_DIFF_76_L))
-                    sameExponent := 1
                 }
+                if iszero(neg) {
+                    aMan := sdiv(aMan, exp(BASE, adj))
+                    bMan := mul(bMan, BASE_TO_THE_DIFF_76_L)
+                }
+            }
+            // // if exponents are the same, we don't need to adjust the mantissas. We just set the result's exponent
+            if eq(aExp, bExp) {
+                aMan := mul(aMan, BASE_TO_THE_DIFF_76_L)
+                bMan := mul(bMan, BASE_TO_THE_DIFF_76_L)
+                r := shl(EXPONENT_BIT, sub(aExp, DIGIT_DIFF_76_L))
+                sameExponent := 1
             }
             // now we convert to 2's complement to carry out the operation
             if and(b, MANTISSA_SIGN_MASK) {
@@ -339,25 +288,16 @@ library Float128 {
                 revert(ptr, 0x64)
             }
 
-            if aL {
-                // Check if mantissa A has exactly 72 digits
-                isInvalid := or(isInvalid, or(lt(aMan, MIN_L_DIGIT_NUMBER), gt(aMan, MAX_L_DIGIT_NUMBER)))
-            }
-
-            if iszero(aL) {
-                // Check if mantissa A has exactly 38 digits
-                isInvalid := or(isInvalid, or(lt(aMan, MIN_M_DIGIT_NUMBER), gt(aMan, MAX_M_DIGIT_NUMBER)))
-            }
-
-            if bL {
-                // Check if mantissa B has exactly 72 digits
-                isInvalid := or(isInvalid, or(lt(bMan, MIN_L_DIGIT_NUMBER), gt(bMan, MAX_L_DIGIT_NUMBER)))
-            }
-
-            if iszero(bL) {
-                // Check if mantissa B has exactly 38 digits
-                isInvalid := or(isInvalid, or(lt(bMan, MIN_M_DIGIT_NUMBER), gt(bMan, MAX_M_DIGIT_NUMBER)))
-            }
+            isInvalid := or(
+                or(
+                    and(aL, or(lt(aMan, MIN_L_DIGIT_NUMBER), gt(aMan, MAX_L_DIGIT_NUMBER))),
+                    and(iszero(aL), or(lt(aMan, MIN_M_DIGIT_NUMBER), gt(aMan, MAX_M_DIGIT_NUMBER)))
+                ),
+                or(
+                    and(bL, or(lt(bMan, MIN_L_DIGIT_NUMBER), gt(bMan, MAX_L_DIGIT_NUMBER))), 
+                    and(iszero(bL),or(lt(bMan, MIN_M_DIGIT_NUMBER), gt(bMan, MAX_M_DIGIT_NUMBER))) 
+                )
+            )
 
             // Revert if validation fails
             if isInvalid {
@@ -381,10 +321,7 @@ library Float128 {
             // we check that the result of an addition won't overflow while normalizing
             if and(
                 iszero(isSubtraction),
-                or(
-                    and(or(gt(aExp, bExp), eq(aExp, bExp)), gt(aExp, sub(shl(1, ZERO_OFFSET), MAX_DIGITS_M_X_2))),
-                    and(gt(bExp, aExp), gt(bExp, sub(shl(1, ZERO_OFFSET), MAX_DIGITS_M_X_2)))
-                )
+                or(gt(aExp, sub(shl(1, ZERO_OFFSET), MAX_DIGITS_M_X_2)), gt(bExp, sub(shl(1, ZERO_OFFSET), MAX_DIGITS_M_X_2)))
             ) {
                 let ptr := mload(0x40) // Get free memory pointer
                 mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
@@ -394,86 +331,49 @@ library Float128 {
                 revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
             }
 
-            if iszero(or(aL, bL)) {
-                // we add 38 digits of precision in the case of subtraction
-                if gt(aExp, bExp) {
-                    r := shl(EXPONENT_BIT, sub(aExp, MAX_DIGITS_M))
-                    let adj := sub(shr(EXPONENT_BIT, r), bExp)
-                    let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
-                    if neg {
-                        bMan := mul(bMan, exp(BASE, sub(0, adj)))
-                        aMan := mul(aMan, BASE_TO_THE_MAX_DIGITS_M)
-                    }
-                    if iszero(neg) {
-                        bMan := sdiv(bMan, exp(BASE, adj))
-                        aMan := mul(aMan, BASE_TO_THE_MAX_DIGITS_M)
-                    }
+            
+            // we make sure both of them are size L before continuing
+            if iszero(aL) {
+                aMan := mul(aMan, BASE_TO_THE_DIGIT_DIFF)
+                aExp := sub(aExp, DIGIT_DIFF_L_M)
+            }
+            if iszero(bL) {
+                bMan := mul(bMan, BASE_TO_THE_DIGIT_DIFF)
+                bExp := sub(bExp, DIGIT_DIFF_L_M)
+            }
+            // we adjust the significant digits and set the exponent of the result
+            if gt(aExp, bExp) {
+                r := shl(EXPONENT_BIT, sub(aExp, DIGIT_DIFF_76_L))
+                let adj := sub(shr(EXPONENT_BIT, r), bExp)
+                let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
+                if neg {
+                    bMan := mul(bMan, exp(BASE, sub(0, adj)))
+                    aMan := mul(aMan, BASE_TO_THE_DIFF_76_L)
                 }
-                if gt(bExp, aExp) {
-                    r := shl(EXPONENT_BIT, sub(bExp, MAX_DIGITS_M))
-                    let adj := sub(shr(EXPONENT_BIT, r), aExp)
-                    let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
-                    if neg {
-                        aMan := mul(aMan, exp(BASE, sub(0, adj)))
-                        bMan := mul(bMan, BASE_TO_THE_MAX_DIGITS_M)
-                    }
-                    if iszero(neg) {
-                        aMan := sdiv(aMan, exp(BASE, adj))
-                        bMan := mul(bMan, BASE_TO_THE_MAX_DIGITS_M)
-                    }
-                }
-                // if exponents are the same, we don't need to adjust the mantissas. We just set the result's exponent
-                if eq(aExp, bExp) {
-                    aMan := mul(aMan, BASE_TO_THE_MAX_DIGITS_M)
-                    bMan := mul(bMan, BASE_TO_THE_MAX_DIGITS_M)
-                    r := shl(EXPONENT_BIT, sub(aExp, MAX_DIGITS_M))
-                    sameExponent := 1
+                if iszero(neg) {
+                    bMan := sdiv(bMan, exp(BASE, adj))
+                    aMan := mul(aMan, BASE_TO_THE_DIFF_76_L)
                 }
             }
-            if or(aL, bL) {
-                // we make sure both of them are size L before continuing
-                if iszero(aL) {
-                    aMan := mul(aMan, BASE_TO_THE_DIGIT_DIFF)
-                    aExp := sub(aExp, DIGIT_DIFF_L_M)
-                }
-                if iszero(bL) {
-                    bMan := mul(bMan, BASE_TO_THE_DIGIT_DIFF)
-                    bExp := sub(bExp, DIGIT_DIFF_L_M)
-                }
-                // we adjust the significant digits and set the exponent of the result
-                if gt(aExp, bExp) {
-                    r := shl(EXPONENT_BIT, sub(aExp, DIGIT_DIFF_76_L))
-                    let adj := sub(shr(EXPONENT_BIT, r), bExp)
-                    let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
-                    if neg {
-                        bMan := mul(bMan, exp(BASE, sub(0, adj)))
-                        aMan := mul(aMan, BASE_TO_THE_DIFF_76_L)
-                    }
-                    if iszero(neg) {
-                        bMan := sdiv(bMan, exp(BASE, adj))
-                        aMan := mul(aMan, BASE_TO_THE_DIFF_76_L)
-                    }
-                }
-                if gt(bExp, aExp) {
-                    r := shl(EXPONENT_BIT, sub(bExp, DIGIT_DIFF_76_L))
-                    let adj := sub(shr(EXPONENT_BIT, r), aExp)
-                    let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
-                    if neg {
-                        aMan := mul(aMan, exp(BASE, sub(0, adj)))
-                        bMan := mul(bMan, BASE_TO_THE_DIFF_76_L)
-                    }
-                    if iszero(neg) {
-                        aMan := sdiv(aMan, exp(BASE, adj))
-                        bMan := mul(bMan, BASE_TO_THE_DIFF_76_L)
-                    }
-                }
-                // // if exponents are the same, we don't need to adjust the mantissas. We just set the result's exponent
-                if eq(aExp, bExp) {
-                    aMan := mul(aMan, BASE_TO_THE_DIFF_76_L)
+            if gt(bExp, aExp) {
+                r := shl(EXPONENT_BIT, sub(bExp, DIGIT_DIFF_76_L))
+                let adj := sub(shr(EXPONENT_BIT, r), aExp)
+                let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
+                if neg {
+                    aMan := mul(aMan, exp(BASE, sub(0, adj)))
                     bMan := mul(bMan, BASE_TO_THE_DIFF_76_L)
-                    r := shl(EXPONENT_BIT, sub(aExp, DIGIT_DIFF_76_L))
-                    sameExponent := 1
                 }
+                if iszero(neg) {
+                    aMan := sdiv(aMan, exp(BASE, adj))
+                    bMan := mul(bMan, BASE_TO_THE_DIFF_76_L)
+                }
+            }
+            // // if exponents are the same, we don't need to adjust the mantissas. We just set the result's exponent
+            if eq(aExp, bExp) {
+                aMan := mul(aMan, BASE_TO_THE_DIFF_76_L)
+                bMan := mul(bMan, BASE_TO_THE_DIFF_76_L)
+                r := shl(EXPONENT_BIT, sub(aExp, DIGIT_DIFF_76_L))
+                sameExponent := 1
             }
             // now we convert to 2's complement to carry out the operation
             if iszero(and(b, MANTISSA_SIGN_MASK)) {
@@ -588,25 +488,16 @@ library Float128 {
                 revert(ptr, 0x64)
             }
 
-            if aL {
-                // Check if mantissa A has exactly 72 digits
-                isInvalid := or(isInvalid, or(lt(aMan, MIN_L_DIGIT_NUMBER), gt(aMan, MAX_L_DIGIT_NUMBER)))
-            }
-
-            if iszero(aL) {
-                // Check if mantissa A has exactly 38 digits
-                isInvalid := or(isInvalid, or(lt(aMan, MIN_M_DIGIT_NUMBER), gt(aMan, MAX_M_DIGIT_NUMBER)))
-            }
-
-            if bL {
-                // Check if mantissa B has exactly 72 digits
-                isInvalid := or(isInvalid, or(lt(bMan, MIN_L_DIGIT_NUMBER), gt(bMan, MAX_L_DIGIT_NUMBER)))
-            }
-
-            if iszero(bL) {
-                // Check if mantissa B has exactly 38 digits
-                isInvalid := or(isInvalid, or(lt(bMan, MIN_M_DIGIT_NUMBER), gt(bMan, MAX_M_DIGIT_NUMBER)))
-            }
+            isInvalid := or(
+                or(
+                    and(aL, or(lt(aMan, MIN_L_DIGIT_NUMBER), gt(aMan, MAX_L_DIGIT_NUMBER))),
+                    and(iszero(aL), or(lt(aMan, MIN_M_DIGIT_NUMBER), gt(aMan, MAX_M_DIGIT_NUMBER)))
+                ),
+                or(
+                    and(bL, or(lt(bMan, MIN_L_DIGIT_NUMBER), gt(bMan, MAX_L_DIGIT_NUMBER))), 
+                    and(iszero(bL),or(lt(bMan, MIN_M_DIGIT_NUMBER), gt(bMan, MAX_M_DIGIT_NUMBER))) 
+                )
+            )
 
             // Revert if validation fails
             if isInvalid {
@@ -786,25 +677,16 @@ library Float128 {
                 revert(ptr, 0x64)
             }
 
-            if aL {
-                // Check if mantissa A has exactly 72 digits
-                isInvalid := or(isInvalid, or(lt(aMan, MIN_L_DIGIT_NUMBER), gt(aMan, MAX_L_DIGIT_NUMBER)))
-            }
-
-            if iszero(aL) {
-                // Check if mantissa A has exactly 38 digits
-                isInvalid := or(isInvalid, or(lt(aMan, MIN_M_DIGIT_NUMBER), gt(aMan, MAX_M_DIGIT_NUMBER)))
-            }
-
-            if bL {
-                // Check if mantissa B has exactly 72 digits
-                isInvalid := or(isInvalid, or(lt(bMan, MIN_L_DIGIT_NUMBER), gt(bMan, MAX_L_DIGIT_NUMBER)))
-            }
-
-            if iszero(bL) {
-                // Check if mantissa B has exactly 38 digits
-                isInvalid := or(isInvalid, or(lt(bMan, MIN_M_DIGIT_NUMBER), gt(bMan, MAX_M_DIGIT_NUMBER)))
-            }
+            isInvalid := or(
+                or(
+                    and(aL, or(lt(aMan, MIN_L_DIGIT_NUMBER), gt(aMan, MAX_L_DIGIT_NUMBER))),
+                    and(iszero(aL), or(lt(aMan, MIN_M_DIGIT_NUMBER), gt(aMan, MAX_M_DIGIT_NUMBER)))
+                ),
+                or(
+                    and(bL, or(lt(bMan, MIN_L_DIGIT_NUMBER), gt(bMan, MAX_L_DIGIT_NUMBER))), 
+                    and(iszero(bL),or(lt(bMan, MIN_M_DIGIT_NUMBER), gt(bMan, MAX_M_DIGIT_NUMBER))) 
+                )
+            )
 
             // Revert if validation fails
             if isInvalid {

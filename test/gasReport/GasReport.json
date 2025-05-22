@@ -2,33 +2,33 @@
   "Packed": {
     "add": {
       "matchingexponents": {
-        "min": 1070,
-        "avg": 1371,
-        "max": 1776
+        "min": 999,
+        "avg": 1293,
+        "max": 1678
       },
       "addsub": {
-        "min": 1674,
-        "avg": 1793,
-        "max": 1843
+        "min": 1611,
+        "avg": 1691,
+        "max": 1712
       },
-      "min": 1200,
-      "avg": 1557,
-      "max": 1844
+      "min": 1130,
+      "avg": 1444,
+      "max": 1724
     },
     "sub": {
       "matchingexponents": {
-        "min": 1067,
-        "avg": 1345,
-        "max": 1711
+        "min": 996,
+        "avg": 1302,
+        "max": 1675
       },
       "subadd": {
-        "min": 1197,
-        "avg": 1280,
-        "max": 1308
+        "min": 1127,
+        "avg": 1178,
+        "max": 1184
       },
-      "min": 1197,
-      "avg": 1543,
-      "max": 1841
+      "min": 1127,
+      "avg": 1447,
+      "max": 1721
     },
     "mul": {
       "mulbyzero": {
@@ -36,39 +36,39 @@
         "avg": 171,
         "max": 171
       },
-      "min": 887,
-      "avg": 1291,
-      "max": 1454
+      "min": 1298,
+      "avg": 1334,
+      "max": 1350
     },
     "div": {
       "numeratorzero": {
-        "min": 189,
-        "avg": 189,
-        "max": 189
+        "min": 183,
+        "avg": 183,
+        "max": 183
       },
-      "min": 948,
-      "avg": 1490,
-      "max": 1601
+      "min": 1423,
+      "avg": 1456,
+      "max": 1475
     },
     "divL": {
       "numeratorzero": {
-        "min": 190,
-        "avg": 190,
-        "max": 190
+        "min": 184,
+        "avg": 184,
+        "max": 184
       },
-      "min": 1512,
-      "avg": 1556,
-      "max": 1602
+      "min": 1424,
+      "avg": 1438,
+      "max": 1454
     },
     "sqrt": {
-      "min": 1415,
-      "avg": 2265,
-      "max": 3224
+      "min": 1397,
+      "avg": 2243,
+      "max": 3206
     },
     "ln": {
-      "min": 67169,
-      "avg": 76546,
-      "max": 83248
+      "min": 59844,
+      "avg": 73849,
+      "max": 80433
     }
   },
   "Helpers": {
@@ -89,28 +89,28 @@
     },
     "gt": {
       "min": 405,
-      "avg": 456,
-      "max": 511
+      "avg": 427,
+      "max": 453
     },
     "ge": {
       "min": 405,
-      "avg": 454,
-      "max": 511
+      "avg": 426,
+      "max": 453
     },
     "lt": {
       "min": 405,
-      "avg": 454,
-      "max": 511
+      "avg": 426,
+      "max": 453
     },
     "le": {
       "min": 405,
-      "avg": 456,
-      "max": 511
+      "avg": 426,
+      "max": 453
     },
     "eq": {
       "min": 177,
-      "avg": 205,
-      "max": 298
+      "avg": 177,
+      "max": 177
     },
     "decode": {
       "min": 197,
