@@ -10,9 +10,6 @@ on:
 
 env:
   FOUNDRY_PROFILE: ci
-  FORK_TEST: false
-  SALT_STRING: "SMELLING_SALTS"
-  SKIP_FORTE_TOKEN_TESTS: true
 
 jobs:
   check:
