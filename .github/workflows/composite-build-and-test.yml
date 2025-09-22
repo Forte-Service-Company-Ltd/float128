@@ -1,0 +1,16 @@
+name: Composite Build and Test
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+permissions:
+  pull-requests: write
+jobs:
+  test:
+    uses: Forte-Service-Company-Ltd/infrastructure-tooling/.github/workflows/onchain-build-test-report.yaml@v0.0.1
+    secrets: inherit
+    with:
+      markdown-file-path: "./README.md, ./LICENSE.md, ./CONTRIBUTING.md, ./CODE_OF_CONDUCT.md"
