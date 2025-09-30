@@ -1,0 +1,13 @@
+name: Composite Code Quality
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  code-quality:
+    uses: Forte-Service-Company-Ltd/infrastructure-tooling/.github/workflows/onchain-code-quality.yaml@v0.0.2
+    secrets: inherit
