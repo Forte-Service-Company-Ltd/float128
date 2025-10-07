@@ -10,6 +10,7 @@ permissions:
   pull-requests: write
 jobs:
   test:
+    # Update the reference to the release version prior to merge.
     uses: Forte-Service-Company-Ltd/infrastructure-tooling/.github/workflows/onchain-build-test-report.yaml@INF-298-Optimizing-On-Chain-Build-and-Test
     secrets: inherit
     with:
