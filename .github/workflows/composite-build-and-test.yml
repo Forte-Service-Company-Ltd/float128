@@ -11,7 +11,7 @@ permissions:
 jobs:
   test:
     # Update the reference to the release version prior to merge.
-    uses: Forte-Service-Company-Ltd/infrastructure-tooling/.github/workflows/onchain-build-test-report.yaml@v0.0.7
+    uses: Forte-Service-Company-Ltd/infrastructure-tooling/.github/workflows/onchain-build-test-report.yaml@v0.0.16-rc1
     secrets: inherit
     with:
       markdown-file-path: "./README.md, ./LICENSE.md, ./CONTRIBUTING.md, ./CODE_OF_CONDUCT.md"
