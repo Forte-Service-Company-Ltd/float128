@@ -89,7 +89,7 @@ contract FloatZeroHandlingTest is FloatUtils {
         packedFloat result = Float128.add(a, b);
         (int rMan, int rExp) = Float128.decode(result);
         // b must be decoded in the same way to account for the 38 digits in the return value mantissa
-        (bMan, bExp) = Float128.decode(result);
+        (bMan, bExp) = Float128.decode(b);
         console2.log("rExp", rExp);
 
         assertEq(rMan, bMan, "Solidity result is not consistent with zero rules");
@@ -99,7 +99,7 @@ contract FloatZeroHandlingTest is FloatUtils {
         result = Float128.add(b, a);
         (rMan, rExp) = Float128.decode(result);
         // b must be decoded in the same way to account for the 38 digits in the return value mantissa
-        (bMan, bExp) = Float128.decode(result);
+        (bMan, bExp) = Float128.decode(b);
         console2.log("rExp", rExp);
 
         assertEq(rMan, bMan, "Solidity result is not consistent with zero rules");
@@ -109,7 +109,7 @@ contract FloatZeroHandlingTest is FloatUtils {
         result = Float128.add(a, a);
         (rMan, rExp) = Float128.decode(result);
         // b must be decoded in the same way to account for the 38 digits in the return value mantissa
-        (aMan, aExp) = Float128.decode(result);
+        (aMan, aExp) = Float128.decode(a);
         console2.log("rExp", rExp);
 
         assertEq(rMan, aMan, "Solidity result is not consistent with zero rules");
